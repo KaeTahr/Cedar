@@ -215,3 +215,5 @@ TSWLatexianTemp*
 *.sta
 # Makeindex log files
 *.lpz
+# vim backup files
+*~
