@@ -49,7 +49,46 @@
 \maketitle
 \section{Summary}
 \section{Introduction}
+Systems programming is an area of software development that relies on precise
+control over hardware resources and system-level abstractions. For this reason,
+systems programming languages are often low-level, allowing developers to write
+efficient code that can directly manipulate memory and hardware. However, this
+low-level access comes at the cost of increased complexity and potential
+for errors. Specifically, C and C++ are two of the most widely used systems
+programming languages, but they are also known to be error-prone and difficult
+to use. In order to address these issues, many researchers have proposed
+new programming languages and tools that aim to improve the safety and
+efficiency of systems programming. One way to reduce the errors in systems is
+to use a type system that is proven to be sound, and guarantees that the
+programmer's intent is preserved. In this project we will propose a Cider, a new
+domain specific language (DSL) for type definition that is sound and
+guarantees that the programmer's intent is preserved. This project originates
+from previous work done in Dargent \cite{dargent2023cider}, a research
+programming language that is meant to be used in low-level systems, but
+allows higher-level abstractions.
+Previous theoretical work and some implementations have been done to create
+a a language with this purpose, and in this project we aim to build upon
+this work, and develop a compiler for Cider. Previous works implements a
+transpiler that allows programmers to define most types defined in C, however lacks
+a preprocessor, custom sizer, and recursive types, which limit its usefulness.
+This transpiler so far allows programmers to define types, and then compile
+the to C.
+We aim refine the language to allow for these features, proving correctness
+and soundness of all features along the way. 
+In this manner, this project aims to answer the following research
+question: 
+How can we design a sound type system for a systems programming language that
+is both expressive and efficient?
+
 \section{Prior Work}
+Systems programming languages have a long history, with many different languages
+and tools that have been developed over the years. From the early days of
+assembly languages and machine code, to the recent developments of high-level
+languages like Rust, systems programming has evovled signficantly. In this 
+project we will focus on programming done in C, and tools that have been developed
+to improve the safety and efficiency of memory management in C.
+
+One of the biggest
 \section{Methodology}
 \subsection{Outline}
 \subsection{Considerations}
