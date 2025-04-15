@@ -87,7 +87,7 @@ hardware resources, and for this reason, C is often used as the language of
 choice. However, this low-level access comes at the cost of increased complexity
 and potential for errors. Specifically, C is known to be error-prone and
 difficult to use, and this is especially true when it comes to data layout.
-Data layout is the process of determinining how data is stored in memory, and
+Data layout is the process of determining how data is stored in memory, and
 manual control of this is critical in systems programming. However, this
 also comes at the cost of it being inherently unsafe, as the programmer must
 ensure the the data is laid out correctly, and that the memory is accessed in
@@ -96,22 +96,49 @@ assist programmers in this task, but they are not foolproof, and rely on
 error detection at runtime. While this process of top-down programming is
 useful, it is not always the most efficient way to write code, and in the end
 it does not guarantee correctness. In order to address these issues, new
-programming languages and tools have been proposed that aim to imrpove the
+programming languages and tools have been proposed that aim to improve the
 safety and efficiency of systems programming. The most well known of these is
 Rust, which is a systems programming language that is designed to be safe and
-efficient. However when it comes to delicte data layout, Rust is not
+efficient. However when it comes to delicate data layout, Rust is not
 always safer, as it may be necessary to use unsafe code in order to achieve
 the desired performance. This is where Cider comes in, as it is a DSL
 for type definition that is designed to be used in low-level systems programming
 allowing programmers to define types in a way that is both safe and efficient.
 \subsection{Dargent and Cogent}
-
+Dargent is a data layout description language and refinement framework integrated
+into the Cogent language. Cogent is a purely functional programming language
+designed to to generate efficient and verifiable C code for low-level components,
+such as file systems and device drivers. It is supported by a certyfying
+compiler that generates C code, alongside proofs in Isabelle/HOL.
+In this context, Dargent enhances Cogent, by allowing developers to
+describe algebraic data types in terms of their memory layout. It aims to
+prevent the need for marshalling and un-marshalling data, which is a common
+common a common performance bottleneck in low-level programming. Instead, 
+Dargent generates C code that directly manipulates the memory along with
+setter and getter functions for safe access, all while generating proofs of
+correctness.
+Dargent's design of allowing layouts to be written independently of types, which
+allows the layouts to be evolved independently of the program's logic, all while
+ensuring well-formed layouts, ensuring non-overlapping fields, valid offsets,
+and bit-aligned representations.
+Dargent is an extension of Cogent, and as such it integrates seamlessly into it.
+Its compiler generates the getters and setters for each layout, which
+manipulate the memory directly. Proof of correctness is also generated during
+the compilation process, providing a combination of high-level control
+and abstraction with formal guarantees.
+\subsection{Cedar}
+Cedar builds upon the work done in Dargent, and aims to essnetially be a 
+"Dargent for C". It aims to be directly compatible with C, and be more broadly
+applicable. It is a layout description language that integrates directly into C,
+implemented as a transpiler in Haskell. 
+Currently, Cedar allows programmers to memory layout constructs, which are
+associated to C structs via syntanctic annotations. 
 
 \section{Prior Work}
 Systems programming languages have a long history, with many different languages
 and tools that have been developed over the years. From the early days of
 assembly languages and machine code, to the recent developments of high-level
-languages like Rust, systems programming has evovled signficantly. In this 
+languages like Rust, systems programming has evolved significantly. In this 
 project we will focus on programming done in C, and tools that have been developed
 to improve the safety and efficiency of memory management in C.
 
