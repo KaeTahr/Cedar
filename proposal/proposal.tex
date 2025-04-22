@@ -83,7 +83,7 @@ is both expressive and efficient?
 
 
 ---
-In systems programming, the precise control over data lyout is essential
+In systems programming, the precise control over data layout is essential
 for software that operates at high performance, and is secure at 
 lower levels. Languages like C offer minimal abstraction over
 memory,which allows programmers to write efficient code, but also
@@ -95,8 +95,8 @@ contexts, such as hardware registers, where memory alignment matters.
 
 Traditionally, developers have resorted to marshalling code, or unsafe
 macros to translate between structure data and low-level binary formats.
-These techniques are difficult to mantain, innefficient, and almost
-impossible to verify formally, oftren leading to subtle bugs and
+These techniques are difficult to maintain, inefficient, and almost
+impossible to verify formally, often leading to subtle bugs and
 security vulnerabilities. This stems from lack of separation, or
 abstraction, between what a data structure represents and how it is
 laid out in memory, which hinders reasoning about correctness.
@@ -115,7 +115,7 @@ difficult to use, and this is especially true when it comes to data layout.
 Data layout is the process of determining how data is stored in memory, and
 manual control of this is critical in systems programming. However, this
 also comes at the cost of it being inherently unsafe, as the programmer must
-ensure the the data is laid out correctly, and that the memory is accessed in
+ensure that the data is laid out correctly, and that the memory is accessed in
 a safe manner. Tools like Valgrind and AddressSanitizer have been developed to
 assist programmers in this task, but they are not foolproof, and rely on 
 error detection at runtime. While this process of top-down programming is
@@ -168,34 +168,18 @@ practical utility for systems programmers.
 The project lays the groundwork for integration with verification systems,
 such as CompCert.
 
-\section{Prior Work}
-(redundant, first- version of background. Will probably remove altogether.)
-Systems programming languages have a long history, with many different languages
-and tools that have been developed over the years. From the early days of
-assembly languages and machine code, to the recent developments of high-level
-languages like Rust, systems programming has evolved significantly. In this 
-project we will focus on programming done in C, and tools that have been developed
-to improve the safety and efficiency of memory management in C.
-
-The main source of inspiration for this project, is the work done in Dargent. Dargent is a 
-functional programming language that is designed to be used in low-level systems programming.
-Cedar aims to be a almost a subset of Dargent, but with a focus on type definition. 
-
-There is much work that has been done in the area of type systems, namely Ribbit, which 
-similar to Cider, it is a DSL for type definition intended for low-level
-applications. This project, however focuses on 
 \section{Research Question Statement and Objectives}
-Cedar enables layout declarations in C, but lacks guaranteees of correctness
-and compatibility. In order for a tool such as this one to be useful, it must be
-verifiable.
 
 How can we extend the work done in Cedar to provide a sound type system for
 C that is both expressive and efficient?
 \section{Research Plan}
-This project aims to explore the integration of ((((((((((()))))))))))
+This project aims to explore the design of a data description language for C.
+In this context we propose the question: \b{How can we design a data description language that is practical
+for systems programming, while being sound and expressive for C?}.
+
 \subsection {Literature Review}
 This first phase involves a comprehensive literature review to understand the
-design space and trade-offs in existing verfied systems languages and tools.
+design space and trade-offs in existing verified systems languages and tools.
 This includes:
 \begin{itemize}
     \item A review of the tools closest to cider, Dargent and Cogent, to
@@ -205,12 +189,19 @@ This includes:
     Cider, and to understand how C semantics are formalised. 
     \item A survey of the current state of the art in type systems for systems programming
 \end{itemize}
-\subsection{TODO}
-Not sure what to call this, but it has to be something pre-implementations
-Formalisation of whatever is going to be implemented.
-Formalisation of layouts? - They are already formalised
-This should align with objectives and research question, so pending till then
-\subsection {Extension of Implementtation}
+\subsection{Evaluation of design space}
+This phase of the project involves evaluating the Cider prototype in regards
+to its current syntax, semantics and toolings. Drawing from examples in real-world 
+use codebases we aim to identify
+\begin{itemize}
+    \item The limitations of the current implementation
+    \item The limitations of the current syntax
+    \item The limitations of the current semantics
+    \item The limitations of the current tooling
+\end{itemize}
+
+\subsection {Extension of Implementation}
+
 \subsection {Case studies }
 \subsection {Optional: Towards Verification integration}
 \subsection {Methodology}
