@@ -49,40 +49,6 @@
 \maketitle
 \section{Summary}
 \section{Introduction} 
-(dont like how all of this sounds, will re-do probs)
-Systems programming is an area of software development that relies on precise
-control over hardware resources and system-level abstractions. For this reason,
-systems programming languages are often low-level, allowing developers to write
-efficient code that can directly manipulate memory and hardware. However, this
-low-level access comes at the cost of increased complexity and potential
-for errors. Specifically, C and C++ are two of the most widely used systems
-programming languages, but they are also known to be error-prone and difficult
-to use. In order to address these issues, many researchers have proposed
-new programming languages and tools that aim to improve the safety and
-efficiency of systems programming. One way to reduce the errors in systems is
-to use a type system that is proven to be sound, and guarantees that the
-programmer's intent is preserved. In this project we will propose a Cider, a new
-domain specific language (DSL) for type definition that is sound and
-guarantees that the programmer's intent is preserved. This project originates
-from previous work done in Dargent \cite{dargent2023cider}, a research
-programming language that is meant to be used in low-level systems, but
-allows higher-level abstractions.
-Previous theoretical work and some implementations have been done to create
-a a language with this purpose, and in this project we aim to build upon
-this work, and develop a compiler for Cider. Previous works implements a
-transpiler that allows programmers to define most types defined in C, however lacks
-a preprocessor, custom sizer, and recursive types, which limit its usefulness.
-This transpiler so far allows programmers to define types, and then compile
-the to C.
-We aim refine the language to allow for these features, proving correctness
-and soundness of all features along the way. 
-In this manner, this project aims to answer the following research
-question: 
-How can we design a sound type system for a systems programming language that
-is both expressive and efficient?
-
-
----
 In systems programming, the precise control over data layout is essential
 for software that operates at high performance, and is secure at 
 lower levels. Languages like C offer minimal abstraction over
@@ -105,7 +71,41 @@ Recent projects and research has explored approaches to describing
 data layouts, One notable example is Dargent, a data Layout
 language integrated into the Cogent language, which enables programmers
 to declaratively specify memory layouts for algebraic data types. 
+Importantly, It provides formal guarantees via proof generation in
+Isabelle/HOL. Dargent eliminates the need for marshalling code by
+producing formally verified C code, however it its main limitation
+is that it remains a part of the Cogent language.
+
+To address this limitation, the Cedar project introduces the idea of a
+data description language that operates directly in the context of C.
+The aim of Cedar is to enable programmers to define memory
+layouts of C structs in a declarative manner through a high-level
+declarative syntax, implemented in Haskell. Currently the project
+exists as a prototype, and is not yet formally verified.
+
+This project builds upon the foundational work of Cedar, with the aim of exploring
+how to extend the current implementation to provide a useful tool for systems
+programmers, and how these techniques may be adapted to the C ecosystem.
+The goal is to investigate the design of a data description language that is
+practical for systems programming, while being sound and expressive for C.
 \section{Background}
+Systems programming is a field of computer science that focuses
+on the design and implementation of low-level software that interacts 
+directly with hardware and system resources. This includes operating
+systems, device drivers, embedded systems, and other performance-critical
+applications. Systems programming is often characterized by the need for
+high performance, low-level control over hardware resources, and the ability.
+to work with limited resources. This requires a deep understanding of
+computer architecture, memory management, and low-level programming languages.
+Systems programming languages such as C and C++ are often used for this purpose,
+as they provide low-level access to hardware resources and allow for fine-grained
+control over memory management. However, this low-level access comes at the 
+cost of increased complexity and potential for errors. This is especially true
+when it comes to data layout, which is the process of determining how the data 
+is stored in memory. Manual control of data layout is critical in systems programming,
+and for this reason, systems programmers often develop custom data layouts for their
+applications. This process is often error-prone and difficult to use, and can
+lead to subtle bugs and bottlenecks in performance.
 \subsection {Data Layout Challenges in C}
 Systems programming relies on the programmer having low-level control over
 hardware resources, and for this reason, C is often used as the language of
@@ -168,8 +168,7 @@ practical utility for systems programmers.
 The project lays the groundwork for integration with verification systems,
 such as CompCert.
 
-\section{Research Question Statement and Objectives}
-
+\section{Objectives}
 How can we extend the work done in Cedar to provide a sound type system for
 C that is both expressive and efficient?
 \section{Research Plan}
@@ -188,6 +187,7 @@ This includes:
     \item Reviewing CompCert, as it is the compiler that is being targeted by
     Cider, and to understand how C semantics are formalised. 
     \item A survey of the current state of the art in type systems for systems programming
+    in order to identify gaps in the current state of the art.
 \end{itemize}
 \subsection{Evaluation of design space}
 This phase of the project involves evaluating the Cider prototype in regards
@@ -200,13 +200,53 @@ use codebases we aim to identify
     \item The limitations of the current tooling
 \end{itemize}
 
-\subsection {Extension of Implementation}
-
-\subsection {Case studies }
+\subsection {Implementation and Integration}
+The current prototype of Cider will be extended, continuing its codebase written
+in Haskell. This will be focusing on modularity and maintainability.
+At this stage, the current key development tasks have been identified as:
+\begin{itemize}
+    \item Refactoring 
+\end{itemize}
+Where appropriate, small experiments may be conducted to explore optional features.
+\subsection {Case studies and Evaluation}
+To evaluate the effectiveness of the extended Cedar language, a suite of case
+studies will be developed. These will include:
+\begin{itemize}
+    \item A set of representative C layout patterns sourced from open-source systems
+    \item Synthetic examples designed to push edge cases (overlapping fields, nested arrays, etc.)
+\end{itemize}
+Each case study will be used to assess
+\begin{itemize}
+    \item The expressiveness of the language
+    \item The ease of use and readability of the syntax
+    \item Correctness of the generated code
+\end{itemize}
+\subsection{Iterative Refinement}
+Through the project, feedback loops will inform further design choices.
+Issues uncovered during case studies or from implementation may lead to 
+refinement of syntax, semantics or implementation strategy. Reflections on 
+trade-offs between usability, complexity and extensibility will be documented
+and discussed in the final report.
 \subsection {Optional: Towards Verification integration}
+If time allows, we will explore the integration of Cedar with a formal
+verification backend. This follows the work done in Dargent, and aims to
+provide formal guarantees of correctness for the generated code. Implementation
+of this feature would be a significant undertaking, so it will only be
+considered if the previous phases are completed ahead of schedule. Additionally,
+given the complexity of this task, it may be considered as a separate
+project in the future. However, the groundwork for this will be laid
+during the project, and the design of the language will be done with
+this in mind.
 \subsection {Methodology}
 \subsection {Timeline}
 \subsection {Potential Impact}
+The proposed work has the potential to improve the usability and applicability
+of Cedar as a tool for systems programmers who require fine-grained control
+ocer layout without sacrificing readability. By refinning Cedar's language
+design and strengthening its implementation, this project aims to contribute
+to the broader effort of enabling safer low-level programming practtices in C -
+a languuage where layout bugs can have sever consequeneces for correctness and
+performance.
 
 
 
