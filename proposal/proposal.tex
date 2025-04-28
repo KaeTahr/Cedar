@@ -88,7 +88,7 @@ how to extend the current implementation to provide a useful tool for systems
 programmers, and how these techniques may be adapted to the C ecosystem.
 The goal is to investigate the design of a data description language that is
 practical for systems programming, while being sound and expressive for C.
-\section{Background}
+\section{Literature Review}
 Systems programming is a field of computer science that focuses
 on the design and implementation of low-level software that interacts 
 directly with hardware and system resources. This includes operating
@@ -177,7 +177,7 @@ This project aims to explore the design of a data description language for C.
 In this context we propose the question: \b{How can we design a data description language that is practical
 for systems programming, while being sound and expressive for C?}.
 
-\subsection {Literature Review}
+\subsection {Design Space Exploration}
 This first phase involves a comprehensive literature review to understand the
 design space and trade-offs in existing verified systems languages and tools.
 This includes:
@@ -211,24 +211,31 @@ At this stage, the current key development tasks have been identified as:
 Where appropriate, small experiments may be conducted to explore optional features.
 \subsection {Case studies and Evaluation}
 To evaluate the effectiveness of the extended Cedar language, a suite of case
-studies will be developed. These will include:
+studies will be developed. Given that the project closely follows the work
+done in Dargent, similar case studies will be used to evaluate the language:
 \begin{itemize}
-    \item A set of representative C layout patterns sourced from open-source systems
-    \item Synthetic examples designed to push edge cases (overlapping fields, nested arrays, etc.)
-\end{itemize}
-Each case study will be used to assess
-\begin{itemize}
-    \item The expressiveness of the language
-    \item The ease of use and readability of the syntax
-    \item Correctness of the generated code
-\end{itemize}
+    \item A structure in power control systems.
+    \item A bitfield in a CAN driver
+    \item A timer devide drier
+    \end{itemize}
+These case studies will be used to evaluate the usability and expressiveness
+of the language, and to identify any limitations or issues with the implementation
+and design. The case studies will be used to evaluate the language in terms
+of its usability, expressiveness, and performance. 
+
 \subsection{Iterative Refinement}
 Through the project, feedback loops will inform further design choices.
 Issues uncovered during case studies or from implementation may lead to 
 refinement of syntax, semantics or implementation strategy. Reflections on 
 trade-offs between usability, complexity and extensibility will be documented
 and discussed in the final report.
-\subsection {Optional: Towards Verification integration}
+\subsection {Optional Extensions}
+Aditional test cases may be added to the Cedar test suite, to cover
+additional cases that may be found in live codebases. These may include
+structures found in the Linux kernel, or other open-source projects.
+However, this will depend on the time available, and the
+progress made in the previous phases. 
+
 If time allows, we will explore the integration of Cedar with a formal
 verification backend. This follows the work done in Dargent, and aims to
 provide formal guarantees of correctness for the generated code. Implementation
