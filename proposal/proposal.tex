@@ -212,61 +212,203 @@ guarantees} that a memory layout adheres to its intended specification. This
 makes them inadequate as a solution to the broader problem of layout correctness,
 especially in safety- or security-critical environments.
 
-The most well known language developed for this purpose is Rust, which is a
-systems programming language 
-that is designed to be safe and efficient. However, when it comes to delicate
-data layout, Rust is not always safer, as it may be necessary to use unsafe code
-in order to achieve the desired performance. This is where Cider comes in, as it
-is a DSL for type definition that is designed to be used in low-level systems
-programming, allowing programmers to define types in a safer and more efficient
-manner.
-\subsection{Dargent and Cogent}
-Dargent is a data layout description language and refinement framework integrated
-into the Cogent language. Cogent is a purely functional programming language
-designed to to generate efficient and verifiable C code for low-level components,
-such as file systems and device drivers. It is supported by a certyfying
-compiler that generates C code, alongside proofs in Isabelle/HOL.
-In this context, Dargent enhances Cogent, by allowing developers to
-describe algebraic data types in terms of their memory layout. It aims to
-prevent the need for marshalling and un-marshalling data, which is a common
-common a common performance bottleneck in low-level programming. Instead, 
-Dargent generates C code that directly manipulates the memory along with
-setter and getter functions for safe access, all while generating proofs of
-correctness.
-Dargent's design of allowing layouts to be written independently of types, which
-allows the layouts to be evolved independently of the program's logic, all while
-ensuring well-formed layouts, ensuring non-overlapping fields, valid offsets,
-and bit-aligned representations.
-Dargent is an extension of Cogent, and as such it integrates seamlessly into it.
-Its compiler generates the getters and setters for each layout, which
-manipulate the memory directly. Proof of correctness is also generated during
-the compilation process, providing a combination of high-level control
-and abstraction with formal guarantees.
-\subsection{Cedar}
-Cedar builds upon the work done in Dargent, and aims to essnetially be a 
-"Dargent for C". It aims to be directly compatible with C, and be more broadly
-applicable. It is a layout description language that integrates directly into C,
-implemented as a transpiler in Haskell. 
-Currently, Cedar allows programmers to memory layout constructs, which are
-associated to C structs via syntactic annotations. The transpiler
-includes modules for lexical and semantic analysis, reduces the Cedar
-data types and layout specifications.
-Cedar currently lacks a formal verification backend, however it preserves
-the advantages of Dargent: declarative layout specifications, syntactic
-clarity, rigorousness. Importantly, as it is designed to work with the
-C language, and not a heavily restricted subset, it increases its
-practical utility for systems programmers.
-The project lays the groundwork for integration with verification systems,
-such as CompCert.
+In summary, while manual techniques and dynamic analysis of some tools
+analysis tools form an essential part of the system programmer's toolbox,
+they do not eliminate the fundamental risks associated with low-level memory
+layout management. These shortcomings motivate the exploration of alternative
+approaches that aim to make layout specification more declarative, 
+reliable, and amendable to formal reasoning.
 
-CompCert is a formally verified C compiler that provides a certified translation
-of C programs into assembly code. It is designed to ensure that the generated
-code is semantically equivalent to the original C program, and it provides 
-formal proofs of correctness for the translation process. CompCert is based on
-the C99 standard and supports a subset of the C language, including most of the
-C99 standard library. It is designed to be used in safety-critical systems,
-where correctness and reliability are paramount. The decision to use CompCert
-as the target for Cedar is motivated by its formal verification capabilities.
+\subsection{Modern Safer Alternatives}
+In recent years, a number of modern systems proramming languages and
+serialization frameworks have been developed in an effort to r improve
+the safety and reliability of low-level programming, particularly in
+the context of memory layout and data representation. These tools aim
+to reduce the risk of memory corruption, undefined behaviour, and layout 
+mismatches that are prevalent in traditional C-based development.
+
+One of the most prominent language-based alternatives is 
+\textbf{Rust}, a systems programming language designed with memory
+safety as a central goal. Rusts's type system, borrow checker, and
+ownership model collectively present many classes of memory errors at
+compile time, including use-after-free bugs, dangling pointers,
+and data races. In terms of memory layout control, Rust offers the
+\texttt{\#[repr(C)]} attribute, which instructs the compiler to lay out
+structs and enums in a manner compatible with C. This enables Rust code
+to safely interface with C libraries and binary formats, provided that
+the layout assumptions are correct.
+
+However, Rusts's approach to layout control is not without limitations.
+While \texttt{\#[repr(C)]} preserves field order and basic layout
+compatibility, it does not prevent all sources of layout divergence.
+The language still permits implicit padding, alignment rules
+vary by platform, and there are no native mechanisms for specifying
+bit-level layout or enforcing alignment constraints beyond what the
+compiler already provides. Furthermore, complex or performance-critical
+layout manipulations in Rust often require the use of \texttt{unsafe}
+code, which bypasses the language's safety guarantees. In such cases,
+developers are again responsible for manually ensuring correctness,
+returning to the same fragile patterns common in C.
+
+In addition to language-level solutions, a number of serialization frameworks
+have been developed to simplify the task of representing structured data
+in binary form. Among the most widely adopted are \textbf{Protocol Buffers
+(Protobuf)}, \textbf{Cap'n Proto}, and \textbf{FlatBuffers}. These tools
+allow developers to define data schemas using an external language or
+IDL (Interface Definition Language), from which code is generated to handle
+serialization, deserialization, and (to varying degrees) in-place memory access.
+
+\textbf{Cap'n Proto}, in particular, emphasizes zero-copy access to serialized
+data by allowing direct memory access without requiring explicit marshalling or
+unmarshalling.
+\textbf{FlatBuffers} similarly supports in-place data parsing with minimal
+runtime overhead. These frameworks are widely used in networked applications,
+game engines, and interprocess communication systems, where both performance and
+portability are critical.
+
+Despite their strengths, these tools are not general-purpose solutions for
+memory layout verification in systems programming. Their primary focus is on
+serialization and interoperability between languages and platforms, rather than
+enabling fine-grained layout control in low-level systems code. While they offer
+high performance and strong schema evolution guarantees, they operate in constrained
+environments where data is accessed through framework-generated APIs, not as
+arbitrary pointers or unions typical in C-based systems. As such, they are not
+well suited for tasks such as device driver development, interacting with 
+memory-mapped hardware, or enforcing precise layout guarantees in systems-level 
+components.
+
+Moreover, these frameworks often impose restrictions on data-structures and memory
+access patterns, which can limit their utility in performance-critical or
+hardware-near contexts. Integration with legacy C codebases is also non-trivial,
+requiring translation layers or FFI binding that may introduce overhead or
+compatibility issues.
+
+Another emerging project of interest is \textbf{Carbon}, a language initiated
+by Google as a possible successor to C++. Carbon is intended to provide modern
+language features, safety guarantees, and improved tooling while maintaining
+strong interoperability with existing C++ codebases. Although still in an early
+stage of development, Carbon represents a broader movement toward
+rethinking systems programming foundations. However, it remains unclear
+whether Carbon will support fine-grained memory layout control or formal
+verification of layout correctness---features that are essential for the kinds
+of systems-level application Cedar targets. As such, while Carbon highlights
+growing awareness of the limitations of C and C++, it does not yet offer
+a concrete solution the specific challenges this project addresses.
+
+In summary, while tools like Rust, Cap'n Proto, FlatBuffers, and Carbon
+represent meaningful progress toward safer and more expressive memory
+manipulation, they do not fully address the problem of reliable, declarative memory
+layout specification in systems programming. None of these solutions
+offer the ability to define layouts with the precision required for low-level
+systems work while simultaneously ensuring structural correctness and usability 
+across diverse C environments. This gap continues to motivate the development of
+domain-specific languages and toolchains---such as Cedar---that aim to offer
+greater control and safety without sacrificing low-level flexibility.
+
+\subsection{Verified Systems Programming: Cogent and Dargent}
+An alternative approach to managing layout correctness in systems
+programming is to shift the focus from error detection to
+\texttit{formal verification}. Rather than relying on runtime
+tools or manual inspection, formal methods aim to \texttit{prove}
+properties of programs, including memory safety, and layout correctness, with
+mathematical certainty. A notable system in this space is \textbf{Cogent},
+a functional programming language designed to generate verifiable and efficient
+C code for low-level systems components.
+
+Cogent was developed with the goal of producing systems code that
+is both performant and formally verifiable. It achieves this by enforcing
+a total, pure, and strongly-typed programming model, from which it is possible
+to extract formal semantics. The Cogent compiler generates both C code and
+a corresponding formal representation in Isabelle/HOL, a proof assistant
+used to verify properties of the generated code. This model enables
+refinement proofs showing that the low-level C code behaves exactylu
+as specified by the high-level Cogent program.
+
+Within the Cogent ecosystem, \textbf{Dargent} serves as a domain-specific
+language for describing data layouts/ Dargent allows developers to specifiy
+memory representation of algebraic data types with precise control over 
+bit-level layouts, offsets and alignment. This is particularly valuable
+in scenarios such as device drivers or file systems, where data must
+conform to strict binary formats. Unlike tradtional approaches that require
+hand-written marshalling logic or inline bit manipulation, Dargent integrates
+layout descriptions into the language itself and automates the generation of
+accessors that manipulate the raw memory safely.
+
+A key feature of Dargent is its \textbf{separation of types and layouts}:
+a programmer defines the logical structure of a data type independently of
+its physical representation. Layouts are then associated with types explicitly,
+allowing layout specifications to evolve independently from program logic.
+This separation facilitates reuse, modularity, and composability---principles
+that are often missing in systems programming languages where layout is
+tightly coupled to struct definitions.
+
+Dargent also performs static well-formedness checks on layout declarations
+to ensure memory safety. These checks validate the fields do not overlap,
+are correctly aligned, and match the semantics of the associated types. 
+The Cogent compiler then generates C code that includes custom getter and
+setter functions for accessing the laid-out memory, along with machine-checked
+proofs that these functions correctly implement the layout semantics.
+As a result, Dargent provides a rare combination of
+\textbf{bit-level control}, \textbf{zero-copy memory access}
+and \textbf{formally erified correctness}.
+
+Despite these advantages, Dargent and Cogent operate within a deliberately
+restricted domain. Cogent intentionally omits features such as recursion,
+mutable state, and unrestricted loops in order to preserve the ability to
+formally verify generated code/ While this makes Cogent an excellent choices
+for verified components in systems such as file systems or microkernels, it
+also limits its general applicability. Furthermore, Dargent's utility is tightly
+bound to Cogent's type system and verification infrastructure, making
+it less suitable for integration into broader, unverified C codebases.
+
+These limitations highlight the need for tools that offer layout specification
+and correctness guarantees in a
+\textbf{less restrictive and more interoperable setting}. In particular, there
+is an opportunity to adapt the ideas behind Dargent---declarative layouts, 
+type-layout separation, and layout validation---to tools designed for general
+C programming. This is the motivation behind Cedar.
+
+\subsection{Cedar: Toward Practical Declarative Layouts for C}
+Building on the ideas explored in Cogent and Dargent, the \textbf{Cedar}
+project seeks to bring declarative layout specification to the C programming
+language/ Cedar can be understood as an attempt to adapt the principles of
+Dargent to the C programming language---developing a domain-specific layout
+description language that preserves low-level control over memory while
+maintaining compatibility with existing C toolchains and workflows. It
+targets systems programmers who require both performance and binary
+compatibility, but who are not operating withing a formally
+verified ecosystem
+
+Cedar is an early-stage research project that explores how declarative
+layout specification techniques---sch as those developed in Dargent--- might be
+adapted to work in the C programming ecosystem. Unlike Dargent, which is
+tightly integrated into the Cogent language and its verification framework, Cedar 
+is intended to work as an independent tool that extends C with high-level layout 
+descriptions in a form that is both expressive and, potentially, verifiable.
+
+Cedar proposes a syntax for defining memory layouts that is decoupled
+from type definitions in C. Programmers can describe layouts using 
+constructs such as \texttt{layout}, \texttt{at}, \texttt{before},
+and \texttt{after}, which are then associated with C \texttt{struct}
+types through a linking mechanism. This design borrows the ideas
+of type-layout separation from Dargent, allowing developers to
+describe physical data representations independent of logical structure.
+However, unlike Dargent, Cedar does not rely on a restricted or pure functional
+language. It is intended to work directly with C code, making it more accessible
+for real-world systems development.
+
+At present, Cedar remains a prototype with limited capabilities. It is composed
+of a compiler written in Haskell, but lacks many critical features needed for
+practical use. There is no support for several common C constructsa (bitfields),
+and the current tooling does not verify layout correctness, or integrate
+with compilers or IDEs. Error handling and diagnostics are minimal, and the
+architecture is still in flux. As such, Cedar is far from ready for production
+use.
+
+The prottype does implement a minimal form of layout checking, ensuring
+layout declarations do not contain invalid offset patterns or duplicate field
+definitions. However, it does not yet verify that a declared layout is
+semtantically  
 
 \section{Problem Statement and Research Objectives}
 How can we extend the work done in Cedar to provide a sound type system for
@@ -349,7 +491,7 @@ this in mind.
 \subsection {Potential Impact}
 The proposed work has the potential to improve the usability and applicability
 of Cedar as a tool for systems programmers who require fine-grained control
-over layout without sacrificing readability. By refinning Cedar's language
+over layout without sacrificing readability. By refining Cedar's language
 design and strengthening its implementation, this project aims to contribute
 to the broader effort of enabling safer low-level programming practices in C -
 a language where layout bugs can have severe consequences for correctness and
