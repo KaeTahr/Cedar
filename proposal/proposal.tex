@@ -49,86 +49,177 @@
 \maketitle
 \section{Summary}
 \section{Introduction} 
-In systems programming, the precise control over data layout is essential
-for software that operates at high performance, and is secure at 
-lower levels. Languages like C offer minimal abstraction over
-memory,which allows programmers to write efficient code, but also
-places a burden on them, to manually define binary layouts through
-bit-fields, unions and other constructs depending on the platform.
-This approach, although appreciated for its flexibility, is 
-notorious for being error-prone, particularly in performance-critical
-contexts, such as hardware registers, where memory alignment matters.
+In systems programming precise control over data layout is essential
+for achieving high performance, interoperability, and correctness. Languages such as C offer minimal 
+abstraction over memory, granting programmers the flexibility to write highly efficient code, but also
+placing a significant burden on them to manually define binary layouts through
+constructs such as bit-fields, unions, and alignment directives. 
+While this low-level control is powerful, it is
+notoriously error-prone, particularly in contexts where memory correctness is critical, 
+such as device drivers, embedded systems, and network protocols.
 
-Traditionally, developers have resorted to marshalling code, or unsafe
-macros to translate between structure data and low-level binary formats.
-These techniques are difficult to maintain, inefficient, and almost
-impossible to verify formally, often leading to subtle bugs and
-security vulnerabilities. This stems from lack of separation, or
-abstraction, between what a data structure represents and how it is
-laid out in memory, which hinders reasoning about correctness.
+Traditionally, developers have addressed these challenges by writing manual marshalling and 
+unmarshalling code, or by using
+unsafe macros to convert between data structures and low-level binary representations. 
+These techniques are difficult to maintain, costly in performance, and extremely challenging
+to formally verify. As a result, layout-related bugs often lead to serious vulnerabilities,
+systems crashes, or subtle performance degradations. A fundamental contributor to this problem
+is the lack of clear abstraction between what a data structure represents semantically and how 
+it is laid out in memory, complicating both human reasoning and automated analysis.
 
-Recent projects and research has explored approaches to describing
-data layouts, One notable example is Dargent, a data Layout
-language integrated into the Cogent language, which enables programmers
-to declaratively specify memory layouts for algebraic data types. 
-Importantly, It provides formal guarantees via proof generation in
-Isabelle/HOL. Dargent eliminates the need for marshalling code by
-producing formally verified C code, however it its main limitation
-is that it remains a part of the Cogent language.
+Real-world examples highlight the seriousness of these issues. In the development
+of device drivers, for instance, hardware registers often impose strict alignment
+and bit-level layout constraints that must be matched precisely. Misinterpreting
+these layouts can lead to misconfiguration of hardware devices, data corruption
+or complete system failure. Similarly, in network protocols stacks must
+adhere to standardized packet formats, where incorrect struct definitions can result
+in vulnerabilities exploitable by malformed input. These risks underline the critical
+importance of providing developers with better abstractions for defining and verifying
+data layouts. 
 
-To address this limitation, the Cedar project introduces the idea of a
-data description language that operates directly in the context of C.
-The aim of Cedar is to enable programmers to define memory
-layouts of C structs in a declarative manner through a high-level
-declarative syntax, implemented in Haskell. Currently the project
-exists as a prototype, and is not yet formally verified.
+Recent research has explored more principled approaches to layout description.
+One notable example is \textbf{Dargent}, a data layout
+language integrated into the \textbf{Cogent} ecosystem. Dargent enables programmers
+to declaratively specify memory layouts for algebraic data types and
+supports automatic generation of layout-aware C code with formal correctness
+proofs, via integration with the Isabelle/HOL theorem prover. However, 
+Dargent is tightly coupled to Cogent, a restricted functional language that,
+while powerful for verification purposes, may be difficult to adopt
+as it requires programmers to work in a completely different language.
 
-This project builds upon the foundational work of Cedar, with the aim of exploring
-how to extend the current implementation to provide a useful tool for systems
-programmers, and how these techniques may be adapted to the C ecosystem.
-The goal is to investigate the design of a data description language that is
-practical for systems programming, while being sound and expressive for C.
+To address this gap, the Cedar project proposes a
+data description language designed to operate directly in the C ecosystem.
+Cedar enables programmers to define the memory
+layout of C structs through a high-level
+declarative syntax, while preserving compatibility with C's expressive and 
+performance-oriented features. Implemented as a prototype compiler in  Haskell,
+Cedar currently supports basic layout declarations. However, its design remains
+at an early stage and lacks the robustness and expressiveness required for
+practical adoption in systems programming.
+
+This project builds upon the foundational work of Cedar. Its goal is to 
+investigate the language and toolchain can be extended to support a 
+broader range of C layout idioms, improve tooling robustness, and better
+serve the needs of systems programmers. In doing so, it aims to explore the
+design principled necessary to develop a sound and practical data description
+language for C, balancing flexibility, safety and usability.
+
 \section{Literature Review}
+A robust understanding of prior work is essential to motivate and inform
+this project, which investigates how to make declarative memory layout
+descriptions in C more expressive, practical and safe for systems programming.
+This section surveys the current state of the art in memory layout
+control, beginning with the challenges posed by low-level programming in C
+and the risks of manual layout specification. It then examines existing
+techniques and tools used to mitigate these challenges, including runtime
+sanitizers and marshalling libraries. Further, the review explores modern systems
+programming languages and DSLs, such as Rust, Cap'n Proto, and FlatBuffers, that
+aim to improve layout safety and correctness. Finally, the literature review focuses 
+on verified layout description approaches, particularly the Dargent system
+embedded in Cogent, and Cedar---the subject of this project---which seems to
+adapt these ideas to the full C language.
+
+Together, these works outline both the need for and the limitations of current
+approaches, and provide a foundation for the investigation carried out in this
+research.
+
+\subsection{Systems Programming and Data Layout Challenges}
 Systems programming is a field of computer science that focuses
 on the design and implementation of low-level software that interacts 
 directly with hardware and system resources. This includes operating
 systems, device drivers, embedded systems, and other performance-critical
-applications. Systems programming is often characterized by the need for
-high performance, low-level control over hardware resources, and the ability.
-to work with limited resources. This requires a deep understanding of
-computer architecture, memory management, and low-level programming languages.
-Systems programming languages such as C and C++ are often used for this purpose,
-as they provide low-level access to hardware resources and allow for fine-grained
-control over memory management. However, this low-level access comes at the 
-cost of increased complexity and potential for errors. This is especially true
-when it comes to data layout, which is the process of determining how the data 
-is stored in memory. Manual control of data layout is critical in systems programming,
-and for this reason, systems programmers often develop custom data layouts for their
-applications. This process is often error-prone and difficult to use, and can
-lead to subtle bugs and bottlenecks in performance.
-\subsection {Data Layout Challenges in C}
-Systems programming relies on the programmer having low-level control over
-hardware resources, and for this reason, C is often used as the language of
-choice. However, this low-level access comes at the cost of increased complexity
-and potential for errors. Specifically, C is known to be error-prone and
-difficult to use, and this is especially true when it comes to data layout.
-Data layout is the process of determining how data is stored in memory, and
-manual control of this is critical in systems programming. However, this
-also comes at the cost of it being inherently unsafe, as the programmer must
-ensure that the data is laid out correctly, and that the memory is accessed in
-a safe manner. Tools like Valgrind and AddressSanitizer have been developed to
-assist programmers in this task, but they are not foolproof, and rely on 
-error detection at runtime. While this process of top-down programming is
-useful, it is not always the most efficient way to write code, and in the end
-it does not guarantee correctness. In order to address these issues, new
-programming languages and tools have been proposed that aim to improve the
-safety and efficiency of systems programming. The most well known of these is
-Rust, which is a systems programming language that is designed to be safe and
-efficient. However when it comes to delicate data layout, Rust is not
-always safer, as it may be necessary to use unsafe code in order to achieve
-the desired performance. This is where Cider comes in, as it is a DSL
-for type definition that is designed to be used in low-level systems programming
-allowing programmers to define types in a way that is both safe and efficient.
+applications. Systems programming is characterized by the need for
+high performance, fine-grained control over hardware resources, and efficient use
+of limited computational resources. These demands require a deep understanding of
+computer architecture, memory management, and low-level programming constructs.
+
+
+Languages such as C and C++ have traditionally been the primary tools for
+systems programming, due to their minimal abstractions over hardware and their
+ability to produce highly efficient machine code.
+However, this low-level access comes at the
+cost of increased complexity and potential for serious errors. In particular, 
+the task of managing data layout---determining how structured data is
+represented and accessed in memory---poses significant risks. Programmers must
+carefully control how structures are packed, how fields are aligned, and how
+memory is accessed, often across different platforms with varying architectural
+requirements.
+
+Manual control over data layout is critical in many systems applications. For
+example, device drivers must interact with hardware registers that demand exact
+field alignments and offsets;network stacks must correctly parse protocol
+headers with specific bit-level representations; and file systems must
+serialize and deserialize data structures according to on-disk formats. Errors
+in data layout handling can lead to severe consequences, including memory
+corruption, security vulnerabilities, and unpredictable behavior.
+
+Despite the importance of correct data layout, C provides little direct support
+for verifying or enforcing these properties. While some compiler-specific 
+directives exist (such as \texttt{\#pragma pack} and compiler-specific 
+attributes for struct alignment), their use is often fragile, non-portable,
+and difficult to reason about formally. Programmers must manually ensure the
+correctness of layouts, which increases maintenance costs and the likelihood of
+bugs.
+
+These challenges are not merely theoretical. Numerous real-world 
+vulnerabilities---such as buffer overflows, misaligned memory accesses, and
+serialization bugs---can be traced back to subtle layout issues.
+Consequently, there has been significant interest in developing tools,
+languages, and frameworks that help programmers specify and reason about
+data layouts more safely and declaratively, without sacrificing performance.
+
+\subsection{Manual Approaches and Current Tools}
+In response to the challenges of data layout management in C, developers have
+traditionally relied on a combination of manual techniques and runtime
+debugging tools to mitigate layout-related errors. These approaches
+while effective to a degree, remain fundamentally limited in their ability to
+ensure correctness, safety, and long-term maintainability.
+
+At the language level, C provides several mechanisms to manually control
+memory layout. Programmers can use \texttt{struct} field ordering, bit-fields,
+union types, and compiler-specific derivatives such as \texttt{\#pragma pack},
+\texttt{\_\_attribute\_\_(packed)}, or alignment hints to influence how data
+is laid out in memory. These features are widely used in systems programming,
+particularly when interacting with hardware or network protocols that require
+binary compatibility with an external specification. 
+
+Despite their widespread use, these techniques are notoriously fragile. 
+Their behaviour can vary across compilers and platforms, and small changes in
+struct definitions may silently alter the resulting layout due to implicit
+padding and alignment adjustments. As a result, layout correctness often
+depends on careful inspection and trial-and-error, rather than principled
+guarantees.
+
+To aid in the detection of layout-related bugs at runtime, developers commonly employ
+dynamic analysis tools such as \textbf{Valgrind} and 
+\textbf{AddressSanitizer (ASan)}. Valgrind
+performs memory instrumentation to detect invalid memory accesses, buffer
+overflows, and uninitialized memory reads. AddressSanitizer, a compiler-based
+instrumentation tool, can detect a range of memory errors 
+including out-of-bounds accesses and use-after-free bugs. Similarly, 
+\textbf{Undefined Behavior Sanitizer (UBSan)} focuses on catching intergers
+overflows, type punning violations, and alignment issues. These tools are
+invaluable for debugging complex memory errors and are widely used in systems
+development and testing pipelines.
+
+While these tools are invaluable for finding certain classes of bugs,
+such tools are reactive rather than preventive. They
+identify errors only after they occur during runtime, meaning that test coverage
+gaps may leave bugs undetected. Moreover, they often impose substantial
+performance overhead and may not be suitable for deployment in embedded
+or real-time systems. Most critically, they provide no \textit{no compile-time
+guarantees} that a memory layout adheres to its intended specification. This
+makes them inadequate as a solution to the broader problem of layout correctness,
+especially in safety- or security-critical environments.
+
+The most well known language developed for this purpose is Rust, which is a
+systems programming language 
+that is designed to be safe and efficient. However, when it comes to delicate
+data layout, Rust is not always safer, as it may be necessary to use unsafe code
+in order to achieve the desired performance. This is where Cider comes in, as it
+is a DSL for type definition that is designed to be used in low-level systems
+programming, allowing programmers to define types in a safer and more efficient
+manner.
 \subsection{Dargent and Cogent}
 Dargent is a data layout description language and refinement framework integrated
 into the Cogent language. Cogent is a purely functional programming language
@@ -168,11 +259,20 @@ practical utility for systems programmers.
 The project lays the groundwork for integration with verification systems,
 such as CompCert.
 
-\section{Objectives}
+CompCert is a formally verified C compiler that provides a certified translation
+of C programs into assembly code. It is designed to ensure that the generated
+code is semantically equivalent to the original C program, and it provides 
+formal proofs of correctness for the translation process. CompCert is based on
+the C99 standard and supports a subset of the C language, including most of the
+C99 standard library. It is designed to be used in safety-critical systems,
+where correctness and reliability are paramount. The decision to use CompCert
+as the target for Cedar is motivated by its formal verification capabilities.
+
+\section{Problem Statement and Research Objectives}
 How can we extend the work done in Cedar to provide a sound type system for
 C that is both expressive and efficient?
 
-\section{Research Plan}
+\section{Methodology}
 This project aims to explore the design of a data description language for C.
 In this context we propose the question: \b{How can we design a data description language that is practical
 for systems programming, while being sound and expressive for C?}.
@@ -245,8 +345,7 @@ given the complexity of this task, it may be considered as a separate
 project in the future. However, the groundwork for this will be laid
 during the project, and the design of the language will be done with
 this in mind.
-\subsection {Methodology}
-\subsection {Timeline}
+\section {Project Timeline}
 \subsection {Potential Impact}
 The proposed work has the potential to improve the usability and applicability
 of Cedar as a tool for systems programmers who require fine-grained control
