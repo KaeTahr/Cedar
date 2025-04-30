@@ -308,8 +308,8 @@ greater control and safety without sacrificing low-level flexibility.
 \subsection{Verified Systems Programming: Cogent and Dargent}
 An alternative approach to managing layout correctness in systems
 programming is to shift the focus from error detection to
-\texttit{formal verification}. Rather than relying on runtime
-tools or manual inspection, formal methods aim to \texttit{prove}
+\textit{formal verification}. Rather than relying on runtime
+tools or manual inspection, formal methods aim to \textit{prove}
 properties of programs, including memory safety, and layout correctness, with
 mathematical certainty. A notable system in this space is \textbf{Cogent},
 a functional programming language designed to generate verifiable and efficient
@@ -369,16 +369,6 @@ type-layout separation, and layout validation---to tools designed for general
 C programming. This is the motivation behind Cedar.
 
 \subsection{Cedar: Toward Practical Declarative Layouts for C}
-Building on the ideas explored in Cogent and Dargent, the \textbf{Cedar}
-project seeks to bring declarative layout specification to the C programming
-language/ Cedar can be understood as an attempt to adapt the principles of
-Dargent to the C programming language---developing a domain-specific layout
-description language that preserves low-level control over memory while
-maintaining compatibility with existing C toolchains and workflows. It
-targets systems programmers who require both performance and binary
-compatibility, but who are not operating withing a formally
-verified ecosystem
-
 Cedar is an early-stage research project that explores how declarative
 layout specification techniques---sch as those developed in Dargent--- might be
 adapted to work in the C programming ecosystem. Unlike Dargent, which is
@@ -397,98 +387,475 @@ However, unlike Dargent, Cedar does not rely on a restricted or pure functional
 language. It is intended to work directly with C code, making it more accessible
 for real-world systems development.
 
-At present, Cedar remains a prototype with limited capabilities. It is composed
-of a compiler written in Haskell, but lacks many critical features needed for
-practical use. There is no support for several common C constructsa (bitfields),
-and the current tooling does not verify layout correctness, or integrate
-with compilers or IDEs. Error handling and diagnostics are minimal, and the
-architecture is still in flux. As such, Cedar is far from ready for production
-use.
+The current prototype, implemented in Haskell, includes a semantic analysis
+phase, which operates on reduced representations onf layouts and C types.
+These representations are obtained through a basic parser. Once reduced, Cedar
+applies a structural matching relation to check for compatibility
+between layouts and their associated C types. THis allows the tool
+to detect mismatches in field order, size, or layout structure at an early 
+stage. While it does not offer verification or compiler integration, this form
+of analysis provides strong syntax checks.
 
-The prottype does implement a minimal form of layout checking, ensuring
-layout declarations do not contain invalid offset patterns or duplicate field
-definitions. However, it does not yet verify that a declared layout is
-semtantically  
+Cedar currently supports layouts for structres, arrays and tagged unions,
+reflecting common use cases in systems programming. However, the implementation
+remains incomplete in serveral important areas. It lacks support for low-level
+constructs such as untagged C unions, flexible array members, nested
+layout references, and overlapping bitfields. Diagnostic support is minimal,
+error messages are not yet developed, and the toolchain does not include features
+like layout visualization, code generation or IDE integration. These limitations 
+significantly restrict usability in practice.
 
-\section{Problem Statement and Research Objectives}
-How can we extend the work done in Cedar to provide a sound type system for
-C that is both expressive and efficient?
+An important design goal of Cedar is eventual compatibility with
+\textbf{CompCert}, a formally verified C compiler. CompCert translates C code
+into assembly, while providing machine-checked proofs of semantic preservation,
+making it particularly attractive for use in safety- and security-critical
+systems. However, CompCert's correctness guarantees assume that the source
+C program is well-formed and layout-safe. It does not reason about whether
+struct layouts corresponding to external binary formats or hardware specifications.
+As a result, layout mismatched---such as overlapping fields, incorrect offsets,
+or misaligned access---can still lead to undefine behavior or runtime errors,
+even when compiling with CompCert.
 
+Cedar aims to fill this gap by statically analyzing working with
+layout declarations, guaranteeing they are structurally compatible with their
+associated types. In doing so, It provides an additional layer of safety and
+confidence when writing low-level code intended for verified compilation.
+Although integration with CompCert is not currently in the scope of the project,
+Cedar's design positions it as a potential framework or pre-analysis tool that
+could generate layout-safe C code suitable for verified compilation.
+
+In summary, Cedar represents a promising but incomplete approach to declarative
+specification in C. It borrows key insights from Dargent---particularly 
+type-layout separation and structural layout matching---but repurposes them for
+a more general context. By complementing verified toolchains like
+CompCert with layout-level checking, Cedar has the potential to improve
+correctness, expressiveness, and maintainability in C-based systems development.
+This project seeks to explore and extend Cedar's capabilities toward that goal.
+
+\section{Problem Statement and Objectives}
+Despite the critical role of data layout in systems programming, mainstream
+languages like C provide only low-level, error-prone mechanisms for controlling
+memory representation. Developers must rely on fragile constructs such as
+bitfields, unions, and compiler-specific pragmas to enforce binary
+compatibility, often leading to layout mismatches, security vulnerabilities, or
+undefined behavior. While tools like Dargent demonstrate the feasibility of 
+declarative, verifiable layout specifications, they are embedded withing 
+restricted language ecosystems and are not applicable to general-purpose
+C codebases.
+
+Cedar proposes a promising alternative by introducing a standalone layout
+description language for C, but its current implementation is at a 
+prototype stage. It lacks full support for common layout idioms, has limited
+diagnostic feedback and does not yet offer a robust or user-fiendly workflow
+for systems programmers. In addition, it remains unclear how expressive or
+usable Cedar is in practical low-level programming scenarios, or how its design
+could evolve to better serve real-world needs.
+
+There is therefore a need to evaluate, refine and extend Cedar's design and
+implementation to make it a more robust and effective tool for declarative 
+memory specification in C.
+
+This project aims to explore the design space of declarative layout
+languages for C by extending and evaluation Cedar. The specific objectives
+are:
+\begin{itemize}
+    \item \textbf{Identify key limitations} in Cedar's current syntax, semantics
+    and toolchain through analysis of C layout scenarios.
+    \item \textbf{Design and implement extensions} to improve its 
+    expressiveness, including support for additional C constructs.
+    \item \textbf{Improve semantic analysis and diagnostics}, enabling more
+    helpful and precise error reporting when layout mismatches occur.
+    \item \textbf{Develop a suite of presentative case studies} using C
+    data structures to evaluate the practicality and expressiveness of Cedar's
+    layout language.
+    \item \textbf{Assess the potential for integration} with verified toolchains
+    outlining necessary steps and future directions for formal layout
+    verification.
+\end{itemize}
+
+By addressing these objectives, this project aims to establish whether a tool
+like Cedar can realistically improve layout readability and maintainability in
+low-level systems code, without imposing the restrictions of fully
+verified languages. 
 \section{Methodology}
-This project aims to explore the design of a data description language for C.
-In this context we propose the question: \b{How can we design a data description language that is practical
-for systems programming, while being sound and expressive for C?}.
+This section outlines the methodology adopted to address the research
+objectives identified in the previous section. The project takes the form
+of a design-oriented systems research effort, situated at the intersection
+of programming language design, tooling development, and low-level systems
+engineering. The core aim is to evaluate and extend Cedar, an early-stage
+prototype for declarative memory layout specification in C, and to assess its
+expressiveness, correctness, and practical utility. This requires a
+combination of literature-informed design analysis, critical evaluation of
+Cedar's current implementation, targeted language and tooling enhancements,
+and empirical evaluation through case studies. The methodology is structured
+into distinct but interrelated phases, each contributing to the iterative
+refinement and validation of the proposed extensions. 
 
-\subsection {Design Space Exploration}
-This first phase involves a comprehensive literature review to understand the
-design space and trade-offs in existing verified systems languages and tools.
-This includes:
+\subsection{Research Methodology Overview}
+This project is framed as a \textbf{design-oriented systems research
+investigation}, with the primary objective of advancing the design and
+implementation of a domain-specific language (DSL) for declarative memory
+layout specification in C. The methodology reflect a \textbf{constructive
+research paradigm}, in which a software artifact (Cedar) is incrementally
+developed, extended and evaluated to explore its capicity to address an
+identified gap in existing systems programming practices. Rather than
+seeking to establish universal truths through empirical generalisation, the
+project aims to generate insight through \textbf{iterative design, critical
+reflection, and focused case-based evaluation}.
+
+The research proceeds through a sequence of methologically distinct but
+conceptually aligned phases. The first is an anylsis of the \textbf{design},
+grounded in literature on verified systems programming, layout correctness, and
+DSL design. This stage establishes theoretical foundations and identifies
+prior approaches (e,g., Dargent, Rust, Cap'n Proto) that inform the Cedar's
+conceptual model. This phase also involves close reading of the Cedar prototype
+and supporting documentation to extract the underlying assumptions and design
+goals.
+
+The second phase focuses on \textbf{design evaluation}, involving a detrailed
+assessment of Cedar's current syntax, semantics and tooling capabilities. This
+includes a critical analysis of what layout constructs it supports, what
+guarantees (if any) it provides about layout-type compatibilit, and how usable
+and expressive the language is in its current form. This stage informs
+the third phase: the \textbf{development of targeted extensions}  to Cedar,
+aimed at addressing specific desing limitations and enabling new functionality
+or use cases. 
+
+Following this, the project enters an \textbf{empirical evaluation phase}, in
+which Cedar is applied to a suite of representative low-level programming tasks.
+These cases studies are conceptualized or directly drawn for real-world
+domains such as device drivers, embedded systems, or protocol parsers, where
+layout correctness is essential. The goal is not exhaustive benchmarking, but
+rather a focused demonstration of language expressive, usability, and
+limitations in practice.
+
+Throughout the project, a strategy of \textbf{iterative refinement} is employed.
+Design changes are informed by insights gained from implementation experience
+and case study application, and are continuously reassessed for coherence with
+the project's broader goals. This methodology mirrors established
+programming language research, which emphasizes co-evolution of language design,
+implementation and real-world usage.
+
+This approach allows the project to remain grounded in practical needs, while
+retaining a principled approach and research-informed orientation. The resulting
+contributions are expected to take the form of a more robust Cedar
+implementation, a set of documented design improvements, and an evaluation of
+Cedar's feasibility as a layout specification tool for systems programming in C.
+
+\subsection {Evaluating Prior Work to Inform Cedar's Extensions}
+The first phase of the project involves a structured evaluation on prior work
+that informs the extension and refinement of Cedar. This evaluation is guided
+by the central research question: \textit{How can we design a data layout
+language that is both practical for systems programming, and sound in its
+treatment of C memory models?} The focus is on identifying foundational ideas,
+successful patterns, and known limitations from related systems languages that
+bear similar goals.
+
+The most directly influential system is \textbf{Dargent}, which
+demonstrates the viability of separating data structure semantics from memory
+layout at a language level. Dargent's design philosophy---especially its
+separation of types and layouts, static layout validation, and automated
+getter/setter generation---provides a compelling model for Cedar. However,
+Dargent's reliance on Cogent's restricted language features and verification
+infrastructure limits its general applicability, making it more of a conceptual
+reference than a direct implementation template.
+
+The evaluation also draws on \textbf{Rust}, whose combination of memory
+safety and layout control via \texttt{\#repr(C)} annotations provides an
+example of how modern languages integrate safety with low-level control.
+While Rust introduces key ideas such as alignment guarantees and explicit unsafe
+boundaries, it still relies on manual reasoning in complex cases, and lacks a
+dedicated DSL for layouts. These limitations point to the continued relevance
+of external layout specification tools like Cedar.
+
+From the domain of data serialization, tools such as \textbf{Cap'n Proto} and
+\textbf{FlatBuffers} offer insights into schema-based layout definition and
+zero-copy access models. These frameworks demonstrate that layout descriptions
+can be declaratively compiled into efficient runtime access code. However, their
+focus on interoperability and high-level abstractions renders them unsuitable for
+low-level systems work, where precise control and compatibility with compiler
+semantics are paramount.
+
+In terms of formal toolchains, \textbf{CompCert} provides the verification
+backend that Cedar ultimately targets. CompCert guarantees semantic preservation
+of C programs during compilation, but assumes that the input programs are
+layout-correct. It does not verify, for instance, whether struct fields
+are properly aligned to match external hardware specification. This leaves a
+critical gap at the interface between high-level C code and low-level binary
+expectations---a gap that Cedar aims to address through explicit layout
+validation.
+
+Finally, the existing Cedar prototype itself serves as a key input to this
+evaluation. Understanding its internal architecture, assumptions, and 
+limitations will inform how the project approaches extension and refinement.
+This includes analysis of the syntax it offers, the semantics it defines (e.g.,
+layout-type matching), and the capabilities of its semantic analysis 
+infrastructure. By critically evaluating the gaps between Cedar's intended goals
+and its current form, the project will develop a grounded understanding of
+what aspects require redesign or augmentation.
+
+This evaluative process establishes the theoretical and practical background
+necessary for the rest of the project. It guides the identification of missing
+language features, informs the selection of case studies, and motivates the
+direction and future implementation work. In doing so, it ensures that subsequent
+phases are both responsive to real-world systems programming challenges and 
+informed by relevant prior research.
+
+\subsection{Lannguage and Tooling Evaluation}
+Before extening Cedar, it is essential to understand the current capabilities
+and limitations of its language design and tool support. This phase of the
+project involves a systematic evaluation of the existing prottype in terms of
+syntax, semantics, supported features, and developer-facing tooling.
+The goal is to identify pain points, inconsistencies, and gaps that hinder
+Cedar;s practical usability or its ability to scale to real-world
+programming tasks.
+
+\subsubsection{Syntax and Semantics}
+Cedar introduces a minimal declarative syntax for describing memory layouts
+using contructs such as \texttt{layout}, \texttt{at}, \texttt{before},
+\texttt{after}, and \texttt{union}. These allow users to define bit- and
+byte-level layouts independently of their C type definitions. While this
+syntactic separation reflects a core strength of the language, preliminary
+analysis shows that the expressiveness of the current syntax is limited.
+For instance, there is not support for layout reuse (e.g., parameterized or nested)
+layouts), custom alignments, or layout macros, all of which could significantly
+improve modularity and readability.
+
+Additionally, while Cedar supports tagged unions, the lack of support for
+certain idiomatic C constructs---such as flexible array members, anonymous
+structs/unions, and overlapping fields--- restricts its applicability. These
+omissions can be especially problematic in operating system development, where
+such constructs are common. Addressing these gaps will be a central part of
+the design and implementation phases of the project.
+
+\subsubsection{Semantic and Type-Layout Matching}
+Cedar includes a semantic analysis stage that checks whether layout declarations
+are structurally compatible with associated C types. THis is performed via a
+matching relation between reduced layout forms (\texttt{LR}), and reduced C
+types (\texttt{CR}). While this relation captures many useful constraints---such
+as field order, bit width, and alignment---it remains limited in scope.
+It does not currently model more advanced C semantics such as padding rules,
+platform-specific ABI alignment, or complex nesting scenarios involving
+unions and structs. Moreover, layout matching failures often result in minimal
+or opaque error messages, reducing the utility of this phase for end users.
+
+As part of this evaluation, the project will systematically test the limits of
+Cedar's layout-type compatibility checking, both by reviewing the semantics
+implemented and by constructing adversarial test cases based on real C headers 
+and memory maps.
+
+\subsubsection{Implementation Quality and Tooling Gaps}
+Cedar's implementation, written in Haskell, is modular and readable but remains
+at a prototype level. It lacks a dedicated parser integration with standard C
+toolchains. There is no error recovery system, layout visualization, or editor
+support, and the tool must be run manually on a per-file basis with limited
+feedback. Logging and diagnostics are minimal, making it difficult for users
+to debug mismatched between layout and C types.
+
+There is also no test suite or regression framework, making it difficult to
+ensure semantic consistency or validate new features. This absence poses
+a significant risk to extensibility and maintainability, and will be addressed
+during implementation. 
+
+\subsubsection{Summary}
+This evaluation phase will result in a detailed inventory of Cedar's current
+capabilities and limitations, guiding the prioritization of future
+implementation tasks. It will also provide the foundation for later case studies,
+ensuring that language extensions are aligned with practical layout needs
+and are grounded on actual usage scenarios rather than hypothetical examples.
+
+\subsection{Implementation Plan}
+This phase of the project involves extending the existing Cedar prototype to
+improve its expressiveness, correctness, and developer usablity. The focus is on
+evolving Cedar from an experimental prototype into a more robust research tool
+capable of supporting practical layout specification tasks in real-world C
+systems code.
+
+The implementation work will build directly on the existing Haskell codebase,
+which serves as the foundation for Cedar's semantic analysis. All changes will
+prioritize \textbf{modularity, maintainability, and clarity}, to ensure that
+future contributors can reason about and extend the tool with minimal
+overhead. The planned implementation tasks are informed by the evaluation
+in the previous phase, as well by ongoing case study development.
+
+\subsubsection{Refactoring and Coedebase Stabilization}
+The first stage of implementation will involve refactoring key componentes of
+the Cedar prototype to improve code modularity, and documentation. This
+includes:
+
 \begin{itemize}
-    \item A review of the tools closest to cider, Dargent and Cogent, to
-    understand their desing, verification architecture, layout-type matching
-    and formal semantics. 
-    \item Reviewing CompCert, as it is the compiler that is being targeted by
-    Cider, and to understand how C semantics are formalised. 
-    \item A survey of the current state of the art in type systems for systems programming
-    in order to identify gaps in the current state of the art.
-\end{itemize}
-\subsection{Language Design}
-This phase of the project involves evaluating the Cider prototype in regards
-to its current syntax, semantics and toolings. Drawing from examples in real-world 
-use codebases we aim to identify
-\begin{itemize}
-    \item The limitations of the current implementation
-    \item The limitations of the current syntax
-    \item The limitations of the current semantics
-    \item The limitations of the current tooling
+    \item \textbf{Reorganizing core modules} to separate concerns such as layout 
+    parsing, type reduction, and semantic matching.
+    \item Improving \textbf{error propagation} and internal diagnostics 
+    infrastructure. 
+    \item And adding \textbf{inline documentation} and a high-level developer
+    guide.
 \end{itemize}
 
-\subsection {Implementation and Integration}
-The current prototype of Cider will be extended, continuing its codebase written
-in Haskell. This will be focusing on modularity and maintainability.
-At this stage, the current key development tasks have been identified as:
+Refactoring will also serve as a means to deepen familiarity with the  codebase,
+enabling safer and more confident extension work.
+
+\subsubsection{Extending Language Features}
+A key implementation goal is to broaden the expressiveness of Cedar's layout
+language. Several concrete extensions are planned, including:
 \begin{itemize}
-    \item Refactoring 
+    \item \textbf{Flexible array memeber support}, which is ciritical for
+    struct compatibility with variable-length protocols
+    \item \textbf{Nested layout references}, to allow layout composition and
+    reuse
+    \item \textbf{Improved union handling}, including tagged unions where safe,
+    \item And the ability to express \textbf{alignment constraints} and
+    \textbf{bitfield overlap}, which appear frequently in low-level hardware
+    structures.
 \end{itemize}
-Where appropriate, small experiments may be conducted to explore optional features.
-\subsection {Case studies and Evaluation}
-To evaluate the effectiveness of the extended Cedar language, a suite of case
-studies will be developed. Given that the project closely follows the work
-done in Dargent, similar case studies will be used to evaluate the language:
+
+These  extensions will be prioritized based on complexity, case study revelance,
+and risk. Where necessary, small, focused experiments will be conducted to
+determine implementation feasibility before fully integrating them into
+the language.
+\subsubsection{Improving Semantic Analysis and Diagnostics}
+Cedar's current semantic matching system will be extended to support more
+precise and informative checks. This includes:
 \begin{itemize}
-    \item A structure in power control systems.
-    \item A bitfield in a CAN driver
-    \item A timer devide drier
-    \end{itemize}
-These case studies will be used to evaluate the usability and expressiveness
-of the language, and to identify any limitations or issues with the implementation
-and design. The case studies will be used to evaluate the language in terms
-of its usability, expressiveness, and performance. 
+    \item Verifying field sizes and offsets with respect to the C standard's
+    alignment and padding rules.
+    \item Improving error messages for layout-type mismatched, including
+    reporting field-level conflicts.
+    \item Providing more meaningful diagnostics for partially matched or ambiguous
+    layouts.
+\end{itemize}
+Where possible, layout-type matching will be made more \textbf{transparent},
+potentially via optional debug output or layout traces.
+
+\subsubsection{Testing and Validation Infrastructure}
+A lightweight \textbf{test suite} will be developed to validate semantic
+behavior across supported features. The suite will include:
+\begin{itemize}
+    \item Unit tests for the matching relation and layout constructs
+    \item Regression tests to ensure backward compatibility
+    \item And adversarial examples drawn from real-world C libraries or hardware headers.
+\end{itemize}
+
+This test infrastructure will enable faster iteration, safer refactoring, and
+better confidence in semantic correctness.
+
+\subsubsection{Optional Tooling Improvements}
+If time permits, auxilary tooling improvements may be explored, including:
+\begin{itemize}
+    \item A \textbf{command-line interface (CLI)} for easier layout-type
+    checking across projects,
+    \item \textbf{Basic pretty-printing} or visualization of resolved layouts
+\end{itemize}
+
+These additions re not core to the research contribution, but may enhance the
+tool's usability and adoption potential.
+
+\subsection{Case Studies and Evaluation Strategy}
+To evaluate the effectiveness of the extended Cedar language, the project will
+employ a series of structured case studies based on real-world systems
+programming tasks. These case studies are designed to test Cedar's 
+expressiveness, usability, and correctness when applied to applied to
+representative layout scenarios encountered in embedded systems, drivers,
+and operating system components.
+
+The case studies are selected to reflect the kinds of challenges that low-level
+C programmers routinely face when working with binary protocols, device drivers,
+and compact data formats. These scenarios typically involve strict constraints
+on field alignment, bit-level packing, padding behavior, and platform-specific
+layout conventions. By applying Cedar to such examples, the project aims
+to assess both its practical capabilities and limitations.
+
+\subsubsection{Case Study Selection}
+The following three test cases have been identified as primary evaluation
+targets. These examples are drawn directly from the evaluation methodology
+used in the \textbf{Dargent} system, allowing for a direct comparison
+between Cedar and its closest conceptual predecessor. Each example reflects
+a common layout challenge in systems programming and has been selected to test
+different aspects of Cedar's design:
+
+\begin{itemize}
+    \item \textbf{Power Control Structure}
+    
+    A C struct representing a control block in a hardware power management unit.
+    This structure typically includes fields for voltage targets, bit-level
+    enable flags, and status registers packed into bytes. 
+    
+    \item \textbf{CAN Driver Bitfield}
+    
+    A layout describing a message header in a CAN {Controlled Area Network} driver,
+    often used in automotive and embedded systems.
+
+    \item \textbf{Time Device Register Map}
+    
+    A representation of a hardware timer's memory-mapped control registers.
+\end{itemize}
+
+Additional case studies may be introduced depending on progress and time
+constraints, particularly targeting complex or non-standard layout idioms
+drawn from open source C projects or Linux kernel headers.
+
+\subsubsection{Evaluation Criteria}
+Each case study will be assessed in the followiing criteria
+
+\begin{itemize}
+    \item \textbf{Expressiveness}: Can the Cedar layout language describe the
+    required layout accurately and concisely?
+    \item \textbf{Correctness}: Does the semantic analysis correctly detect
+    matches or mismatches between layout and type declarations?
+    \item \textbf{Error Reporting}: Are diagnostic messages informative and
+    helpful when mismatches or invalid constructs are encountered?
+    \item \textbf{Usability}: Is the layout specification process intuitive and
+    readable?
+\end{itemize}
+
+Where appropriate, manual comparisons will be made against traditional C
+representations, to illustrate Cedar's advantages or trade-offs in terms of
+clarity, reliability and safety.
 
 \subsection{Iterative Refinement}
-Through the project, feedback loops will inform further design choices.
-Issues uncovered during case studies or from implementation may lead to 
-refinement of syntax, semantics or implementation strategy. Reflections on 
-trade-offs between usability, complexity and extensibility will be documented
-and discussed in the final report.
-\subsection {Optional Extensions}
-Aditional test cases may be added to the Cedar test suite, to cover
-additional cases that may be found in live codebases. These may include
-structures found in the Linux kernel, or other open-source projects.
-However, this will depend on the time available, and the
-progress made in the previous phases. 
+Given the exploratory natuire of language tooling design, this project will
+adopt an \textbf{iterative and feedback-driven development model}. Rather than
+attempting to define all language features or semantic rules up front, design
+decisions will evolve in response to insights gained from implementation,
+testing, and case study evaluation.
 
-If time allows, we will explore the integration of Cedar with a formal
-verification backend. This follows the work done in Dargent, and aims to
-provide formal guarantees of correctness for the generated code. Implementation
-of this feature would be a significant undertaking, so it will only be
-considered if the previous phases are completed ahead of schedule. Additionally,
-given the complexity of this task, it may be considered as a separate
-project in the future. However, the groundwork for this will be laid
-during the project, and the design of the language will be done with
-this in mind.
-\section {Project Timeline}
-\subsection {Potential Impact}
+Each stage of the project---from language design and semantic analysis to
+case study application---may uncover limitations, ambiguities or opportunities
+for improvement. These findings will feed back into the design process through
+short reflection cycles, where the language syntax, semantic rules or
+tooling behavior may be refined to better accommodate real-world use cases or
+improve usability
+
+For example, if a particular layout construct proves awkward to express or
+repeatedly triggers misleading diagnostics, its syntax or interpretation may be
+revised. If a case study exposes a semantic gap between Cedar and the C type
+system, the layout type matching algorithm may be extended or clarified.
+These refinements will be documented and justified, with particular attention to
+maintaining internal consistency and alignment with the project's goals.
+
+This iterative process mirrors established practices in programming language
+research, where prototype implementations are frequently refined in tandem with
+theoretical insights and practical experimentation. The final report will
+include a discussion of major design trade-offs encountered during this process,
+including reflection on usability, expressiveness, verification potential,
+and compatibility with C semantics.
+
+By explicitly embracing feedback loops, the project aims to produce a more
+grounded and usable outcome--- not only a theoretically sound language, but one
+that reflects the practical realities of low-level software development
+\subsection{Optional Extensions}
+While the primary focus of this project is on evaluating and extending Cedar's
+language and analysis features, several optional extensions may be explored if
+time permits. These extensions align with the long-term vision for Cedar as a
+usable and verifiable layout specification tool, and may help lay the
+groundowrk for future research or integration
+
+\subsubsection{Expaneded Case Study Coverage}
+\subsubsection{Formal Verification Integration}
+\section{Project Timeline}
+\subsection{Expected Outcomes and Impact}
+
+ROUGH DRAFT!!!!!
 The proposed work has the potential to improve the usability and applicability
 of Cedar as a tool for systems programmers who require fine-grained control
 over layout without sacrificing readability. By refining Cedar's language
@@ -496,7 +863,6 @@ design and strengthening its implementation, this project aims to contribute
 to the broader effort of enabling safer low-level programming practices in C -
 a language where layout bugs can have severe consequences for correctness and
 performance.
-
 
 
 \newpage
