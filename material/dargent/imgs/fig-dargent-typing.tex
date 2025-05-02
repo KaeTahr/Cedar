@@ -1,0 +1,134 @@
+\begin{figure}
+\begin{inductive}{\Q \vdash \layoutok{\tau}}
+  \inferrule
+    {\Q \vdash \ell \sim \RecordTy{\many{\FieldN{f}_i : \tau_i}}{\Unboxed}}
+    {\Q \vdash \layoutok{\RecordTy{\many{\FieldN{f}_i : \tau_i}}{\Boxed{\ell}}}}
+    {\textsc{RecordOk}}
+  \quad
+  % \inferrule
+  %   {\text{for each $i$: } \Q \vdash \layoutok{\tau_i}}
+  %   {\Q \vdash \layoutok{\RecordTy{\many{\FieldN{f}_i : \tau_i}}{\Unboxed}}}
+  %   {\textsc{URecordOk}}
+  % \\
+  % \inferrule
+  %   {\text{for each $i$: } \Q \vdash \layoutok{\tau_i}}
+  %   {\Q \vdash \layoutok{\VariantTy{\many{\ConsN{C}_i\ \tau_i}}}}
+  %   {\textsc{VariantOk}}
+  % \\
+  \inferrule
+    {\Q \vdash \ell \sim \ArrayTy{\tau}{v}{\Unboxed}}
+    {\Q \vdash \layoutok{\ArrayTy{\tau}{v}{\Boxed{\ell}}}}
+    {\textsc{ArrayOk}}
+  \quad
+  % \inferrule
+  %   {\Q \vdash \layoutok{\tau}}
+  %   {\Q \vdash \layoutok{\ArrayTy{\tau}{v}{\Unboxed}}}
+  %   {\textsc{UArrayOk}}
+  % \\
+  \inferrule
+    {\text{(currently not supported)}}
+    {\Q \vdash \layoutok{\AbsTy{C}{\many{\tau_i}}{\BoxedNL}}}
+    {\textsc{AbsTyOk}}
+\end{inductive}
+
+\begin{inductive}{\Q \vdash \ell \sim \tau}
+  \inferrule
+    {\mathrm{bits}\;(T) = s\\
+    T\ \text{is a primitive type} }
+    {\Q \vdash \bitrange{o}{s} \sim T}
+    {\textsc{PrimTyMatch}}
+  \quad
+  \inferrule
+    {x \sim \tau' \in \Q\\
+     \tau' \lesssim_{\ell} \tau}
+    {\Q \vdash x\{o\} \sim \tau}
+    {\textsc{VarMatch}}
+  \\
+  \inferrule
+    {M\ \text{is the pointer size}\\
+     T\ \text{is boxed}}
+    {\Q \vdash \bitrange{o}{M} \sim T}
+    {\textsc{BoxedTyMatch}}
+  \quad
+  \inferrule
+    { }
+    {\Q \vdash () \sim ()}
+    {\textsc{UnitMatch}}
+  \\
+  \inferrule
+    {\text{for each $i$: } \Q \vdash \ell_i \sim \tau_i}
+    {\Q \vdash \DLRec{\many{\FieldN{f}_i : \ell_i}} \sim \RecordTy{\many{\FieldN{f}_i : \tau_i}}{\Unboxed}}
+    {\textsc{URecordMatch}}
+  \\
+  \inferrule
+    {\Q \vdash \ell \sim \tau \\
+     \ell\ \text{is byte aligned}}
+    {\Q \vdash \DLArr{\ell} \sim \ArrayTy{\tau}{v}{\Unboxed}}
+    {\textsc{UArrayMatch}}
+  \\
+  \inferrule
+    {s\ \text{big enough for all alternatives, and smaller than $M$}\\\\
+     \text{for each $i$:\ } \Q \vdash \ell_i \sim \tau_i}
+    {\Q \vdash \DLVar{s}{\many{\ConsN{C}_i\ (v_i) : \ell_i}} \sim \VariantTy{\many{\ConsN{C}_i\ \tau_i}}}
+    {\textsc{VariantMatch}}
+    \\
+    \inferrule
+    { }
+    {\Q \vdash \ell \sim \alpha}
+    {\textsc{VarTypeMatch}}
+    \quad
+    \inferrule
+    { }
+    {\Q \vdash \ell \sim \alpha!}
+    {\textsc{BangVarTypeMatch}}
+\end{inductive}
+
+\begin{displaymath}
+  \begin{array}{ll}
+    \bits{\ConsN{U8}}   & = 8  \\
+    \bits{\ConsN{U16}}  & = 16 \\
+    \bits{\ConsN{U32}}  & = 32 \\
+    \bits{\ConsN{U64}}  & = 64 \\
+    \bits{\ConsN{Bool}} & = 1
+  \end{array}
+\end{displaymath}
+\caption{\Dargent Typing Rules}
+\label{fig:dargent-typing}
+\end{figure}
+
+
+\begin{figure}
+  $$\blocksize{\tau} = \left \{
+  \begin{array}{ll}
+     \bits{\tau} & \text{if $\tau$ is a primitive type} \\
+     M           & \text{if $\tau$ is a boxed type} \\
+     0           & \text{if $\tau = ()$} \\
+     \bot        & \text{otherwise}
+  \end{array}\right.
+  $$\vspace{1em}
+
+  \begin{inductive}{\tau \lesssim_{\ell} \tau'}
+    \inferrule
+      {\blocksize{\tau} = \blocksize{\tau'}}
+      {\tau \lesssim_{\ell} \tau'}
+      {\textsc{BlockCompt}}
+    \quad
+    \inferrule
+      {\text{for each $i$: } \tau_i \lesssim_{\ell} \tau_i'}
+      {\RecordTy{\many{\FieldN{f}_i : \tau_i}}{\Unboxed} \lesssim_{\ell} \RecordTy{\many{\FieldN{f}_i : \tau_i'}}{\Unboxed}}
+      {\textsc{URecordCompt}}
+    \\
+    \inferrule
+      {\text{for each $i$: } \tau_i \lesssim_{\ell} \tau_i'}
+      {\VariantTy{\many{\ConsN{C}_i\ \tau_i}} \lesssim_{\ell} \VariantTy{\many{\ConsN{C}_i\ \tau_i'}}}
+      {\textsc{VariantCompt}}
+    \quad
+    \inferrule
+      {\tau \lesssim_{\ell} \tau'}
+      {\ArrayTy{\tau_i}{s}{\Unboxed} \lesssim_{\ell} \ArrayTy{\tau_i'}{s}{\Unboxed}}
+      {\textsc{UArrayCompt}}
+  \end{inductive}
+  \caption{Type-compatibility rules}
+  \label{fig:dargent-type-compat}
+\end{figure}
+

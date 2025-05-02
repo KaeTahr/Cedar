@@ -1,0 +1,126 @@
+\section{Introduction}\label{sec:intro}
+
+In the realm of software systems, such as device drivers, file
+systems, and network stacks, precise control over the
+\emph{data layout} of objects is crucial for compatibility and
+performance. Specifically, controlling the composition of objects in memory
+on a bit- and byte-level can avoid the need for translation or \emph{deserialisation} 
+at the boundaries between on-medium and
+in-memory data which frequently arise from interacting with
+standardised protocols or hardware.
+%
+These systems are often implemented in the C language, in part because it offers low-level features to give fine-grained control over data layout. 
+Unfortunately, to maintain good performance, the C programmer must throw away the conceptual abstraction of the data type, and instead focus on the low-level details of bits and bytes. This low-level code contains many subtle bit-twiddling
+operations which, apart from being difficult to manually verify, are
+also tedious and error-prone to implement.
+
+% \input{opening-ex}
+
+
+
+To maintain the higher-level structure of a program without sacrificing
+performance, we want to use a language with a high-level semantics, but with facilities for
+specifying the low-level memory layout of heap-allocated objects. While most
+high-level languages use fixed heap layouts, there has been recent
+progress on language-based support for user-defined memory
+layouts~\cite{Cronburg:2019,Vollmer:2019}. These languages, however, do
+not provide verified correctness of their translations.
+
+In this paper, we present \Dargent, a language for describing data
+layouts of high-level algebraic datatypes along with a data
+refinement framework for \emph{automatically verifying} the correctness of the compiled C code
+with respect to those layout descriptions. We
+build on the \cogent language and refinement framework~\citep{Cogent_JFP_2021}.
+\cogent is designed for the implementation of high-assurance low-level systems components as pure
+mathematical functions operating on algebraic data types.
+\cogent's certifying compiler co-generates
+a C program and Isabelle/HOL~\citep{Nipkow:2002} theorems witnessing a proof
+that the C program refines an Isabelle/HOL embedding of the \cogent source program~\cite{Rizkallah:itp16}. 
+
+While there is a very long line of prior work on \emph{data description
+languages}~\citep{FisherG05, McCannC00, Back02, WangG11, everparse,
+Ye_Delaware_19, vanGeest_Swierstra_17, Slind_21}, and the data layout
+descriptions used in \dargent do indeed look similar to those used in such
+languages, there is a fundamental difference: These languages are
+designed for synthesising data (de)serialisation functions (also sometimes
+referred to as data marshalling/unmarshalling functions, encoders/decoders, 
+or parsers and pretty-printers for low-level data),
+which convert data stored in a low-level, sequential format in some storage
+medium to a high-level, structured representation in memory and vice versa. 
+They are primarily used for the interaction and communication between
+different programming languages (e.g.\ a foreign function interface)
+or systems (e.g.\ data transmission over the network). In this context, code to transform back-and-forth
+between the two representations is still necessary.
+
+\dargent, on the other hand, is intended to solve a different
+problem. The \dargent data layout descriptions grant programmers
+the ability to dictate to the \cogent compiler how it should lay out the algebraic data
+types used by the \cogent program itself. The compiler generates code that works directly 
+with data laid out according to the programmer's specifications, as well as Isabelle/HOL  
+proofs showing that it has done so correctly. 
+
+Depending on the application, \dargent therefore can either eliminate entirely
+or reduce the need for data (de)serialisation code, be it manually
+written or automatically derived, when interacting with the external world.
+Because algebraic data types can be represented directly in their binary data formats with \dargent,  the 
+programmer does not need
+to decode raw data first into some other in-memory representation in order to operate on it as a data type. Eliminating these (de)serialisation steps naturally results in more concise and readable code, better performance, and easier informal and 
+formal reasoning.
+
+This additional power in expressiveness can also be
+used to improve the performance of the compiled \cogent code, 
+e.g.\ by having smaller memory footprints or a specialised memory
+layout optimal for the underlying architecture,
+independent of the interoperation between languages or systems.
+It also enables \cogent programmers to directly write code that is binary-compatible
+with native C programs.
+
+\cogent is readily amenable to an extension for prescribing 
+data layouts and fine-tuning the compilation of algebraic data types 
+by virtue of its lack of a runtime system
+and direct compilation to C. Before \dargent, it simply adopted
+the layout conventions of the
+underlying C compiler. The introduction of \dargent into the
+framework enabled improvements to
+some outstanding inefficiencies in the prior design, such as
+a reduced reliance on deserialisation code within file system
+implementations~\citep{Amani:2016} and directly representing device
+register formats as data types.
+%%
+Furthermore, we have extended the \cogent compiler so as to preserve the
+benefits of \cogent's high-level type system and semantics. The upshot
+is our compiler automatically translates read and write operations on
+heap-allocated objects to take account of their particular data
+layout. The translation's correctness is guaranteed by the enhanced
+data refinement theorem. 
+This paper describes, to the best of our knowledge, the first framework that
+is able to leverage data layout specifications for generating bit-level accessors
+with formal correctness guarantees. %Thanks to \cogent's uniqueness type system, our framework also supports mutable data. 
+%This is the first \emph{certifying} framework to be extended with data layout descriptions supporting mutable data, thanks to \cogent's
+%uniqueness type system which allows for efficient destructive
+%updates.
+
+\subsection*{Contributions}
+This paper realises the vision set out previously~\citep{Isola:2018}.
+We make the following contributions:
+\begin{itemize}
+  \item The design and implementation of \Dargent
+    (\autoref{sec:dargent}), a \emph{data layout} language for
+    controlling the memory layout of algebraic data types, down to the
+    bit level. We formalise a core calculus and its static semantics
+    in Isabelle/HOL~\citep{Nipkow:2002}, and discuss the compilation process;
+  \item An extension to the \cogent verification framework 
+    (\autoref{sec:verification}) to \emph{automatically verify} the
+    translation of high-level read/write accesses (known as
+    \emph{getters} and \emph{setters}) to explicit offsets within a
+    well-defined memory region;
+  \item An extended suite of examples (\autoref{sec:applications}
+    and \autoref{sec:timerdriver}) demonstrating the utility of \Dargent in
+    the context of device drivers.
+\end{itemize}
+All the results described in this paper, including the case studies we
+present, are associated with formal proofs in Isabelle/HOL.
+These materials are packaged as a virtual machine image, which is publicly
+available~\citep{dargent-artefact}. It is derived from a development branch of
+the \cogent project repository (\url{https://github.com/au-ts/cogent}).
+

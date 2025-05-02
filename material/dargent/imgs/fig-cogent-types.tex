@@ -1,0 +1,24 @@
+
+\begin{figure}
+\[
+\begin{array}{llclr}
+  \text{Types} 
+     & \tau & ::=  & T & \text{(primitive types)} \\
+     &      & \mid & ()                & \text{(unit)} \\
+     &      & \mid & \alpha            & \text{(type variables)} \\
+     % &      & \mid & \tau_1 \rightarrow \tau_2      & \text{(functions)} \\
+     &      & \mid &\RecordTy{\many{\mathrm{f}_i : \tau_i}}{s} & \text{(records)}\\
+     &      & \mid & \VariantTy{\many{\mathrm{A}_i\ \tau_i}}  & \text{{(variants)}}\\
+     &      & \mid & \AbsTy{K}{\many{{\tau_i}}}{s}  & \text{(abstract types)} \\
+     &      & \mid & \dots & \\
+  \text{Primitive types} & T & ::= & \PrimType{U}n \mid \PrimType{Bool} & \text{($n = 1 \dots 64$)} \\
+  \text{Field names}  & & \ni  & \mathrm{f}\\
+  \text{Constructors} & & \ni  & \mathrm{A}\\
+  \text{Sigils} & s & ::= & \BoxedNL \mid \Unboxed & \\
+                & \BoxedNL & ::= & \ModeN{w} \mid \ModeN{r} & 
+\end{array}
+\]
+(lists are represented by $\many{\text{overlines}}$)
+\caption{The syntax of \cogent types}
+\label{fig:syntax-cogent-types}
+\end{figure}

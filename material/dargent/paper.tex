@@ -1,0 +1,374 @@
+\documentclass[acmsmall,screen]{acmart}
+
+\newif \ifDraft \Draftfalse
+
+\usepackage[scaled=0.78]{DejaVuSansMono} % use a better tt font for code
+\usepackage[T1]{fontenc}
+
+\usepackage{listings}
+\usepackage{mathpartir}
+\usepackage{mathtools}
+%\usepackage{stmaryrd}
+%\usepackage{pifont}
+\usepackage{xspace}
+\usepackage{util}
+\usepackage{array}
+\usepackage[inline]{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{cd}
+\usetikzlibrary{backgrounds}
+
+%% Journal information
+%% Supplied to authors by publisher for camera-ready submission;
+%% use defaults for review submission.
+
+\setcopyright{rightsretained}
+\acmPrice{}
+\acmDOI{10.1145/3571240}
+\acmYear{2023}
+\copyrightyear{2023}
+\acmSubmissionID{popl23main-p325-p}
+\acmJournal{PACMPL}
+\acmVolume{7}
+\acmNumber{POPL}
+\acmArticle{47}
+\acmMonth{1}
+\received{2022-07-07}
+\received[accepted]{2022-11-07}
+
+\citestyle{acmauthoryear}
+
+\lstset{
+  basicstyle=\ttfamily,
+  commentstyle=\color{darkgray}\itshape,
+}
+
+\lstdefinelanguage{Cogent}{
+  morecomment=[l]{--},
+  keywords={type, layout},
+  keywordstyle=\bfseries,
+  keywords=[2]{let, in, record, variant, at, after, using},
+  keywordstyle=[2]\sffamily,
+  %keywords=[3]{U8,U16,U32,U64,Bool,Unit,Char},
+  %keywordstyle=[3]\color{teal}\bfseries,
+  identifierstyle=\color{black},
+  extendedchars=true,
+  mathescape,
+  breaklines=true,
+  literate=
+    {lambda}{$\lambda$}1
+    {<<->>}{$\hole{-}\;$}1
+    {->}{$\rightarrow$}1
+    %{->}{$\rightarrow$}1
+    %{<-}{$\leftarrow$}1
+    %{|->}{$\mapsto$}1
+    %{=>}{$\Rightarrow$}1
+}
+
+\lstdefinelanguage{isa}{
+  columns=fullflexible,
+  keepspaces,
+  mathescape=true,
+  morecomment=[s]{(*}{*)},
+  morekeywords={locale,fixes,assumes,shows,and,lemma,definition,in,
+    type_synonym,where,procedures,theorem,if,then,else,do,od,case,of,let},
+  literate=
+    {"}{}0
+    {ÔøΩ}{$^\prime$}1
+    {'}{$^\prime$}1
+    {\\<^sub>6}{$_6$}1      
+    {\\<^sub>4}{$_4$}1      
+    {\\<^sub>3}{$_3$}1      
+    {\\<^sub>2}{$_2$}1      
+    {\\<^sub>1}{$_1$}1      
+    {\\<^sub>0}{$_0$}1      
+    {\\<^sub>f}{$_f$}1
+    {\\<^sub>G}{$_G$}1      
+    {\\<^sub>T}{$_T$}1
+    {\\<forall>}{$\forall$}1
+    {\\<exists>}{$\exists$}1
+    {\\<equiv>}{$\equiv$}1
+    {\\<Longrightarrow>}{$\Longrightarrow$}2
+    {\\<longrightarrow>}{$\longrightarrow$}2
+    {\\<Rightarrow>}{$\Rightarrow$}1
+    {\\<rightarrow>}{$\rightarrow$}1
+    {\\<leftarrow>}{$\leftarrow$}1
+    {\\<longleftrightarrow>}{$\longleftrightarrow$}2
+    {\\<Down>}{$\Downarrow$}2
+    {\\<guillemotleft>}{$\mathopen{\{\mkern-4mu|}$}2
+    {\\<guillemotright>}{$\mathclose{|\mkern-4mu\}}$}2
+    {\\<And>}{$\bigwedge$}1
+    {\\<and>}{$\land$}1
+    {\\<or>}{$\lor$}1
+    {\\<not>}{$\lnot$}1
+    {\\<in>}{$\in$}1
+    {\\<notin>}{$\notin$}1
+    {\\<noteq>}{$\neq$}1
+    {\\<le>}{$\le$}1
+    {\\<ge>}{$\ge$}1
+    {\\<cup>}{$\cup$}1
+    {\\<cap>}{$\cap$}1
+    {\\<lambda>}{$\lambda$}1
+    {\\<times>}{$\times$}1
+    {\\<turnstile>}{$\vdash$}1
+    {\\<turnstile-t>}{$\vdash_t$}2
+    {\\<subseteq>}{$\subseteq$}1
+    {\\<sqinter>}{$\sqcap$}1
+    {\\<lbrace>}{$\mathopen{\{\mkern-4mu|}$}1
+    {\\<rbrace>}{$\mathclose{|\mkern-4mu\}}$}1
+    {\\<lbrakk>}{$\mathopen{\lbrack\mkern-3mu\lbrack}$}1
+    {\\<rbrakk>}{$\mathclose{\rbrack\mkern-3mu\rbrack}$}1
+    {\\<infinity>}{$\infty$}1
+    {\\<sigma>}{$\sigma$}1
+    {\\<mu>}{$\mu$}1
+    {\\<gamma>}{$\gamma$}1
+    {\\<tau>}{$\tau$}1
+    {\\<Gamma>}{$\Gamma$}1
+    {\\<le>}{$\leq$}1
+    {\\<Sum>}{$\sum$}1
+    {\\<dollar>}{\$}1
+    {\\<lparr>}{$\mathopen{(\mkern-4mu|}$}1
+    {\\<rparr>}{$\mathclose{|\mkern-4mu)}$}1
+    }
+
+
+
+\renewcommand{\sectionautorefname}{Section}
+\renewcommand{\subsectionautorefname}{Section}
+\newcommand\litem[1]{\item{\bfseries [#1]\enspace}}
+
+\newcommand{\citepos}[2][]{\citeauthor{{#2}}{#1}~\cite{{#2}}}
+
+% Shorthands
+\newcommand{\cc}{\lstinline[language=C]}
+\newcommand{\cg}{\lstinline[language=Cogent]}
+\newcommand{\key}[1]{\texttt{{#1}}}
+\newcommand{\bd}[1]{\textbf{{#1}}}
+\newcommand{\fd}[1][f]{\key{{#1}}} % field
+\newcommand\GG{\Gamma}
+\newcommand\LL{\mathcal{L}}
+\newcommand{\Sg}{\Sigma}
+\newcommand{\sg}{\sigma}
+\newcommand\adj{\delta}
+\newcommand{\Adj}{\Delta}
+\newcommand\bN{\mathbb{N}}
+\newcommand\Ge{\varepsilon}
+\newcommand\Go{\omega}
+\newcommand\Gt{\theta}
+\newcommand\Gg{\gamma}
+\newcommand\GL{\Lambda}
+\newcommand\Gl{\lambda}
+\newcommand\rB{\mathrm{B}} % Byte descriptor
+\newcommand\rb{\mathrm{b}} % bit descriptor
+\newcommand{\fresh}[1]{{{#1}~\text{fresh}}}
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket }
+
+\newcommand{\Cogent}{\textsc{Cogent}\xspace}
+\newcommand{\cogent}{\Cogent}
+\newcommand{\Dargent}{\textsc{Dargent}\xspace}
+\newcommand{\dargent}{\Dargent}
+\newcommand{\bilby}{BilbyFs\xspace}
+
+
+\ifDraft
+  \newcommand{\Comment}[1]{\textbf{\textsl{#1}}}
+  \newcommand{\TODO}[1]{\textbf{\textsl{\colorbox{yellow}{TODO:} #1}}}
+  \newcommand{\FIXME}[1]{\textbf{\textsl{\colorbox{yellow}{FIXME:} #1}}}
+  \usepackage{draftwatermark}
+  \SetWatermarkLightness{0.85}
+\else
+  \newcommand{\Comment}[1]{\relax}
+  \newcommand{\TODO}[1]{\relax}
+  \newcommand{\FIXME}[1]{\relax}
+\fi
+\newcommand{\zilinc}[1]{\Comment{#1 [zilinc]}}
+\newcommand{\liam}[1]{\Comment{#1 [liam]}}
+\newcommand{\ambroise}[1]{\Comment{#1 [ambroise]}}
+\newcommand{\louis}[1]{\Comment{#1 [louis]}}
+\newcommand{\cmcl}[1]{\Comment{#1 [cmcl]}}
+\newcommand{\review}[1]{\Comment{#1 [reviewer]}}
+
+
+\newcommand{\urltimerdriver}{https://github.com/seL4/util_libs/blob/c446df1f1a3e6aa1418a64a8f4db1ec615eae3c4/libplatsupport/src/plat/odroidc2/meson_timer.c}
+\newcommand{\urltimerdriverh}{https://github.com/seL4/util_libs/blob/c446df1f1a3e6aa1418a64a8f4db1ec615eae3c4/libplatsupport/plat_include/odroidc2/platsupport/plat/meson_timer.h}
+\hyphenation{poly-morphic}
+\hyphenation{data-type}
+
+\begin{document}
+\title{\Dargent: A Silver Bullet for Verified Data Layout Refinement}
+
+
+%% Author with single affiliation.
+\author{Zilin Chen}
+% \authornote{with author1 note}          %% \authornote is optional;
+                                        %% can be repeated if necessary
+\orcid{0000-0003-0854-2464}             %% \orcid is optional
+\affiliation{
+  %\position{Position1}
+  %\department{Department1}              %% \department is recommended
+  \institution{UNSW Sydney}            %% \institution is required
+  %\streetaddress{Street1 Address1}
+  %\city{City1}
+  %\state{State1}
+  %\postcode{Post-Code1}
+  \country{Australia}                    %% \country is recommended
+}
+\email{zilin.chen@student.unsw.edu.au}          %% \email is recommended
+
+%% Author with two affiliations and emails.
+\author{Ambroise Lafont}
+%\authornote{with author2 note}          %% \authornote is optional;
+                                        %% can be repeated if necessary
+\orcid{0000-0002-9299-641X}             %% \orcid is optional
+\affiliation{
+  %\position{Position2a}
+  %\department{Department2a}             %% \department is recommended
+  \institution{University of Cambridge}           %% \institution is required
+  %\streetaddress{Street2a Address2a}
+  \country{UK}                   %% \country is recommended
+}
+\email{ael62@cam.ac.uk}         %% \email is recommended
+
+\author{Liam O'Connor}
+\orcid{0000-0003-2765-4269}
+\affiliation{
+  \institution{University of Edinburgh}
+  \country{UK}
+}
+\email{l.oconnor@ed.ac.uk}
+
+\author{Gabriele Keller}
+\orcid{0000-0003-1442-5387}
+\affiliation{
+  \institution{Utrecht University}
+  \country{Netherlands}
+}
+\email{g.k.keller@uu.nl}
+
+\author{Craig McLaughlin}
+\orcid{0000-0002-1323-8566}
+\affiliation{
+  \institution{UNSW Sydney}
+  \country{Australia}
+}
+\email{c.mclaughlin@unsw.edu.au}
+
+\author{Vincent Jackson}
+\orcid{0000-0002-8737-4202}
+\affiliation{
+  \institution{University of Melbourne}
+  \country{Australia}
+}
+\email{vjjac@student.unimelb.edu.au}
+
+\author{Christine Rizkallah}
+\orcid{0000-0003-4785-2836}
+\affiliation{
+  \institution{University of Melbourne}
+  \country{Australia}
+}
+\email{christine.rizkallah@unimelb.edu.au}
+
+
+
+%% Abstract
+%% Note: \begin{abstract}...\end{abstract} environment must come
+%% before \maketitle command
+
+\begin{abstract}
+%Systems programming involves writing code which adheres to well-defined
+%interfaces usually imposed by standardised protocols or hardware. 
+%\cogent's certifying compiler generates imperative C programs and
+%provides a formal proof that its compilation is a refinement of the
+%functional \cogent code. 
+
+Systems programmers need fine-grained control over the memory
+layout of data structures, both to produce performant code and to comply with well-defined interfaces imposed by existing code, standardised protocols or hardware. Code that manipulates these low-level representations in memory is hard to get right. Traditionally, this problem is addressed by the implementation of tedious marshalling code to convert between compiler-selected data representations and the desired compact data formats. Such marshalling code is error-prone and can lead to a significant runtime overhead due to
+excessive copying. While there are many languages and systems that address the correctness issue, by automating the generation and, in some cases, the verification of the marshalling code, the performance overhead introduced by the marshalling code remains.
+In particular for systems code, this overhead can be prohibitive.
+In this work, we address both the correctness and the performance problems.
+
+We present a data layout description language and data refinement framework,
+called \Dargent, which allows programmers to declaratively specify
+how algebraic data types are laid out in memory.
+Our solution is applied to the \Cogent language,
+but the general ideas behind our solution are applicable to other settings.
+The \Dargent framework generates C code that manipulates data directly with the desired memory layout,
+while retaining the formal proof that this generated C code is correct
+with respect to the \cogent functional semantics.
+This added expressivity removes the need for implementing and verifying marshalling code,
+which eliminates copying, smoothens interoperability with surrounding systems,
+and increases the trustworthiness of the overall system.
+\end{abstract}
+
+
+
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10011007.10011074.10011099.10011692</concept_id>
+       <concept_desc>Software and its engineering~Formal software verification</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011060.10011690</concept_id>
+       <concept_desc>Software and its engineering~Specification languages</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10010940.10010941.10010949</concept_id>
+       <concept_desc>Software and its engineering~Operating systems</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011024.10011028</concept_id>
+       <concept_desc>Software and its engineering~Data types and structures</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~Formal software verification}
+\ccsdesc[500]{Software and its engineering~Specification languages}
+\ccsdesc[500]{Software and its engineering~Operating systems}
+\ccsdesc[300]{Software and its engineering~Data types and structures}
+
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{certifying compiler, data refinement, systems programming}
+
+\maketitle
+
+\renewcommand{\shortauthors}{Z. Chen, A. Lafont, L. O'Connor, G. Keller, C. McLaughlin, V. Jackson, and C. Rizkallah}
+
+% \balance
+
+
+\input{introduction}
+\input{cogent}
+\input{dargent}
+\input{verification}
+\input{applications}
+\input{timerdriver}
+\input{related-and-future}
+\input{conclusion}
+
+\begin{acks}
+Matthew Di Meglio, Sahan Fernando and Zhenyu Yao contributed to the language
+design, pen-and-paper formalisation and compiler engineering during early
+iterations of \dargent. We would also like to thank the anonymous reviewers
+for their insightful and constructive feedback on drafts of this paper.
+Robert Sison kindly offered to proofread a draft of this paper and provided many
+helpful suggestions.
+\end{acks}
+
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
+
+

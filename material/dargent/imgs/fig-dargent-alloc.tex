@@ -1,0 +1,57 @@
+\begin{figure}
+  \begin{inductive}{\ell \reserves s}
+    \inferrule
+      { }
+      {() \reserves \bitrange{0}{0}}
+      {\textsc{UnitAlloc}}
+    \qquad
+    \inferrule
+      { }
+      {\bitrange{o}{s} \reserves \bitrange{o}{s}}
+      {\textsc{PrimAlloc}}
+    \\
+    \inferrule
+      {\ell \reserves \{a\} \\ a = \bitrange{o}{s} \\ s \in \{8,16,32,64\}}
+      {\ell\ \using\ \omega \reserves \{a\}}
+      {\textsc{EndianAlloc}}
+    \\
+    \text{(layout variables omitted)}
+    \\
+    \inferrule
+      {\many{\FieldN{f}_i}\ \text{distinct} \\
+       \text{for each $i$: } \ell_i \reserves a_i\\
+       \many{a_i}\ \text{disjoint}}
+      {\DLRec{\many{\FieldN{f}_i : \ell_i}} \reserves \bigcup_{i} a_i}
+      {\textsc{RecordAlloc}}
+    \\
+    \inferrule
+      {\ell_t \reserves \bitrange{o_t}{s_t} \\
+       \many{\ConsN{C}_i}\ \text{distinct} \\
+       \many{v_i}\ \text{distinct} \\\\
+       \text{for each $i$:}\ v_i \le s_t^2 - 1 \\
+       \ell_i \reserves a_i \\
+       \bitrange{o_t}{s_t}\text{, }a_i\ \text{disjoint}}
+      {\DLVar{\ell'}{\many{\ConsN{C}_i\ (v_i) : \ell_i}} \reserves \bigcup_i a_i \cup \bitrange{o_t}{s_t}}
+      {\textsc{VariantAlloc}}
+    \\
+    \inferrule
+      {\ell \reserves \bitrange{o}{s}\\
+       \ell\ \text{is byte aligned}}
+      {\DLArr{\ell} \reserves ?}
+      {\textsc{ArrayAlloc}}
+      \\
+      \inferrule
+      { }
+      {x\{o\} \reserves \bitrange{0}{0}}
+      {\textsc{VarAlloc}}
+    % We have several problems here. One is that do we need to know the size of the array on the dargent side?
+    % Another is what is the alignment restrictions for array layouts? Given that we require each type to be
+    % allocated extract size (and no more), how do we specify padding (esp. at the end of a data structure)? 
+    % Does it have to be specified as the offset of the next piece of data? Do we need a padding type for arbitrary
+    % sized chunk of memory? If we have paddings in arrays, how do we specify it?
+  \end{inductive}
+  \caption{Space allocation rules for \Dargent}
+  \label{fig:dargent-alloc}
+\end{figure}
+
+

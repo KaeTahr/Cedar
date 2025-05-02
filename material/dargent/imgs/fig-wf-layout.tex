@@ -1,0 +1,52 @@
+\begin{figure}
+\begin{inductive}{\ell\ \mathbf{wf}}
+  \inferrule
+    { }
+    {\bitrange{o}{s}\ \mathbf{wf}}
+    {\textsc{BitRangeWF}}
+    \qquad
+    \inferrule
+    { }
+    {()\ \mathbf{wf}}
+    {\textsc{UnitWF}}
+    \qquad
+    \inferrule
+    { }
+    {x\{o\}\ \mathbf{wf}}
+    {\textsc{VarWF}}
+  \\
+  \inferrule
+  {\text{for each $i$: } \ell_i \ \mathbf{wf} \\\\
+    \text{for each $i\neq j$: }
+    \mathrm{taken}(\ell_i) \cap 
+    \mathrm{taken}(\ell_j) = \emptyset
+  }
+    {\DLRec{\many{\FieldN{f}_i : \ell_i}} \  \mathbf{wf}}
+    {\textsc{URecordWF}}
+  % \\
+  % \inferrule
+  %   {\ell \sim \tau \\
+  %    \ell\ \text{is byte aligned}}
+  %   {\DLArr{\ell} \sim \ArrayTy{\tau}{v}{\Unboxed}}
+  %   {\textsc{UArrayWF}}
+  \\
+  \inferrule
+  {\text{for each $i$:\ } \ell_i \ \mathbf{wf}\\
+    v_i < 2^s
+    \\
+    \mathrm{taken}(\ell_i) \cap \mathrm{taken}(\bitrange{o}{s}) = \emptyset
+    \\\\
+    \text{for each $i\neq j$:\ } v_i \neq v_j }
+    {\DLVar{\bitrange{o}{s}}{\many{\ConsN{A}_i\ (v_i) : \ell_i}}\ \mathbf{wf}}
+    {\textsc{VariantWF}}
+\end{inductive}
+
+  where
+  $\mathrm{taken}(\ell) \in \mathbb{N}$
+   returns the set of bit positions that $\ell$ occupies
+    (defined recursively).
+\caption{Wellformed layouts}
+\label{fig:wf-layout}
+\end{figure}
+
+

@@ -1,0 +1,87 @@
+\begin{figure*}
+  %
+  \boxlabel{$\ell \ds \ell'$}
+  \centering
+  $$
+  \begin{gathered}
+    \inferrule
+      {\sizebits{s} \neq 0 \\ \ell = \bitrange{0}{\sizebits{s}}}
+      { s \ds \ell_{\mathsf{ME}}}
+      {\textsc{SizeDs}}
+     \quad
+     \inferrule
+       {\sizebits{s} = 0}
+       { s \ds ()}
+       {\textsc{Size0Ds}}
+     \quad
+     \inferrule
+       { }
+       { x \ds x}
+       {\textsc{VarDs}}
+     \quad
+     \inferrule
+       {\ell = \bitrange{0}{M}}
+       { \DLPtr \ds \ell_{\mathsf{ME}}}
+       {\textsc{PtrDs}}
+     \\
+     \inferrule
+       {\ell \ds \ell'}
+       {\ell\ \using\ \omega \ds \ell'_{\omega}}
+       {\textsc{EndianDs}}
+     \quad
+     \inferrule
+       {L\ \many{x_i} = \ell \in \mathsf{TypeDefs}\\
+         \ell \ds \ell'}
+       { L\ \many{x_i} \ds \ell'}
+       {\textsc{NameDs}}
+     \quad
+     \inferrule
+       { \ell \ds \ell'\\
+        \sizebits{s} = b}
+       { \ell\ \mathsf{at}\ s \ds \offset{b}{\ell'}}
+       {\textsc{OffsetDs}}
+     \\
+     \inferrule
+       {\text{for each $i$: }  \ell_i \ds \ell_i'}
+       { \DLRec{\many{\FieldN{f}_i : \ell_i}} \ds \DLRec{\many{\FieldN{f}_i : \ell_i'}}}
+       {\textsc{RecordDs}}
+     \quad
+     \inferrule
+       { \ell_t \ds \ell_t' \\
+        \text{for each $i$: }  \ell_i \ds \ell_i'}
+       { \DLVar{\ell_t}{\many{\ConsN{A}\ (v_i) : \ell_i}} \ds \DLVar{\ell_t'}{\many{\ConsN{A}\ (v_i) : \ell_i'}}}
+       {\textsc{VariantDs}}
+   %  \quad
+   %  \inferrule
+   %    { \ell \ds \ell'}
+   %    { \DLArr{\ell} \ds \DLArr{\ell'}}
+   %    {\textsc{ArrayDs}}
+  \end{gathered}
+  $$
+  \vspace{1em}
+  ($M$ is the size of a machine word, in bits)
+
+  %\vspace{1em}
+
+  \begin{displaymath}
+  \begin{array}{l|l}
+    \begin{array}{ll}
+      \offset{o}{()} & = () \\
+      \offset{o}{\bitrange{o'}{s}} & = \bitrange{o + o'}{s} \\
+      \offset{o}{x\{o'\}} & = x\{o + o'\} \\
+      \offset{o}{\DLRec{\many{\FieldN{f}_i : \ell_i}}} & = \DLRec{\many{\FieldN{f}_i : \offset{o}{\ell_i}}} \\
+      \offset{o}{\DLVar{\ell_t}{\many{\ConsN{C}_i (v_i) : \ell_i}}} & = \DLVar{\offset{o}{\ell_t}}{\many{\ConsN{C}_i (v_i) : \offset{o}{\ell_i}}} \\
+      \offset{o}{\DLArr{\ell}} & = \DLArr{\offset{o}{\ell}}
+    \end{array} &
+  
+    \begin{array}{ll}
+      \sizebits{n\rB} & = 8n \\
+      \sizebits{n\rb} & = n  \\
+      \sizebits{(b_1 + b_2)} & = \sizebits{b_1} + \sizebits{b_2}
+    \end{array}
+  \end{array}
+  \end{displaymath}
+  \caption{Desugaring \Dargent}
+  \label{fig:dargent-desugar}
+\end{figure*}
+
