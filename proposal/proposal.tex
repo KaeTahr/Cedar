@@ -50,26 +50,25 @@
 \maketitle
 \section{Introduction}
 Precise control over memory layout is a core requirement in systems programming,
-where performance \autocite{adt_layout_faria}, binary compatibility, and hardware interaction often 
-depends on the exact physical arrangement of data in memory \autocite{device_driver_verification}. 
+where performance~\autocite{adt_layout_faria}, binary compatibility, and hardware interaction often 
+depends on the exact physical arrangement of data in memory~\autocite{device_driver_verification}. 
 The C programming
-language, long dominant in this domain \autocite{dist_systems_languages}
-\autocite{C_embedded_programming}, offers minimal abstractions over layout,
+language, long dominant in this domain~\autocite{dist_systems_languages,C_embedded_programming}
+, offers minimal abstractions over layout,
 relying on low-level mechanisms such as bit-fields, unions,
 \autocite{C_union_bugs} and compiler-specific
-pragmas \autocite{pragmas_jungck}. While flexible, these techniques are error-prone, difficult to verify,
-and notoriously fragile across compilers or platforms \
-\autocite{memory_errors_stridharan}. Layout bugs in C can
+pragmas~\autocite{pragmas_jungck}. While flexible, these techniques are error-prone, difficult to verify,
+and notoriously fragile across compilers or platforms~\autocite{memory_errors_stridharan}. Layout bugs in C can
 cause subtle performance issues, memory corruption, or security vulnerabilities
 ---particularly in contexts such as device drivers, embedded systems, and 
-protocol implementations \autocite{evaluation_memory_errors} \autocite{C_errors_study}.
+protocol implementations~\autocite{evaluation_memory_errors,C_errors_study}.
 
 Several approaches have emerged to address layout and memory related challenges
 and safety, including serialization frameworks (e.g., FlatBuffers
-\autocite{flat_buffers}, Cap'n Proto \autocite{capn_proto_serialization}),
-safe systems languages (e.g., Rust \autocite{rust_memory_v_c} \autocite{rust_memory_protection}),
+\autocite{flat_buffers}, Cap'n Proto~\autocite{capn_proto_serialization}),
+safe systems languages (e.g., Rust~\autocite{rust_memory_v_c,rust_memory_protection}),
  and formally verified tools such as
-Cogent and Dargent \autocite{dargent}. While these tools offer valuable insights, most are either
+Cogent and Dargent~\autocite{dargent}. While these tools offer valuable insights, most are either
 embedded in their restricted ecosystems or lack general applicability to
 existing C codebases. In particular, there remains a lack of dedicated
 tooling that allows systems programmers to write layout declarations
@@ -100,32 +99,32 @@ abstraction over memory, granting programmers the flexibility to write highly ef
 placing a significant burden on them to manually define binary layouts through
 constructs such as bit-fields, unions, and alignment directives. 
 While this low-level control is powerful, it is
-notoriously error-prone \autocite{C_errors_study,memory_errors_stridharan}, particularly in contexts where memory correctness is critical, 
+notoriously error-prone~\autocite{C_errors_study,memory_errors_stridharan}, particularly in contexts where memory correctness is critical, 
 such as device drivers, embedded systems, and network protocols~\autocite{memory_bottleneck}.
 
 Traditionally, developers have addressed these challenges by writing manual marshalling and 
-unmarshalling code \autocite{marshalling_performance}, or by using
+unmarshalling code~\autocite{marshalling_performance}, or by using
 unsafe macros to convert between data structures and low-level binary representations. 
 These techniques are difficult to maintain, costly in 
-performance \autocite{memory_bottleneck}, and extremely challenging
-to formally verify \autocite{memory_formal_verification}. As a result, layout-related bugs often lead to serious vulnerabilities,
+performance~\autocite{memory_bottleneck}, and extremely challenging
+to formally verify~\autocite{memory_formal_verification}. As a result, layout-related bugs often lead to serious vulnerabilities,
 system crashes, or subtle performance degradations~\autocite{memory_errors_stridharan}. A fundamental contributor to this problem
 is the lack of clear abstraction between what a data structure represents semantically and how 
 it is laid out in memory, complicating both human reasoning and automated analysis.
 
 Real-world examples highlight the seriousness of these issues. In the development
 of device drivers, for instance, hardware registers often impose strict alignment
-and bit-level layout constraints that must be matched precisely \autocite{C_embedded_programming}. Misinterpreting
+and bit-level layout constraints that must be matched precisely~\autocite{C_embedded_programming}. Misinterpreting
 these layouts can lead to misconfiguration of hardware devices, data corruption
-or complete system failure \autocite{memory_errors_stridharan}. Similarly, in network protocols stacks must
+or complete system failure~\autocite{memory_errors_stridharan}. Similarly, in network protocols stacks must
 adhere to standardized packet formats, where incorrect struct definitions can result
-in vulnerabilities exploitable by malformed input \autocite{network_memory_layouts}. These risks underline the critical
+in vulnerabilities exploitable by malformed input~\autocite{network_memory_layouts}. These risks underline the critical
 importance of providing developers with better abstractions for defining and verifying
 data layouts. 
 
 Recent research has explored more principled approaches to layout description.
 One notable example is \textbf{Dargent}, a data layout
-language integrated into the \textbf{Cogent} ecosystem \autocite{dargent}. Dargent enables programmers
+language integrated into the \textbf{Cogent} ecosystem~\autocite{dargent}. Dargent enables programmers
 to declaratively specify memory layouts for algebraic data types and
 supports automatic generation of layout-aware C code with formal correctness
 proofs, via integration with the Isabelle/HOL theorem prover. However, 
@@ -138,17 +137,17 @@ data description language designed to operate directly in the C ecosystem.
 Cedar enables programmers to define the memory
 layout of C structs through a high-level
 declarative syntax, while preserving compatibility with C's expressive and 
-performanca-oriented features. Implemented as a prototype compiler in  Haskell,
+performance-oriented features. Implemented as a preliminary prototype compiler in  Haskell,
 Cedar currently supports basic layout declarations. However, its design remains
 at an early stage and lacks the robustness and expressiveness required for
 practical adoption in systems programming.
 
 This project builds upon the foundational work of Cedar. Its goal is to 
-investigate the language and toolchain can be extended to support a 
+investigate how the language and toolchain can be extended to support a 
 broader range of C layout idioms, improve tooling robustness, and better
 serve the needs of systems programmers. In doing so, it aims to explore the
-design principled necessary to develop a sound and practical data description
-language for C, balancing flexibility, safety and usability.
+design principles necessary to develop a sound and practical data description
+language for C, balancing flexibility, safety, and usability.
 
 \section{Literature Review}
 A robust understanding of prior work is essential to motivate and inform
@@ -174,40 +173,40 @@ Systems programming is a field of computer science that focuses
 on the design and implementation of low-level software that interacts 
 directly with hardware and system resources. This includes operating
 systems, device drivers, embedded systems, and other performance-critical
-applications. \autocite{C_errors_study} \autocite{network_memory_layouts}
+applications.~\autocite{C_errors_study}~\autocite{network_memory_layouts}
 Systems programming is characterized by the need for
 high performance, fine-grained control over hardware resources, and efficient use
 of limited computational resources. These demands require a deep understanding of
 computer architecture, memory management, and low-level programming
-constructs \autocite{C_union_bugs}.
+constructs~\autocite{C_union_bugs}.
 
 
 Languages such as C and C++ have traditionally been the primary tools for
 systems programming, due to their minimal abstractions over hardware and their
-ability to produce highly efficient machine code. \autocite{C_embedded_programming}
+ability to produce highly efficient machine code.~\autocite{C_embedded_programming}
 However, this low-level access comes at the
-cost of increased complexity and potential for serious errors \autocite{C_errors_study}. In particular, 
+cost of increased complexity and potential for serious errors~\autocite{C_errors_study}. In particular, 
 the task of managing data layout---determining how structured data is
-represented and accessed in memory---poses significant risks \autocite{data_layout}. Programmers must
+represented and accessed in memory---poses significant risks~\autocite{data_layout}. Programmers must
 carefully control how structures are packed, how fields are aligned, and how
 memory is accessed, often across different platforms with varying architectural
 requirements.
 
 Manual control over data layout is critical in many systems applications. For
 example, device drivers must interact with hardware registers that demand exact
-field alignments and offsets \autocite{device_drivers};
-network stacks must correctly parse protocol \autocite{network_memory_layouts}
+field alignments and offsets~\autocite{device_drivers};
+network stacks must correctly parse protocol~\autocite{network_memory_layouts}
 headers with specific bit-level representations; and file systems must
-serialize and deserialize data structures according to on-disk formats. \autocite{file_systems}
+serialize and deserialize data structures according to on-disk formats.~\autocite{file_systems}
 Errors
 in data layout handling can lead to severe consequences, including memory
 corruption, security vulnerabilities, and unpredictable 
-behavior\autocite{memory_errors_stridharan} \autocite{memory_bottleneck} \autocite{evaluation_memory_errors}.
+behavior\autocite{memory_errors_stridharan,memory_bottleneck,evaluation_memory_errors}.
 
 Despite the importance of correct data layout, C provides little direct support
 for verifying or enforcing these properties. While some compiler-specific 
 directives exist (such as \texttt{\#pragma pack} and compiler-specific 
-attributes for struct alignment) \autocite{c_compilers}, their use is often fragile, non-portable,
+attributes for struct alignment)~\autocite{c_compilers}, their use is often fragile, non-portable,
 and difficult to reason about formally. Programmers must manually ensure the
 correctness of layouts, which increases maintenance costs and the likelihood of
 bugs.
@@ -230,25 +229,25 @@ At the language level, C provides several mechanisms\\ to manually control
 memory layout. Programmers can use \texttt{struct} field ordering, bit-fields,
 union types, and compiler-specific derivatives such as \texttt{\#pragma pack},
 \texttt{\_\_attribute\_\_(packed)}, or alignment hints to influence how data
-is laid out in memory \autocite{C_structures}. These features are widely used in systems programming,
+is laid out in memory~\autocite{C_structures}. These features are widely used in systems programming,
 particularly when interacting with hardware or network protocols that require
 binary compatibility with an external specification. 
 
 Despite their widespread use, these techniques are notoriously fragile. 
-Their behaviour can vary across compilers and platforms \autocite{c_compilers}, and small changes in
+Their behavior can vary across compilers and platforms~\autocite{c_compilers}, and small changes in
 struct definitions may silently alter the resulting layout due to implicit
 padding and alignment adjustments. As a result, layout correctness often
 depends on careful inspection and trial-and-error, rather than principled
 guarantees.
 
 To aid in the detection of layout-related bugs at runtime, developers commonly employ
-dynamic analysis tools such as \textbf{Valgrind} \autocite{valgrind} and 
-\textbf{AddressSanitizer (ASan)} \autocite{asan}. Valgrind
+dynamic analysis tools such as \textbf{Valgrind}~\autocite{valgrind} and 
+\textbf{AddressSanitizer (ASan)}~\autocite{asan}. Valgrind
 performs memory instrumentation to detect invalid memory accesses, buffer
 overflows, and uninitialized memory reads. AddressSanitizer, a compiler-based
 instrumentation tool, can detect a range of memory errors 
 including out-of-bounds accesses and use-after-free bugs. Similarly, 
-\textbf{Undefined Behavior Sanitizer (UBSan)} \autocite{ubsan} focuses on catching intergers
+\textbf{Undefined Behavior Sanitizer (UBSan)}~\autocite{ubsan} focuses on catching integers
 overflows, type punning violations, and alignment issues. These tools are
 invaluable for debugging complex memory errors and are widely used in systems
 development and testing pipelines.
@@ -279,13 +278,13 @@ to reduce the risk of memory corruption, undefined behavior, and layout
 mismatches that are prevalent in traditional C-based development.
 
 One of the most prominent language-based alternatives is 
-\textbf{Rust} \autocite{Rust_lang}, a systems programming language designed with memory
+\textbf{Rust}~\autocite{Rust_lang}, a systems programming language designed with memory
 safety as a central goal. Rusts's type system, borrow checker, and
 ownership model collectively present many classes of memory errors at
 compile time, including use-after-free bugs, dangling pointers,
 and data races. In terms of memory layout control, Rust offers the
 \texttt{\#[repr(C)]} attribute, which instructs the compiler to lay out
-structs and enums in a manner compatible with C \autocite{rust_repr}. This enables Rust code
+structs and enums in a manner compatible with C~\autocite{rust_repr}. This enables Rust code
 to safely interface with C libraries and binary formats, provided that
 the layout assumptions are correct.
 
@@ -299,13 +298,13 @@ compiler already provides. Furthermore, complex or performance-critical
 layout manipulations in Rust often require the use of \texttt{unsafe}
 code, which bypasses the language's safety guarantees. In such cases,
 developers are again responsible for manually ensuring correctness,
-returning to the same fragile patterns common in C \autocite{unsafe_rust}.
+returning to the same fragile patterns common in C~\autocite{unsafe_rust}.
 
 In addition to language-level solutions, a number of\\ serialization frameworks
 have been developed to simplify the task of representing structured data
 in binary form. Among the most widely adopted are \textbf{Protocol Buffers
-(Protobuf)} \autocite{protobuf}, \textbf{Cap'n Proto} \autocite{capn_proto_serialization},
- and \textbf{FlatBuffers} \autocite{FlatBuffers}. These tools
+(Protobuf)}~\autocite{protobuf}, \textbf{Cap'n Proto}~\autocite{capn_proto_serialization},
+ and \textbf{FlatBuffers}~\autocite{flat_buffers}. These tools
 allow developers to define data schemas using an external language or
 IDL (Interface Definition Language), from which code is generated to handle
 serialization, deserialization, and (to varying degrees) in-place memory access.
@@ -336,7 +335,7 @@ requiring translation layers or FFI binding that may introduce overhead or
 compatibility issues.
 
 Another emerging project of interest is \textbf{Carbon}, a language initiated
-by Google as a possible successor to C++ \autocite{carbon_cpp_safety}.
+by Google as a possible successor to C++~\autocite{carbon_cpp_safety}.
 Carbon is intended to provide modern
 language features, safety guarantees, and improved tooling while maintaining
 strong interoperability with existing C++ codebases. Although still in an early
@@ -366,7 +365,7 @@ tools or manual inspection, formal methods aim to \textit{prove}
 properties of programs, including memory safety, and layout correctness, with
 mathematical certainty. A notable system in this space is \textbf{Cogent},
 a functional programming language designed to generate verifiable and efficient
-C code for low-level systems components. \autocite{dargent}
+C code for low-level systems components.~\autocite{dargent}
 
 Cogent was developed with the goal of producing systems code that
 is both performant and formally verifiable. It achieves this by enforcing
@@ -378,7 +377,7 @@ refinement proofs showing that the low-level C code behaves exactly
 as specified by the high-level Cogent program.
 
 Within the Cogent ecosystem, \textbf{Dargent} serves as a domain-specific
-language for describing data layouts/ Dargent allows developers to specifiy
+language for describing data layouts/ Dargent allows developers to specify
 memory representation of algebraic data types with precise control over 
 bit-level layouts, offsets and alignment. This is particularly valuable
 in scenarios such as device drivers or file systems, where data must
@@ -403,7 +402,7 @@ setter functions for accessing the laid-out memory, along with machine-checked
 proofs that these functions correctly implement the layout semantics.
 As a result, Dargent provides a rare combination of
 \textbf{bit-level control}, \textbf{zero-copy memory access}
-and \textbf{formally erified correctness}.
+and \textbf{formally verified correctness}.
 
 Despite these advantages, Dargent and Cogent operate within a deliberately
 restricted domain. Cogent intentionally omits features such as recursion,
@@ -459,7 +458,7 @@ like layout visualization, code generation or IDE integration. These limitations
 significantly restrict usability in practice.
 
 An important design goal of Cedar is eventual compatibility with
-\textbf{CompCert}, a formally verified C compiler \autocite{compcert}. CompCert translates C code
+\textbf{CompCert}, a formally verified C compiler~\autocite{compcert}. CompCert translates C code
 into assembly, while providing machine-checked proofs of semantic preservation,
 making it particularly attractive for use in safety- and security-critical
 systems. However, CompCert's correctness guarantees assume that the source
@@ -500,7 +499,7 @@ C codebases.
 Cedar proposes a promising alternative by introducing a standalone layout
 description language for C, but its current implementation is at a 
 prototype stage. It lacks full support for common layout idioms, has limited
-diagnostic feedback and does not yet offer a robust or user-fiendly workflow
+diagnostic feedback and does not yet offer a robust or user-friendly workflow
 for systems programmers. In addition, it remains unclear how expressive or
 usable Cedar is in practical low-level programming scenarios, or how its design
 could evolve to better serve real-world needs.
@@ -510,7 +509,7 @@ implementation to make it a more robust and effective tool for declarative
 memory specification in C.
 
 This project aims to explore the design space of declarative layout
-languages for C by extending and evaluation Cedar. The specific objectives
+languages for C by extending and evaluating Cedar. The specific objectives
 are:
 \begin{itemize}
     \item \textbf{Identify key limitations} in Cedar's current syntax, semantics
@@ -536,7 +535,7 @@ This section outlines the methodology adopted to address the research
 objectives identified in Section~\ref{sec:problem}. The project lies at the intersection
 of programming language design, tool development, and low-level systems
 engineering. The core of our project is to aim is to implement and evaluate Cedar---a 
-declarative language for specifying the memory layouts of C datastructures. Our work 
+declarative language for specifying the memory layouts of C data structures. Our work 
 will provide an implementation of the language
 an early-stage prototype~\autocite{cedar_george}. Then we plan to validate Cedar in terms of 
 correctness and practical utility by applying it to testing on several case studies. 
@@ -734,22 +733,6 @@ future contributors can reason about and extend the tool with minimal
 overhead. The planned implementation tasks are informed by the evaluation
 in the previous phase, as well by ongoing case study development.
 
-\subsubsection{Error Propagation}
-%change to clarify why this is important in the design, maybe drop the reorganizing
-The first stage of implementation will involve refactoring key components of
-the Cedar prototype to improve code modularity and documentation. This
-includes:
-
-\begin{itemize}
-    \item Improving \textbf{error propagation} and internal diagnostics 
-    infrastructure. 
-    \item And adding \textbf{inline documentation} and a high-level developer
-    guide.
-\end{itemize}
-
-Refactoring will also serve as a means to deepen familiarity with the  codebase,
-enabling safer and more confident extension work.
-
 \subsubsection{Designing and Implementing Language Features}
 A key implementation goal is to broaden the expressiveness of Cedar's layout
 language. Several concrete extensions are planned, including:
@@ -796,7 +779,7 @@ This test infrastructure will enable faster iteration, safer refactoring, and
 better confidence in semantic correctness.
 
 \subsubsection{Possible Extension: Tooling Improvements}
-If time permits, auxilary tooling improvements may be explored, including:
+If time permits, auxiliary tooling improvements may be explored, including:
 \begin{itemize}
     \item A \textbf{command-line interface (CLI)} for easier layout-type
     checking across projects,
