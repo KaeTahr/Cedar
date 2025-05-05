@@ -1,0 +1,25 @@
+\begin{figure}
+$$
+  \begin{array}{llclr}
+  \text{Sizes} & s & ::= & \multicolumn{2}{l}{n\rB \mid n\rb \mid s + s} \\
+  \text{Layout expressions} 
+     & \ell & ::=  & s & \text{(block of memory)}\\
+     &      & \mid & x & \text{(layout variable)} \\
+     &      & \mid & \mathsf{pointer} & \text{(pointer layout)}\\
+     &      & \mid & L\ \many{\ell_i} & \text{(another layout)}\\
+     &      & \mid & \ell\ \mathsf{at}\ s & \text{(offset operator)}\\
+     &      & \mid & \ell\ \mathsf{after}\ \FieldN{f} & \text{(relative location)}\\
+     &      & \mid & \ell\ \mathsf{using}\ \omega & \text{(endianness)}\\
+     &      & \mid & \multicolumn{2}{l}{\mathsf{record}\ \{ \overline{\FieldN{f}_i : \ell_i} \}} \\
+     &      & \mid & \multicolumn{2}{l}{\mathsf{variant}\ (\ell)\ \{ \overline{\ConsN{A}_i\ (n_i) : \ell_i} \}} \\
+     % &      & \mid & \multicolumn{2}{l}{\mathsf{array}\ \{ \ell \}} \\
+  \text{Declarations} & d & ::= & \multicolumn{2}{l}{\mathbf{layout}\ L\ \many{x_i} = \ell} \\
+  \text{Layout names} &   & \ni & L\\
+  \text{Endianness} & \omega & ::= & \bigEnd \mid \littleEnd \\
+  \text{Natural numbers} &   & \ni & n, m\\
+%  \text{Layout contexts} & C & ::= & \many{\ell_i \sim \tau_i} \\
+\end{array}
+$$
+\caption{The syntax of the \Dargent surface language}
+\label{fig:dargent-syntax}
+\end{figure}

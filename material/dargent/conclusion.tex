@@ -1,0 +1,22 @@
+\section{Conclusion}{\label{sec:conclusion}}
+
+Systems code must adhere to stringent requirements on data
+representation to achieve efficient, predictable performance and avoid
+costly mediation at abstraction boundaries. In many cases, these
+requirements result in code that is error prone and tedious to write,
+ugly to read, and very difficult to verify.
+
+We are not without hope, however, as we have demonstrated in this
+paper. By using \Dargent, we can avoid the need for having the
+\emph{glue} code (be it manually written or synthesised) that marshals
+data from one format into another, and eliminate error-prone
+bit-twiddling operations for manipulating specific bits in device
+registers. Instead, we enable programmers to provide declarative
+specifications of how their algebraic datatypes are laid out. Given
+these specifications, our \emph{certifying} compiler generates
+corresponding C code that operates on these data types directly,
+ along with proofs that the generated code is
+functionally correct. We have shown the applicability of \dargent on a
+number of examples showcasing its support for low-level systems
+features including the formal verification of a timer device driver.
+

@@ -1,0 +1,48 @@
+\begin{figure}
+\begin{inductive}{\ell \sim \hat{\tau}}
+  \inferrule
+    {\mathrm{bits}\;(T) = s}
+    {\bitrange{o}{s} \sim T}
+    {\textsc{PrimTyMatch}}
+  \qquad
+  \begin{array}{ll}
+    \bits{\ConsN{U}n}   & = n  \\
+    \bits{\ConsN{Bool}} & = 1
+  \end{array}
+  \\
+  \inferrule
+    {M\ \text{is the pointer size}}
+    {\bitrange{o}{M} \sim \mathsf{pointer}}
+    {\textsc{BoxedTyMatch}}
+  \qquad
+  \inferrule
+    { }
+    {x\{o\} \sim \hat{\tau}}
+    {\textsc{VarMatch}}
+  \\
+  \inferrule
+    { }
+    {() \sim ()}
+    {\textsc{UnitMatch}}
+  \qquad
+  \inferrule
+    {\text{for each $i$: } \ell_i \sim \hat{\tau}_i}
+    {\DLRec{\many{\FieldN{f}_i : \ell_i}} \sim \{\many{\FieldN{f}_i : \hat{\tau}_i}\}}
+    {\textsc{URecordMatch}}
+  % \\
+  % \inferrule
+  %   {\ell \sim \tau \\
+  %    \ell\ \text{is byte aligned}}
+  %   {\DLArr{\ell} \sim \ArrayTy{\tau}{v}{\Unboxed}}
+  %   {\textsc{UArrayMatch}}
+  \\
+  \inferrule
+    {\text{for each $i$:\ } \ell_i \sim \hat{\tau}_i}
+    {\DLVar{s}{\many{\ConsN{A}_i\ (v_i) : \ell_i}} \sim \VariantTy{\many{\ConsN{A}_i\ \hat{\tau}_i}}}
+    {\textsc{VariantMatch}}
+\end{inductive}
+\caption{Matching relation between layouts and types}
+\label{fig:layout-type}
+\end{figure}
+
+

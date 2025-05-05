@@ -1,0 +1,21 @@
+\begin{figure}
+\[
+\begin{array}{llclr}
+  \text{Bit ranges} & r\\
+  \text{Offsets}    & o & \in & \mathbb{N} \\
+  \text{Layouts} & \ell & ::=  & () & \text{(unit layout)}\\ 
+                 &      & \mid & r_\omega & \text{(primitive layout)} \\
+                 &      & \mid & x\{o\} & \text{(layout variable)} \\
+                 &      & \mid & \multicolumn{2}{l}{\mathsf{record}\ \{ \overline{\mathrm{f}_i\!: \ell_i} \}}\\
+                 &      & \mid & \multicolumn{2}{l}{\mathsf{variant}\ (\ell)\ \{ \overline{\mathrm{A}_i\ (n_i)\!: \ell_i} \}}\\
+ %                &      & \mid & \multicolumn{2}{l}{\mathsf{array}\ \{ \ell \}}\\
+  \text{Field names} & & \ni & \mathrm{f}\\
+  \text{Constructors} & & \ni & \mathrm{A}\\
+  \text{Endianness} & \omega & ::= & \multicolumn{2}{l}{\mathsf{BE} \mid \mathsf{LE} \mid \mathsf{ME}} \\
+%  \text{Layout contexts} & C & ::= & \many{\ell_i \sim \tau_i} \\
+\end{array}
+\]
+\caption{The syntax of the \Dargent core language}
+\label{fig:dargent-core}
+\end{figure}
+

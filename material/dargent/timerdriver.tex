@@ -1,0 +1,236 @@
+\section{Verification of a Timer Device Driver}
+\label{sec:timerdriver}
+
+In this section, we present a formally verified \cogent timer driver (available
+in the supplementary material), that we ran
+successfully on an ODROID hardware, based on the seL4 operating system~\citep{seL4:2022}. The formal verification was conducted in Isabelle/HOL.
+Our formalisation took advantage of the fact that the
+shallow embedding of the \cogent program in Isabelle remains simple, as the layouts are fully transparent to the functional
+semantics of the \cogent program.
+
+
+Our \cogent implementation is based on a C driver\footnote{\url{\urltimerdriver}}
+% that
+% is sixty lines long and 
+consisting of an interface for two timers, called A and E, provided by the device.
+Both implementations are about the same size ($\approxeq$60 LoC, excluding type
+and layout declarations). 
+%
+The driver can be used to:
+\begin{itemize}
+\item 
+  measure elapsed time since its initialisation, using the device timer E, and
+  \item
+    generate an interrupt at the end of a (possibly periodic) countdown,
+    using the device timer~A.
+\end{itemize}
+The driver consists of four functions:
+\begin{itemize}
+\item
+  \href{\urltimerdriver#L13}{\lstinline{meson_init}}
+  initialises the device register;
+  \item
+    \href{\urltimerdriver#L29}{\lstinline{meson_get_time}} returns the elapsed time
+    since the initialisation (in nanoseconds);
+  \item 
+    \href{\urltimerdriver#L29}{\lstinline{meson_set_timeout}}
+    sets the countdown value, making it possibly periodic;
+  \item 
+    \href{\urltimerdriver#L59}{\lstinline{meson_stop_timer}} stops the countdown.
+\end{itemize}
+The driver state is passed around as a C structure called
+\href{\urltimerdriverh#L82}{\lstinline{meson_timer_t}}, consisting of
+the location of the device registers in memory and a boolean flag
+remembering whether the countdown is~enabled.
+
+
+\subsection{Using \dargent}
+In the original C implementation, operations on the timer registers are largely based on
+bitwise operations, which are unintuitive to read, error-prone, and more difficult to prove correct. Modelling the timer registers as algebraic
+data types, like records and sum types,
+makes the program easier to read and to reason about, while \dargent still allows us control over low-level representation details. 
+%
+With \dargent, the timer register can be defined as:
+\begin{lstlisting}[language=Cogent]
+  type Meson_timer_reg = {
+     timer_a_en : Bool,
+     timer_a : U32,
+     timer_a_mode : Bool,
+     timer_a_input_clk : Timeout_timebase,
+     timer_e : U32,
+     timer_e_hi : U32,
+     timer_e_input_clk : Timestamp_timebase
+  } layout record {
+       timer_a_mode : 1b at 11b,
+       timer_a_en : 1b at 15b,
+       timer_a_input_clk : LTimeout_timebase,
+       timer_e_input_clk : LTimestamp_timebase,
+       timer_a : 4B at 4B,
+       timer_e : 4B at 72B,
+       timer_e_hi : 4B at 76B
+    }
+\end{lstlisting}
+Contrary to the C definition, which is mostly type-less and relies on macros and bit-shifting
+to denote the semantics of the bits in use, the \cogent definition comes with a lot more
+type information, and also concisely prescribes how bits are used and placed.
+A typical set-value operation in C can thus be rewritten in a more abstract way in \cogent as
+record field updates, shown in~\autoref{fig:timer-set}.
+
+
+ % Not only is it more readable,
+ % but it also induces a nicer Isabelle shallow
+ % embedding, using records and variant types, easier to formally verify.
+
+%   As an example of layout specification, the following one
+%   details the memory representation of the variant type for the timer A units:
+%   \begin{lstlisting}
+%     layout LTimeout_timebase =
+%     variant (2b) {
+%         TIMEOUT_TIMEBASE_1_US  (0) : 0b
+%       , TIMEOUT_TIMEBASE_10_US (1) : 0b
+%       , TIMEOUT_TIMEBASE_100_US(2) : 0b
+%       , TIMEOUT_TIMEBASE_1_MS  (3) : 0b }
+%   \end{lstlisting}
+%   Except for the shared tag location (2 bits long), each payload
+%   is 0 bit long since the constructors do not take any argument. 
+%   This layout corresponds to the following C defined constants:
+%   %\footnote{\url{\urltimerdriverh}}:
+%   % in the interface  file:
+%   \begin{lstlisting}[language=C]
+%     #define TIMEOUT_TIMEBASE_1_US   0b00
+%     #define TIMEOUT_TIMEBASE_10_US  0b01
+%     #define TIMEOUT_TIMEBASE_100_US 0b10
+%     #define TIMEOUT_TIMEBASE_1_MS   0b11
+%   \end{lstlisting}
+%   
+  
+\subsection{Verification}
+To formally verify the driver, we first implemented a purely functional
+specification of the driver. Then, we proved that the shallow embedding
+of the \cogent driver refines it.
+
+Both the device and the driver states are threaded through the functional implementation.
+For example, the initialisation function performs a functional update of the device state,
+represented as a record similar to
+\lstinline|Meson_timer_reg| (ignoring the layout annotations):
+\begin{lstlisting}[language=isa]
+  initialize s =
+    (s \<lparr> deviceState := (deviceState s)
+          \<lparr> timer_e_low_hi := 0,
+             timer_a_input_clk := TIMEOUT_TIMEBASE_1_MS,
+             timer_e_input_clk := TIMESTAMP_TIMEBASE_1_US
+           \<rparr> \<rparr> )
+\end{lstlisting}
+
+% \review{numbers on effort on manual verific\ation?}
+Both the specification and the manual functional correctness proof are $\approxeq$150 lines each.
+The manual proof is established by straightforward equational reasoning---much easier than reasoning about the bitwise operations implemented in C. Layouts are transparent on the shallow embedding level: \cogent records are encoded as Isabelle records just as if no layouts were~specified.
+
+This manual functional correctness proof composed with the automatically generated compiler certificate establishes
+the correctness of the compiler-generated C code. All the tedium in the layout details is successfully hidden by our automatically generated compiler proofs.
+
+\subsection{Discussion}
+\label{ssec:issues}
+
+
+%\zilinc{Is it relevant?}
+Even though this timer driver is a short program, our formal verification nonetheless uncovered several bugs or implicit assumptions that had been made in the original C driver.
+
+\begin{figure}
+\begin{tabular}{p{0.5\textwidth}p{0.5\textwidth}}
+\begin{minipage}{.5\textwidth}
+\begin{lstlisting}[language=C]
+  timer->regs->mux =
+     TIMER_A_EN 
+    | (TIMEOUT_TIMEBASE_1_MS << 
+       TIMER_A_INPUT_CLK)
+    | (TIMESTAMP_TIMEBASE_1_US << 
+       TIMER_E_INPUT_CLK) ;
+\end{lstlisting}
+\end{minipage} &
+\begin{minipage}{.5\textwidth}
+\begin{lstlisting}[language=Cogent]
+  regs {
+     timer_a_en = True,
+     timer_a_input_clk = TIMEOUT_TIMEBASE_1_MS,
+     timer_e_input_clk = TIMESTAMP_TIMEBASE_1_US }
+\end{lstlisting}
+\end{minipage}
+\end{tabular}
+  \caption{The code 
+  enables the timer A, and selects
+  the time units for the timers A and E.
+  \texttt{TIMEOUT\_TIMEBASE\_1\_MS} and
+  \texttt{TIMESTAMP\_TIMEBASE\_1\_US} are constant macro definitions in C (left), whereas in \cogent (right)
+  they can be modelled as constructors of a variant type, but compiled to 2-bit integers.}
+\label{fig:timer-set}
+\end{figure}
+
+Firstly, the original implementation of the initialisation function \lstinline{meson_init}
+enabled the countdown timer A, without setting a starting value for it. The behaviour of the timer
+device in this case is unspecified. In fact, this countdown timer should 
+only be enabled when used---that is, in the \lstinline{meson_set_timeout} function.
+%We thus
+%removed this instruction.
+Another related issue is that the initialisation function does not ensure that
+the disable flag of the driver state is synchronised with the enable flag of the
+device register, but rather assumes such. We introduced a specific invariant to the functional correctness specification of this function, to make this assumption explicit.
+
+Additionally, when verifying the function
+ \lstinline{meson_get_time}, we had to explicitly assume that the timer value in the device state is not too large. While the device provides the timer value in microseconds, the function is specified to return the time in nanoseconds.
+The conversion requires a multiplication by one thousand, possibly triggering
+an overflow if the timer value is larger than approximately 500 years. Thus, we had to add a precondition to rule out such cases.
+
+\subsection{Volatile Behaviour}% and pointer arithmetic}
+
+Although some device registers (such as the configuration register)
+behave as regular memory, other registers are volatile. In particular, the value of 
+timer E may change between reading, so reading it twice may yield different values.
+The original C implementation of \lstinline{meson_get_time} exploits this behaviour
+to detect a possible overflow when reading the lower bits of timer E. 
+
+Such volatile memory can be modelled by adapting the getter functions on those
+memory locations to return non-deterministic values. While \cogent functions
+are deterministic, non-determinism  can be expressed by threading an additional
+abstract value through a deterministic version of the function, then
+abstracting that function to a non-deterministic one without that additional
+value. In particular, the getter function of a volatile register can be
+replaced by a function that takes an additional abstract type as input and
+returns a value of that type along with the value of the register. The shallow
+embedding of this getter function can then be abstracted to a function that
+ignores that additional input and returns a non-deterministic value representing
+the true behaviour of the volatile register. We worked out a small example that
+sums two random numbers to clearly demonstrate this idea. The verification of
+this example illustrates that summing two random numbers can yield any value
+(not just even values). 
+
+%In this formalisation, we have not modelled these volatile features.
+%As mentioned in Section~\ref{ssec:power-control-system}, 
+%we plan to extend \cogent to handle them more carefully in future work.
+
+% for the timer E reset: setting any value to the lower bits of timer E 
+% resets the whole timer E.
+% We thus implemented this reset in C, as an abstract function from the viewpoint of \cogent.
+% This makes it possible to give it a custom axiomatisation in the shallow
+% embedding that reflects this behaviour.
+% This volatile behaviour can be modelled by introducing a layer of non-determinism in the shallow embedding, when necessary. The \cogent file system BilbyFs has an example of how non-determinism can be modelled on top of the shallow embedding~\cite{Amani:phd}. One can explore   dealing with volatile registers in a similar manner.
+%In future work, we plan to address volatile behaviours in a more adapted manner, for example
+%by .
+
+%We also didn't fully re-implement original initalisation function. In particular,
+%we kept on the C side the null pointer checks and the instruction finding the
+%device register location, as it involves pointer arithmetic, which cannot
+%be expressed in \cogent.
+% \begin{lstlisting}[language=C]
+% int meson_init(meson_timer_t *timer, meson_timer_config_t config)
+% {
+%     if (timer == NULL || config.vaddr == NULL) {
+%       return EINVAL;
+%     }
+%     timer->regs = (void *)((uintptr_t) config.vaddr + (TIMER_BASE + TIMER_REG_START * 4 - TIMER_MAP_BASE));
+%     // remaining of the initialisation function, written in Cogent
+%     cogent_initialize(timer);
+%     return 0;
+% }
+% \end{lstlisting}
+

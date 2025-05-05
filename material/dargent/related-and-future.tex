@@ -1,0 +1,114 @@
+\section{Related Work}\label{sec:rfw}
+
+The idea of describing low-level data layout with high-level languages is
+not new. The rich area of research makes it
+challenging to fully contextualise our work within the
+space. Simplifying our analysis a bit, we can roughly bifurcate the
+literature into research on \emph{program synthesis} and \emph{program
+abstraction}.
+
+For instance, the PADS family of languages~\citep{FisherW11,
+FisherG05, MandelbaumFWFG07}, PacketTypes~\citep{McCannC00},
+Protege~\citep{WangG11}, DataScript~\citep{Back02}, Nail~\citep{Bangert_Zeldovich_14},
+the generic
+packet description by \citet{vanGeest_Swierstra_17}, the verified Protocol
+Buffer~\citep{Ye_Delaware_19} built upon the \textsc{Narcissus}
+framework~\citep{Delaware_SPYC_19}, EverParse~\citep{everparse},
+and contiguity types~\citep{Slind_21} are all concerned
+with synthesising a parser program (and also a pretty-printer for some of
+them) from a high-level specification of the data format.
+
+\dargent's primary focus is on the data refinement of algebraic
+data types rather than securely operating on wire formats. Even though our
+technology shares a lot in common, the problem we try to solve
+is very different. In particular, \dargent is not a language for parsing or
+converting between data formats. It is an extension to \cogent for its compiler to 
+fine-tune the target code generation so that compiled code
+is already in the desired format that is suitable for systems software.
+In many cases, \dargent can eliminate the need for such a data marshalling tool entirely. 
+
+Along with \dargent,
+LoCal~\citep{Vollmer:2019}, SHAPES~\citep{Franco:17, Franco:19}
+and \texttt{hobbit}~\citep{Diatchki_JL_05, Diatchki_Jones_06} fall in
+ the program abstraction camp and 
+are concerned with compiling
+data structures in a program into specific layouts dictated by
+the user. Programmers can therefore still work
+with high-level source code, while the compiler 
+does the heavy-lifting to generate the low-level mechanisms, retaining the 
+separation of program logic from low-level concerns.
+
+LoCal~\citep{Vollmer:2019} is a compiler for a first-order pure functional
+language that can operate on recursive serialised data by translation into an
+intermediate \emph{location} calculus, LoCal, mapping pointer indirections of
+the high-level language to pointer arithmetic calculations on a base address.
+The final compiler output is C code which, interestingly, preserves the
+asymptotic complexity of the original recursive functions, although this
+property is implementation-defined and not assured by any formal theorem.
+Nonetheless, LoCal's type safety theorem does ensure a form of memory safety:
+Each location is initialised and written to exactly once. The latter property
+is a key difference to our work, since \Dargent can operate on mutable data by
+virtue of \cogent's linear types. On the other hand, \cogent is a total
+language and purposely lacks full support for recursion, we therefore do not
+yet support recursive layout descriptions. Primitive recursive types for
+\cogent are under development and use records~\citep{Murray:2019}. Since
+we already support layout descriptions on records, we believe, once recursive
+types are supported, adding support for recursive layouts would be a
+straightforward engineering task. As a systems language, \cogent code often
+uses abstract types such as arrays and  iteration constructs over such types.
+Arrays and iteration constructs over arrays were recently verified through
+\cogent's FFI~\cite{Cheung_OR_22}. We have ensured these proofs work with our
+\dargent extensions. The most significant difference with LoCal is that
+\Dargent is a \emph{certifying} data layout language, with generated theorems
+that the translation is correct, whereas LoCal offers no verified guarantees
+about its final compiler output.
+
+The SHAPES~\citep{Franco:17, Franco:19} extension is designed for fine-tuning 
+the layout of object classes for an object-oriented language to improve cache performance. 
+It allows
+users to define layout-unaware classes and specify what layout to use at
+object instantiation time. This class parameterisation mechanism shares
+some similarity with \dargent's layout polymorphism. The layouts that SHAPES
+is concerned with are primarily arrays of values, which are key to better
+cache locality but are not how compilers
+of managed languages natively represent data in memory. Their layouts are not
+down to the bit-level, but rather on the level of record fields.
+In contrast, \dargent's layouts are lower-level and more flexible, and
+are less tailored for a specific optimisation. SHAPES's type system maintains
+memory safety properties of the program when it splits and lays out
+boxed data types. Therefore it also plays a similar role as \cogent's
+uniqueness type system. In our work, these two aspects are independently managed:
+\dargent does not directly interfere with memory safety properties guaranteed
+by \cogent's type system. 
+
+
+The \texttt{hobbit} interpreter~\citep{Diatchki_JL_05} extends a Haskell-like functional language with
+first-class support for bit-level types and operations (e.g.\ bit concatenation
+and splitting), supporting external
+representations of bit-level structures. Their work initially focused on
+bit-data that can be stored within a single register and later gets extended
+to memory areas realised as arrays~\citep{Diatchki_Jones_06}.
+Instead of assigning a high-level type
+and a low-level layout to an object in memory, their types already prescribe
+the layouts, by virtue of the first-class bit-data support in the language. In
+that sense, it is more comparable to the bit fields feature in the C language,
+or to \cogent if the \dargent layout descriptors were subsumed by the \cogent types.
+Their research novelty also lies in using advanced type system features that are readily
+available in Haskell to encode the new language constructs and to perform
+sophisticated typechecking, which is arguably an orthogonal
+matter to data layouts.
+
+Floorplan~\citep{Cronburg:2019} is also somewhat
+relevant to \dargent, but hardly fits in either category. It is a
+memory layout specification language for declaratively describing the
+structure of a heap as laid out by a memory manager.
+It therefore chiefly serves the implementors of memory managers rather than
+systems developers and users in general, and the abstraction it provides
+does not necessarily extends to algebraic types of heap objects.
+The compiler follows the specification to generate memory-safe Rust code to perform
+common tasks that are needed in the implementation of a memory manager.
+The semantics of a heap layout
+specification is denoted by the set of values that the heap can take.
+In contrast, the semantics of a \dargent layout is characterised by the getter
+and the setter functions.
+

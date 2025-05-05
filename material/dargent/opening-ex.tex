@@ -1,0 +1,40 @@
+
+In Linux, a \cc{dev_t} type is used to represent device numbers. It is \cc{typedef}ed to
+a 32-bit unsigned integer (\cc{u32}). It is composed of two parts: a major number and a minor
+number. Within the 32 bits, 12 bits are set aside for the major number, and the remaining
+20 bits for the minor number. In C, to construct a \cc{dev_t} or to fetch the device
+numbers, users need to use a some macros, which are implemented with convoluted bit twiddling:
+\begin{lstlisting}[language=C]
+#define MINORBITS    20
+#define MINORMASK    ((1U << MINORBITS) - 1)
+#define MAJOR(dev)   ((unsigned int) ((dev) >> MINORBITS)) // get major
+#define MINOR(dev)   ((unsigned int) ((dev) & MINORMASK))  // get minor
+#define MKDEV(ma,mi) (((ma) << MINORBITS) | (mi))          // construct dev_t
+\end{lstlisting}
+Logically, the \cc{dev_t} type is simply a product of two integers.
+To implement it in a high-level language, users would typically define it as a record
+type with two integer fields. For example, in \cogent, it may be defined as:\footnote{
+As an opening example, we show pseudo-\cogent code here to omit the irrelevant \cogent
+intricacies.}
+
+\begin{lstlisting}[language=Cogent]
+type Dev_t = { major : Int, minor : Int }
+\end{lstlisting}
+and to access the fields of such an object \cg{dev},
+the normal member operation (\cg{dev.major} and \cg{dev.minor}) can be used.
+With this abtract view of the type, which facilitates simpler operations on this type,
+the user unfortunately has to hand over control of the type's layout to the
+\cogent compiler. The user then needs to study the compiler's code generation convention
+and write data format conversion functions to related the compiled \cg{Dev_t} type with
+the native C type \cc{dev_t}. In fact, the user does not have to make this compromise. With
+\dargent, the user can have both the abstraction and control over types' memory
+layouts. By specifying a \dargent layout description, the \cogent compiler can
+generate C code with the specified layout:
+\begin{lstlisting}[language=Cogent]
+type Dev_t = { major : Int, minor : Int }
+  layout record { major : 12b, minor : 20b }
+\end{lstlisting}
+This is transparent to the functional smenatics
+of the \cogent program. Namely, the \cg{dev.major} operation continues to work regardless
+of the underlying layout of \cg{dev}.
+
