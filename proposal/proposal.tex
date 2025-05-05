@@ -1,4 +1,4 @@
-\documentclass[12pt, draft]{article} 
+\documentclass[12pt]{article} 
 \usepackage{graphicx}
 \usepackage[bottom]{footmisc}
 \usepackage[utf8]{inputenc} \usepackage[backend=biber, style=numeric]{biblatex}
@@ -51,7 +51,7 @@
 \section{Introduction}
 Precise control over memory layout is a core requirement in systems programming,
 where performance \autocite{adt_layout_faria}, binary compatibility, and hardware interaction often 
-depend on the exact physical arrangement of data in memory \autocite{device_driver_verification}. 
+depends on the exact physical arrangement of data in memory \autocite{device_driver_verification}. 
 The C programming
 language, long dominant in this domain \autocite{dist_systems_languages}
 \autocite{C_embedded_programming}, offers minimal abstractions over layout,
@@ -60,7 +60,7 @@ relying on low-level mechanisms such as bit-fields, unions,
 pragmas \autocite{pragmas_jungck}. While flexible, these techniques are error-prone, difficult to verify,
 and notoriously fragile across compilers or platforms \
 \autocite{memory_errors_stridharan}. Layout bugs in C can
-lead to subtle performance issues, memory corruption, or security vulnerabilities
+cause subtle performance issues, memory corruption, or security vulnerabilities
 ---particularly in contexts such as device drivers, embedded systems, and 
 protocol implementations \autocite{evaluation_memory_errors} \autocite{C_errors_study}.
 
@@ -83,7 +83,7 @@ compatibility. However, the current implementation is limited, making it difficu
 to apply in real-world use-cases.
 
 % evaluate design, implement Cedar based on existing preliminary prototype.
-This project aims to extend and evaluate Cedar by refining its language design, 
+This project aims to implement, design, and evaluate Cedar by refining its language design, 
 strengthening its implementation, and applying it to representative systems
 programming scenarios. Through a structured methodology involving critical
 analysis, language extension, and case-study based evaluation, the project seeks
@@ -138,7 +138,7 @@ data description language designed to operate directly in the C ecosystem.
 Cedar enables programmers to define the memory
 layout of C structs through a high-level
 declarative syntax, while preserving compatibility with C's expressive and 
-performance-oriented features. Implemented as a prototype compiler in  Haskell,
+performanca-oriented features. Implemented as a prototype compiler in  Haskell,
 Cedar currently supports basic layout declarations. However, its design remains
 at an early stage and lacks the robustness and expressiveness required for
 practical adoption in systems programming.
@@ -212,7 +212,7 @@ and difficult to reason about formally. Programmers must manually ensure the
 correctness of layouts, which increases maintenance costs and the likelihood of
 bugs.
 
-These challenges are not merely theoretical. Numerous real-world 
+These challenges are not merely theoretical.\\ Numerous real-world 
 vulnerabilities---such as buffer overflows, misaligned memory accesses, and
 serialization bugs---can be traced back to subtle layout issues.
 Consequently, there has been significant interest in developing tools,
@@ -226,7 +226,7 @@ debugging tools to mitigate layout-related errors. These approaches
 while effective to a degree, remain fundamentally limited in their ability to
 ensure correctness, safety, and long-term maintainability.
 
-At the language level, C provides several mechanisms to manually control
+At the language level, C provides several mechanisms\\ to manually control
 memory layout. Programmers can use \texttt{struct} field ordering, bit-fields,
 union types, and compiler-specific derivatives such as \texttt{\#pragma pack},
 \texttt{\_\_attribute\_\_(packed)}, or alignment hints to influence how data
@@ -301,7 +301,7 @@ code, which bypasses the language's safety guarantees. In such cases,
 developers are again responsible for manually ensuring correctness,
 returning to the same fragile patterns common in C \autocite{unsafe_rust}.
 
-In addition to language-level solutions, a number of serialization frameworks
+In addition to language-level solutions, a number of\\ serialization frameworks
 have been developed to simplify the task of representing structured data
 in binary form. Among the most widely adopted are \textbf{Protocol Buffers
 (Protobuf)} \autocite{protobuf}, \textbf{Cap'n Proto} \autocite{capn_proto_serialization},
@@ -374,7 +374,7 @@ a total, pure, and strongly-typed programming model, from which it is possible
 to extract formal semantics. The Cogent compiler generates both C code and
 a corresponding formal representation in Isabelle/HOL, a proof assistant
 used to verify properties of the generated code. This model enables
-refinement proofs showing that the low-level C code behaves exactylu
+refinement proofs showing that the low-level C code behaves exactly
 as specified by the high-level Cogent program.
 
 Within the Cogent ecosystem, \textbf{Dargent} serves as a domain-specific
@@ -382,7 +382,7 @@ language for describing data layouts/ Dargent allows developers to specifiy
 memory representation of algebraic data types with precise control over 
 bit-level layouts, offsets and alignment. This is particularly valuable
 in scenarios such as device drivers or file systems, where data must
-conform to strict binary formats. Unlike tradtional approaches that require
+conform to strict binary formats. Unlike traditional approaches that require
 hand-written marshalling logic or inline bit manipulation, Dargent integrates
 layout descriptions into the language itself and automates the generation of
 accessors that manipulate the raw memory safely.
@@ -441,7 +441,7 @@ language. It is intended to work directly with C code, making it more accessible
 for real-world systems development.
 
 The current prototype, implemented in Haskell, includes a semantic analysis
-phase, which operates on reduced representations onf layouts and C types.
+phase, which operates on reduced representations of layouts and C types.
 These representations are obtained through a basic parser. Once reduced, Cedar
 applies a structural matching relation to check for compatibility
 between layouts and their associated C types. This allows the tool
@@ -477,7 +477,7 @@ Although integration with CompCert is not currently in the scope of the project,
 Cedar's design positions it as a potential framework or pre-analysis tool that
 could generate layout-safe C code suitable for verified compilation.
 
-In summary, Cedar represents a promising but incomplete approach to declarative
+In summary, Cedar represents a promising but\\ incomplete approach to declarative
 specification in C. It borrows key insights from Dargent---particularly 
 type-layout separation and structural layout matching---but repurposes them for
 a more general context. By complementing verified toolchains like
@@ -538,7 +538,7 @@ of programming language design, tool development, and low-level systems
 engineering. The core of our project is to aim is to implement and evaluate Cedar---a 
 declarative language for specifying the memory layouts of C datastructures. Our work 
 will provide an implementation of the language
-an early-stage prototype~\autocite{}. Then we plan to validate Cedar in terms of 
+an early-stage prototype~\autocite{cedar_george}. Then we plan to validate Cedar in terms of 
 correctness and practical utility by applying it to testing on several case studies. 
 
 This goal requires a combination of literature-informed design analysis, critical evaluation of
@@ -741,8 +741,6 @@ the Cedar prototype to improve code modularity and documentation. This
 includes:
 
 \begin{itemize}
-    \item \textbf{Reorganizing core modules} to separate concerns such as layout 
-    parsing, type reduction, and semantic matching.
     \item Improving \textbf{error propagation} and internal diagnostics 
     infrastructure. 
     \item And adding \textbf{inline documentation} and a high-level developer
@@ -756,7 +754,7 @@ enabling safer and more confident extension work.
 A key implementation goal is to broaden the expressiveness of Cedar's layout
 language. Several concrete extensions are planned, including:
 \begin{itemize}
-    \item \textbf{Flexible array memeber support}, which is ciritical for
+    \item \textbf{Flexible array member support}, which is critical for
     struct compatibility with variable-length protocols
     \item \textbf{Nested layout references}, to allow layout composition and
     reuse
@@ -826,7 +824,7 @@ layout conventions. By applying Cedar to such examples, the project aims
 to assess both its practical capabilities and limitations.
 
 %\subsubsection{Case Study Selection}
-We plan to consider  three case studies were are used to evaluate Dargent~\autocite{}. 
+We plan to consider  three case studies were are used to evaluate Dargent~\autocite{dargent}. 
 This allows for a direct comparison
 between Cedar and its closest conceptual predecessor. Each case study reflects
 a common layout challenge in systems programming, and has been selected to test
@@ -954,7 +952,7 @@ Rust, and related tools. Initial engagement with the Cedar codebase to understan
 its internal structure. Refinement of research objectives and drafting of early
 proposal sections.
 \item Week 8: Finalize the writing of the project proposal.
-\item    Weeks 9-10: Begin internal refactoring
+\item    Weeks 9-10: Begin development and refactoring
 \item Weeks 11-15: Design and implement key extensions.
 \item Weeks 16-17: Apply case studies to new implementation
 \item    Weeks 18: Reflect on evaluation outcomes. Iterate on
