@@ -170,6 +170,7 @@ tokens :-
 
   -- COMMENTS 6.4.9
   -- not immediately clear how to implement
+  -- no need to tokenize comments
 
   -- KEYWORDS 6.4.1
   @cKeyword | @dargentKeyword {\s -> Keyword s}
@@ -183,6 +184,8 @@ tokens :-
   
   -- Enum Const 6.4.4.3
   -- exactly mirrors identifier pattern
+  -- handled semantically
+  -- cannot see a reason to handle at a lexer level yet
 
   -- Char Const 6.4.4.4
   -- @octalEscapeSequence  { \s -> TokenCharConstant s }
