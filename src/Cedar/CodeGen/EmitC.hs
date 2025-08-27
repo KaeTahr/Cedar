@@ -1,45 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Cedar.CodeGen.EmitC
-  ( Prim(..), CType(..), Endian(..)
-  , Range(..), CField(..), CBoundStruct(..)
-  , emitHeader, emitImpl
-  , bytesNeeded
+  (
+    emitHeader, emitImpl, bytesNeeded
   ) where
 
 import Data.List (intercalate)
 import Data.Char (toLower)
+import Cedar.CodeGen.Boundary
+  (
+    Prim(..), CType(..), Endian(..)
+  , Range(..), CField(..), CBoundStruct(..)
+  , bytesNeeded
+  )
 
 -- ====== Mock AST structure after /semantic phase ======
-
-data Prim = I8 | I16 | I32 | I64 | F32 | F64 | Ptr
-  deriving (Eq, Show)
-
-data CType
-  = CPrim Prim
-  | CPointer CType
-  | CStruct [(String, CType)]
-  deriving (Eq, Show)
-
-data Endian = LE | BE deriving (Eq, Show)
-
-data Range = Range { offsetBits :: Int, sizeBits :: Int }
-  deriving (Eq, Show)
-
-data CField = CField
-  { fName   :: String
-  , fType   :: CType
-  , fRange  :: Range
-  , fEndian :: Maybe Endian
-  }
-  deriving (Eq, Show)
-
-data CBoundStruct = CBoundStruct
-  { sName     :: String
-  , sSizeBits :: Int  -- total bits needed (rounded up to byte boundary)
-  , sFields   :: [CField]
-  }
-  deriving (Eq, Show)
-
 
 emitHeader :: CBoundStruct -> String
 emitHeader s =
@@ -70,9 +44,6 @@ emitImpl s =
     ] ++ unlines (concatMap (implPair (sName s)) (sFields s))
 
 -- ====== Helpers ======
-
-bytesNeeded :: Int -> Int
-bytesNeeded bits = (bits + 7) `div` 8
 
 ctypeC :: CType -> String
 ctypeC (CPrim I8)   = "uint8_t"

@@ -32,5 +32,5 @@ size _ I32                = 4 * 8
 size _ I64                = 8 * 8 
 size _ F32                = 4 * 8
 size _ F64                = 8 * 8
-size config LongDouble  = ldbSize config * 8 -- typicall 10 or 16 bytes
+size config LongDouble  = ldbSize config * 8 -- typically 10 or 16 bytes
 size config Pointer     = ptrSize config * 8

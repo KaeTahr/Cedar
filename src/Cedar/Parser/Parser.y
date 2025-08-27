@@ -62,7 +62,5 @@ Declaration :: Declaration
 
 -- ... Add more grammar rules for statements, expressions, etc.
 
-%%
-
 parseError :: [Token] -> a
 parseError tokens = error $ "Parse error: unexpected tokens " ++ show tokens

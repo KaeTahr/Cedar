@@ -1,0 +1,16 @@
+cabal-version:       2.4
+
+name:                Kae-mcs-project
+version:             0.1.0.0
+build-type:          Simple
+
+
+executable cedar-demo
+  -- We'll use app/Main.hs as the entry point for the demo.
+  main-is:          Main.hs
+  hs-source-dirs:   app, src
+  default-language: GHC2021
+
+  build-depends:    base >=4.14 && <5
+
+  ghc-options:      -Wall -Wcompat -Wmissing-import-lists -Wredundant-constraints
