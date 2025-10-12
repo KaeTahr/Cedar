@@ -220,3 +220,5 @@ TSWLatexianTemp*
 # haskell compilation
 *.hi
 *.o
+
+.vscode
