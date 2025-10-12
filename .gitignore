@@ -222,3 +222,4 @@ TSWLatexianTemp*
 *.o
 
 .vscode
+dist-newstyle
