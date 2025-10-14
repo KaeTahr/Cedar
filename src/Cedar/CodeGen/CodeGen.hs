@@ -4,11 +4,11 @@
 module Cedar.CodeGen.CodeGen
   ( emitHeader
   , emitImpl
-  , genRecordGetSet -- (name, aligned layout) → list of C fns
   ) where
 
 import qualified Data.Map as M
-import Data.Char (toLower)
+import Data.Char (toLower, toUpper)
+import Data.Bits (shiftL)
 import Data.List (intercalate, scanl')
 import Cedar.CodeGen.Allocation (AlignedBitRange(..))
 import Cedar.Layout.Surface (Endianness(..))
@@ -44,11 +44,11 @@ emitImpl typeName parts =
     , "#include \"" ++ map toLower typeName ++ ".h\""
     , ""
     ]
-    ++ concatMap (uncurry3 (emitFieldFns typeName)) parts
+    ++ map (\(_fld, brs, e) -> emitFieldFns typeName brs e) parts
   where
     uncurry3 f (a,b,c) = f a b c
 
--- ===== per-field code (Dargent style) =====
+-- ===== per-field code =====
 
 emitFieldFns
   :: String                   -- struct name (e.g., t1)
@@ -67,7 +67,7 @@ emitFieldFns typeName brs ω =
       setFun    = mkWholeSet partNames brs
   in unlines (partGets ++ [getFun] ++ partSets ++ [setFun])
   where
-    fresh base = base  -- simple; you can prefix with field name when you wire this to field names
+    fresh base = base  -- prefix with field name when wiring this to field names
 
     mkPartGet tn nm (AlignedBitRange sz boff woff) =
       unlines
@@ -107,6 +107,7 @@ emitFieldFns typeName brs ω =
         , "{"
         ] ++ unlines lines' ++ "}\n"
 
+    mask :: Integer -> Integer
     mask nBits
       | nBits <= 0 = 0
       | nBits >= 32 = 0xFFFFFFFF

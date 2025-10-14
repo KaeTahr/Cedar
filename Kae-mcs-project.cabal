@@ -31,4 +31,8 @@ executable cedar-demo
   main-is:             Main.hs
   build-depends:
       base,
-      Kae-mcs-project
+      containers,
+      directory,
+      filepath,
+      bytestring,
+      Kae-mcs-project,
