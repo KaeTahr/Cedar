@@ -1,16 +1,34 @@
-cabal-version:       2.4
-
+cabal-version:       3.0
 name:                Kae-mcs-project
 version:             0.1.0.0
 build-type:          Simple
 
+-- shared flags
+common common-settings
+  default-language:    Haskell2010
+  hs-source-dirs:      src
+  ghc-options:         -Wall -Wcompat -Wincomplete-uni-patterns -Wincomplete-record-updates
+  default-extensions:  RecordWildCards OverloadedStrings
+
+library
+  import:              common-settings
+  exposed-modules:
+      Cedar.CodeGen.Allocation
+      Cedar.CodeGen.Boundary
+      Cedar.CodeGen.CodeGen
+      Cedar.Layout.Surface
+      Cedar.Layout.Core
+      Cedar.Compat.Basic
+  build-depends:
+      base >=4.14 && <5,
+      containers,
+      text,
+      bytestring
 
 executable cedar-demo
-  -- We'll use app/Main.hs as the entry point for the demo.
-  main-is:          Main.hs
-  hs-source-dirs:   app, src
-  default-language: GHC2021
-
-  build-depends:    base >=4.14 && <5
-
-  ghc-options:      -Wall -Wcompat -Wmissing-import-lists -Wredundant-constraints
+  import:              common-settings
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  build-depends:
+      base,
+      Kae-mcs-project

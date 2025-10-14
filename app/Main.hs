@@ -1,24 +1,29 @@
 module Main where
 
+import System.Directory (createDirectoryIfMissing)
+import System.FilePath  ((</>))
+import qualified Data.ByteString.Char8 as B
+
 import Cedar.CodeGen.Boundary
-  ( Prim(..), CType(..), Endian(..)
-  , Range(..), CField(..), CBoundStruct(..)
-  , totalSizeBitsFromFields
-  )
-import Cedar.CodeGen.EmitC (emitHeader, emitImpl)
+import Cedar.CodeGen.CodeGen   -- <— your generator (emitHeader/emitImpl or similar)
 
 student :: CBoundStruct
-student =
-  let fields =
-        [ CField "id"   (CPrim I32) (Range 0   32) (Just LE)
-        , CField "age"  (CPrim I16) (Range 32  16) (Just BE)
-        , CField "gpa"  (CPrim F32) (Range 48  32) Nothing
-        ]
-      sizeBits = totalSizeBitsFromFields fields  -- safer than hardcoding
-  in CBoundStruct { sName = "Student", sSizeBits = sizeBits, sFields = fields }
+student = CBoundStruct
+  { sName     = "Student"
+  , sSizeBits = totalSizeBitsFromFields fields
+  , sFields   = fields
+  }
+  where
+    fields =
+      [ CField "id"    (CPrim I32) (Range 0   32) (Just LE)
+      , CField "age"   (CPrim I16) (Range 32  16) (Just LE)
+      , CField "grade" (CPrim I8 ) (Range 48   8) (Just LE)
+      ]
 
 main :: IO ()
 main = do
-  writeFile "student_cedar.h" (emitHeader student)
-  writeFile "student_cedar.c" (emitImpl student)
-  putStrLn "Wrote student_cedar.h and student_cedar.c"
+  let outDir = "out"
+  createDirectoryIfMissing True outDir
+  B.writeFile (outDir </> "student_cedar.h") (B.pack (emitHeader student))
+  B.writeFile (outDir </> "student_cedar.c") (B.pack (emitImpl   student))
+  putStrLn "Wrote out/student_cedar.h and out/student_cedar.c"

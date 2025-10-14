@@ -1,107 +1,178 @@
-{-# LANGUAGE RecordWildCards #-}
+-- ported from dargent
+-- cogent/src/Cogent/Dargent/Allocation.hs
+
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Cedar.CodeGen.Allocation
-  ( -- sizes
-    byteSizeBits
-  , wordSizeBits
-    -- bit ranges
-  , BitRange(..)
-  , newBitRangeBaseSize
+  ( -- bit ranges
+   BitRange(..)
   , newBitRangeFromTo
+  , newBitRangeBaseSize
+  , emptyBitRange
+  , primBitRangeBits
+  , pointerBitRange
+  , isZeroSizedBR
+    -- allocations (sets of bit ranges with payloads/paths)
+  , AllocationBlock
+  , OverlappingAllocationBlocks(..)
+  , Allocation'(..)
+  , emptyAllocation
+  , singletonAllocation
+  , undeterminedAllocation
+  , (\/)
+  , (/\)
+  , overlaps
+  , beginningOfAllocation
+  , endOfAllocation
+  , containsAllocVars
+    -- aligned chunks
   , AlignedBitRange(..)
-  , rangeToAlignedRanges
   , alignSize
+  , alignOffsettable
+  , rangeToAlignedRanges
   ) where
 
--- TODO: should be in a config file
-byteSizeBits :: Integer
-byteSizeBits = 8
+import Cedar.Compat.Basic
+  ( Size, VarName
+  , byteSizeBits, wordSizeBits, pointerSizeBits
+  , Offsettable(..)
+  )
 
--- TODO: we're just assuming 64-bit words
-wordSizeBits :: Integer
-wordSizeBits = 64
+-- ===== Bit ranges =====
 
--- A contiguous bit slice: [bitOffset .. bitOffset + bitSize - 1]
+-- contiguous bit slice: [bitOffset .. bitOffset + bitSize - 1]
 data BitRange = BitRange
-  { bitSizeBR   :: Integer
-  , bitOffsetBR :: Integer
+  { bitSizeBR   :: Size
+  , bitOffsetBR :: Size
   } deriving (Eq, Ord, Show)
 
-newBitRangeBaseSize :: Integer -> Integer -> Maybe BitRange
-newBitRangeBaseSize bitOffsetBR bitSizeBR
-  | bitOffsetBR >= 0 && bitSizeBR >= 0 = Just BitRange{..}
-  | otherwise                          = Nothing
+instance Offsettable BitRange where
+  offset n br
+    | n >= 0    = br { bitOffsetBR = bitOffsetBR br + n }
+    | otherwise = error "offset: negative offset not allowed"
 
-newBitRangeFromTo :: Integer -> Integer -> Maybe BitRange
+newBitRangeFromTo :: Size -> Size -> Maybe BitRange
 newBitRangeFromTo from to
   | 0 <= from && from <= to = Just BitRange { bitSizeBR = to - from, bitOffsetBR = from }
   | otherwise               = Nothing
 
--- True iff two non-empty bit ranges overlap
+newBitRangeBaseSize :: Size -> Size -> Maybe BitRange
+newBitRangeBaseSize bitOffsetBR bitSizeBR
+  | bitOffsetBR >= 0 && bitSizeBR >= 0 = Just BitRange {..}
+  | otherwise                          = Nothing
+
+emptyBitRange :: BitRange
+emptyBitRange = BitRange { bitSizeBR = 0, bitOffsetBR = 0 }
+
+primBitRangeBits :: Size -> BitRange
+primBitRangeBits n = BitRange { bitSizeBR = n, bitOffsetBR = 0 }
+
+pointerBitRange :: BitRange
+pointerBitRange = BitRange { bitSizeBR = pointerSizeBits, bitOffsetBR = 0 }
+
+isZeroSizedBR :: BitRange -> Bool
+isZeroSizedBR BitRange{..} = bitSizeBR == 0
+
+-- ===== Allocations =====
+
+-- the smallest piece of an allocation
+type AllocationBlock p = (BitRange, p)
+
+newtype OverlappingAllocationBlocks p =
+  OverlappingAllocationBlocks { unOverlappingAllocationBlocks :: (AllocationBlock p, AllocationBlock p) }
+  deriving (Eq, Show, Ord)
+
+-- a set of bit ranges (union) + “allocation variables” (for unknown offsets)
+data Allocation' p = Allocation
+  { unAllocation :: [AllocationBlock p]
+  , allocVars    :: [(VarName, Size)]
+  } deriving (Eq, Show, Ord)
+
+instance Offsettable (Allocation' p) where
+  offset n (Allocation bs vs) =
+    Allocation (map (\(br,p) -> (offset n br, p)) bs) (map (\(v,off) -> (v, off + n)) vs)
+
+emptyAllocation :: Allocation' p
+emptyAllocation = Allocation [] []
+
+singletonAllocation :: AllocationBlock p -> Allocation' p
+singletonAllocation b = Allocation [b] []
+
+undeterminedAllocation :: [VarName] -> Allocation' p
+undeterminedAllocation vs = Allocation [] (map (\v -> (v,0)) vs)
+
+-- union (disjunction)
+(\/) :: forall p. Ord p => Allocation' p -> Allocation' p -> Allocation' p
+(Allocation a1 vs1) \/ (Allocation a2 vs2) = Allocation (a1 ++ a2) (vs1 ++ vs2)
+
+-- do two bit ranges overlap (strictly positive intersection)?
 overlaps :: BitRange -> BitRange -> Bool
 overlaps (BitRange s1 o1) (BitRange s2 o2) =
   o1 < o2 + s2 && o2 < o1 + s1 && s1 > 0 && s2 > 0
 
--- A chunk that is aligned within a fixed-size “word” lane.
--- Example field that spans multiple words gets split into these.
+-- conjunction: ensures two allocations can be used simultaneously (no overlaps)
+(/\) :: forall p. Ord p
+     => Allocation' p -> Allocation' p
+     -> Either [OverlappingAllocationBlocks p] (Allocation' p)
+(Allocation a1 vs1) /\ (Allocation a2 vs2) =
+  case allOverlappingBlocks a1 a2 of
+    xs@(_ : _) -> Left xs
+    []         -> Right $ Allocation (a1 ++ a2) (vs1 ++ vs2)
+  where
+    allOverlappingBlocks :: [AllocationBlock p] -> [AllocationBlock p] -> [OverlappingAllocationBlocks p]
+    allOverlappingBlocks xbs ybs =
+      [ OverlappingAllocationBlocks (xb, yb)
+      | xb@(brx,_) <- xbs
+      , yb@(bry,_) <- ybs
+      , overlaps brx bry
+      ]
+
+beginningOfAllocation :: Allocation' p -> Size
+beginningOfAllocation (Allocation []     _ ) = 0
+beginningOfAllocation (Allocation blocks _ ) = minimum [ o | (BitRange _ o, _) <- blocks ]
+
+endOfAllocation :: Allocation' p -> Size
+endOfAllocation (Allocation []     _ ) = 0
+endOfAllocation (Allocation blocks _ ) = maximum [ o + s | (BitRange s o, _) <- blocks ]
+
+containsAllocVars :: Allocation' p -> Bool
+containsAllocVars = not . null . allocVars
+
+-- ===== Aligned chunking =====
+
+-- a chunk that fits within a fixed-sized “word” lane (e.g., 32-bit)
 data AlignedBitRange = AlignedBitRange
-  { bitSizeABR    :: Integer   -- <= alignSize
-  , bitOffsetABR  :: Integer   -- < alignSize
-  , wordOffsetABR :: Integer   -- which word (0-based) within the backing blob
+  { bitSizeABR    :: Size   -- <= align lane size
+  , bitOffsetABR  :: Size   -- <  align lane size
+  , wordOffsetABR :: Size   -- which lane (0-based)
   } deriving (Eq, Ord, Show)
 
--- Round size up to a multiple of k.
-alignSize :: Integer -> Integer -> Integer
+-- round up to a multiple
+alignSize :: Size -> Size -> Size
 alignSize k n =
   let (q,r) = n `quotRem` k
   in if r == 0 then n else (q+1)*k
 
--- Split a BitRange into aligned chunks for a given lane size (word or byte).
--- If bitSizeBR == 0, returns [].
-rangeToAlignedRanges :: Integer -> BitRange -> [AlignedBitRange]
-rangeToAlignedRanges align (BitRange size offset)
-  | size <= 0 = []
-  | otherwise =
-      go (offset `div` align) (offset `mod` align) size
+-- align an Offsettable thing (assumed to start at offset 0) to >= minBitOffset,
+-- snapping to multiples of alignBitSize
+alignOffsettable :: Offsettable a => Size -> Size -> a -> a
+alignOffsettable alignBitSize minBitOffset =
+  offset (alignSize alignBitSize minBitOffset)
+
+-- split a BitRange into lane-aligned chunks
+-- if bitSizeBR == 0, returns []
+rangeToAlignedRanges :: Size -> BitRange -> [AlignedBitRange]
+rangeToAlignedRanges lane (BitRange size offset)
+  | size <= 0  = []
+  | otherwise  = go (offset `div` lane) (offset `mod` lane) size
   where
-    go :: Integer -> Integer -> Integer -> [AlignedBitRange]
-    go _    _    0    = []
+    go :: Size -> Size -> Size -> [AlignedBitRange]
+    go _    _    0 = []
     go wOff bOff remSz =
-      let takeBits = min remSz (align - bOff)
-          this     = AlignedBitRange { bitSizeABR    = takeBits
-                                     , bitOffsetABR  = bOff
-                                     , wordOffsetABR = wOff
-                                     }
+      let takeBits = min remSz (lane - bOff)
+          this     = AlignedBitRange
+                       { bitSizeABR    = takeBits
+                       , bitOffsetABR  = bOff
+                       , wordOffsetABR = wOff
+                       }
       in this : go (wOff + 1) 0 (remSz - takeBits)
-
--- | A single allocated slice, annotated with some payload 'p'.
-type AllocationBlock p = (BitRange, p)
-
--- | An allocation = a set of blocks.
-newtype Allocation' p = Allocation
-  { unAllocation :: [AllocationBlock p]
-  } deriving (Eq, Show, Ord)
-
-type Allocation = Allocation' String   -- you can pick a nicer payload later
-
--- | Empty allocation
-emptyAllocation :: Allocation' p
-emptyAllocation = Allocation []
-
--- | Singleton allocation
-singletonAllocation :: AllocationBlock p -> Allocation' p
-singletonAllocation b = Allocation [b]
-
--- | Union: just concatenates the block lists.
-(\/) :: Allocation' p -> Allocation' p -> Allocation' p
-(Allocation a1) \/ (Allocation a2) = Allocation (a1 ++ a2)
-
--- | Conjunction: succeeds only if there’s no overlap.
-(/\) :: Allocation' p -> Allocation' p -> Either [ (AllocationBlock p, AllocationBlock p) ] (Allocation' p)
-(Allocation a1) /\ (Allocation a2) =
-  case allOverlaps a1 a2 of
-    [] -> Right (Allocation (a1 ++ a2))
-    os -> Left os
-  where
-    allOverlaps :: [AllocationBlock p] -> [AllocationBlock p] -> [(AllocationBlock p, AllocationBlock p)]
-    allOverlaps xbs ybs =
-      [ (xb,yb) | xb@(r1,_) <- xbs, yb@(r2,_) <- ybs, overlaps r1 r2 ]
