@@ -1,30 +1,37 @@
 module Main where
 
 import qualified Data.ByteString.Char8 as B
-import System.Directory (createDirectoryIfMissing)
 import System.FilePath ((</>))
-import Data.Char (toLower)
+import System.Directory (createDirectoryIfMissing)
+
 import Cedar.CodeGen.CodeGen (emitHeader, emitImpl)
-import Cedar.CodeGen.Allocation (AlignedBitRange(..))
-import Cedar.Layout.Surface (Endianness(..))
+import Cedar.Layout.ToCodeGen (layoutToCodeGenParts, wordCountFromParts)
+
+-- bring in (or build) your aligned layout here
+import Cedar.Layout.Core (DataLayout(..), DataLayout'(..))
+import Cedar.CodeGen.Allocation (rangeToAlignedRanges) -- to align manually
+import Cedar.Layout.Core (alignLayout')
+
+-- Suppose you have an already-aligned record layout value:
+studentLR :: DataLayout [AlignedBitRange]
+-- You can mock one for now if needed.
 
 main :: IO ()
 main = do
-  let outDir = "out"
+  let outDir   = "out"
+      typeName = "t1"
+
   createDirectoryIfMissing True outDir
 
-  let typeName  = "t1"
-      wordCount = 3
+  -- get parts + size from the layout
+  let parts     = layoutToCodeGenParts studentLR
+      wordCount = wordCountFromParts parts
 
-      -- Fields:
-      -- f1: 32 bits at word 0, bit 0
-      -- f2: 64 bits split as 32@word1 + 32@word2 (both at bit 0)
-      parts :: [(String, [AlignedBitRange], Endianness)]
-      parts =
-        [ ("f1", [AlignedBitRange 32 0 0], ME)
-        , ("f2", [AlignedBitRange 32 0 1, AlignedBitRange 32 0 2], ME)
-        ]
+  -- generate header and impl
+  B.writeFile (outDir </> (map toLower typeName ++ ".h"))
+    (B.pack (emitHeader typeName wordCount))
 
-  let base = map toLower typeName
-  B.writeFile (outDir </> base ++ ".h") (B.pack (emitHeader typeName wordCount))
-  B.writeFile (outDir </> base ++ ".c") (B.pack (emitImpl   typeName parts))
+  B.writeFile (outDir </> (map toLower typeName ++ ".c"))
+    (B.pack (emitImpl typeName parts))
+
+  putStrLn "Generated C in ./out/"

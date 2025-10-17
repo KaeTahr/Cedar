@@ -5,6 +5,7 @@
 module Cedar.Layout.Core
   ( DataLayout'(..), DataLayout(..)
   , alignLayout', dataLayoutSizeBits'
+
   ) where
 
 import qualified Data.Map as M

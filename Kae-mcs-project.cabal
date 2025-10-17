@@ -19,6 +19,7 @@ library
       Cedar.Layout.Surface
       Cedar.Layout.Core
       Cedar.Compat.Basic
+      Cedar.Layout.ToCodeGen
   build-depends:
       base >=4.14 && <5,
       containers,
@@ -36,3 +37,17 @@ executable cedar-demo
       filepath,
       bytestring,
       Kae-mcs-project,
+
+executable semantic
+  import:              common-settings
+  hs-source-dirs:      semantic
+  main-is:             Main.hs
+  build-depends:
+      base,
+      bytestring,
+      text,
+      aeson,
+      directory,
+      filepath,
+      Kae-mcs-project,
+      semantic
