@@ -1,40 +1,47 @@
-{-# LANGUAGE NamedFieldPuns #-}
 module Cedar.Layout.ToCodeGen
-  ( layoutToCodeGenParts
-  , wordCountFromParts
+  ( CGField(..), CGStruct(..)
+  , layoutRecordToCGStruct
+  , wordCountFromStruct
   ) where
 
 import qualified Data.Map as M
-import Data.List (foldl')
 import Cedar.CodeGen.Allocation (AlignedBitRange(..))
-import Cedar.Layout.Surface (Endianness(..))
 import Cedar.Layout.Core
-  ( DataLayout(..)
-  , DataLayout'(..)
-  )
+import Cedar.Layout.Surface (Endianness(..))
 
--- | Extract (fieldName, [AlignedBitRange], Endianness) triples from a record layout.
---   Expects a *record* layout whose fields are PrimLayout leaves (already aligned to ABR).
---   Anything else is ignored for now.
---   TODO:  extend?
-layoutToCodeGenParts
-  :: DataLayout [AlignedBitRange]
-  -> [(String, [AlignedBitRange], Endianness)]
-layoutToCodeGenParts (Layout (RecordLayout fields)) =
-  [ (fname, brs, ω)
-  | (fname, PrimLayout { bitsDL = brs, endianness = ω }) <- M.toList fields
-  ]
-layoutToCodeGenParts _ = []
-  -- Future: handle nested records/sums/arrays here if you want
+data CGField = CGField
+  { cgName   :: String
+  , cgRanges :: [AlignedBitRange]
+  , cgEndian :: Endianness
+  } deriving (Show, Eq)
 
--- | Compute how many 32-bit words we need for the backing storage,
---   based on the maximum wordOffset touched by any field’s aligned ranges.
-wordCountFromParts
-  :: [(String, [AlignedBitRange], Endianness)]
-  -> Int
-wordCountFromParts parts =
-  let maxWord = foldl' step 0 parts
-      step acc (_, brs, _) =
-        let localMax = maximum (0 : [ fromInteger (wordOffsetABR r) + 1 | r <- brs ])
-        in max acc localMax
-  in max 1 maxWord
+data CGStruct = CGStruct
+  { cgTypeName :: String
+  , cgWordCount :: Int
+  , cgFields   :: [CGField]
+  } deriving (Show, Eq)
+
+-- Compute words needed from AlignedBitRanges (32-bit lanes assumed here)
+wordsNeeded :: [AlignedBitRange] -> Int
+wordsNeeded rs =
+  let maxWord = maximum (0 : [ fromIntegral w | AlignedBitRange _ _ w <- rs ])
+  in maxWord + (if null rs then 0 else 1)
+
+wordCountFromStruct :: CGStruct -> Int
+wordCountFromStruct (CGStruct _ _ fs) =
+  maximum (1 : [ wordsNeeded (cgRanges f) | f <- fs ])
+
+-- Bridge: only handles RecordLayout of PrimLayout for now
+layoutRecordToCGStruct :: String -> DataLayout [AlignedBitRange] -> CGStruct
+layoutRecordToCGStruct typeName (Layout (RecordLayout mp)) =
+  let fields =
+        [ CGField { cgName = fname
+                  , cgRanges = rs
+                  , cgEndian = ω
+                  }
+        | (fname, PrimLayout rs ω) <- M.toList mp
+        ]
+      wc = maximum (1 : [ wordsNeeded (cgRanges f) | f <- fields ])
+  in CGStruct { cgTypeName = typeName, cgWordCount = wc, cgFields = fields }
+layoutRecordToCGStruct _ _ =
+  error "layoutRecordToCGStruct: expected Layout (RecordLayout ...)"
