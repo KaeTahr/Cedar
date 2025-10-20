@@ -86,7 +86,7 @@ categories of low-level defects}\autocite{ubsan}.
 
 Cedar targets this class of problems by providing a separate, declarative layer
 that specifies how a value is represented in memory, independent of its logical
-structure. Instead, of emebeddinng layout logic implicitly withinc C syntax or 
+structure. Instead, of emebedding layout logic implicitly withinc C syntax or 
 heuristics, Cedar externalises it as a \textit{layout description language}.
 The compiler then translates that specification into verifiable C accessors
 and struct declarations.
@@ -106,15 +106,35 @@ The central \textbf{research question} guiding this work is:
     enabling reasoning about correctness and consistency?}
 \end{quote}
 
-Addressing this question involves both theorertical and practical components:
+Addressing this question involves both theoretical and practical components:
 \begin{enumerate}
-    \item identifying the essential stages that mantain correspondence
-    between semantic constructs and for describing layouts (alignemnt,
-    nesting, bit ranges, unions);
-    \item defining translation stages that maintain correspondence between
-    abstract types and concrete representation; and
-    \item producing generated C code that is cohesive, portable, and ready for
-    potential verification.
+    \item \textbf{Language Design and Theoretical Model}
+        \begin{itemize}
+            \item Extend Cedar's syntax and internal representations 
+            (\texttt{L}, \texttt{LR}, \texttt{CR}) to support nested layouts,
+            arrays, and bitfields.
+            \item Formalise layout semantics in terms of offset-size pairs
+            and compositional alignment rules.
+            \item Draw parallels with declarative frameworks, to inform
+            tradeoffs with techniques such as serialization. 
+        \end{itemize}
+    \item \textbf{Implementation and Code Generation}
+        \begin{itemize}
+            \item Implement a compiler in Haskell, producing C headers and
+            definitions from Cedar programs.
+            \item Focus on generating \textit{cohesive} code.
+            \item Ensure the pipeline remains modular so that each stage could,
+            in future, be linked to a verified backend (e.g., CompCert).
+        \end{itemize}
+    \item \textbf{Evaluation and Case Studies}
+        \begin{itemize}
+            \item Reproduce examples from Dargent.
+            \item Evaluate in terms of \textit{expressivity} (what can be
+            represented), \textit{correctness} (generated C compiles and behaves
+            as Intended) and \textit{usability} (readability, simplicity, and
+            correspondence with C conventions).
+
+        \end{itemize}
 \end{enumerate}
 
 The thesis does not aim to produce a fully verified compiler but to establish the
@@ -149,13 +169,15 @@ structures that would later support formal reasoning.
 \subsection{Contributions}
 The main contributions of this thesis are:
 \begin{itemize}
-    \item \textbf{An extended Language Design for Cedar —} supporting nexsted
-    record layouts, bitfields, and more expressive alignment semantics, while
-    retaining declarative composition.
-    \item \textbf{A Refined Compilation Pipeline —} a modular transofromation
-    from surface syntax to layout-resolved forms
-    ( L $\rightarrow$ LR $\rightarrow$ CR ) culminating in generated C code that
-    preserves structure and alignment.
+    \item \textbf{Language Design for Cedar}
+    \item It defines an extended declarative syntax for memory layouts in C,
+    integrating concepts from type theory. The design isolates layout description
+    from computation, enabling independent reasoning about representation.
+    \item \textbf{Implementation Contribution} 
+    It provides a Haskell implementation of Cedar, incorporating, semantics and
+    code generation for realistic examples. The compiler demonstrates how
+    declarative layouts can be translate into valid C code without ad-hoc
+    alignment logic.
     \item \textbf{A Prototype Implementation —} a working Cedar compiler
     implemented in Haskell, integrating parsing, type checking layout matching,
     and code generation.
