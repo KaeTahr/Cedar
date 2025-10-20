@@ -56,12 +56,12 @@ and generation of C code.
 
 \subsection {Approach and Methodology}
 The research follows a \textit{design-and-evaluation} methodology typical
-of programming-language research \autocite{incremental_development}.
+of programming-language research\autocite{incremental_development}.
 The work proceeds in three interlocking stages:
 \begin{enumerate}
     \item \textbf{Language Design and Formalisation — } analyising the previous
     Cedar proposal and revising its intermediate representations
-    (L \rightarrow LR \rightarrow CR) to better capture nexsted records, arrays,
+    (L $\rightarrow$ LR $\rightarrow$ CR) to better capture nexsted records, arrays,
     and bitfields.
     \item \textbf{Implementation and Code Generation — } implementing the Cedar
     compiler to emit cohesive, self-contained C output for representative
@@ -81,6 +81,43 @@ structures that would later support formal reasoning.
 The main contributions of this thesis are:
 \begin{itemize}
     \item \textbf{An extended Language Design for Cedar —} supporting nexsted
-    \record layouts, bitfields, and more expressive alignment semantics, while
+    record layouts, bitfields, and more expressive alignment semantics, while
     retaining declarative composition.
-    \item \textbf{A Refined Compilation Pipeline —}
+    \item \textbf{A Refined Compilation Pipeline —} a modular transofromation
+    from surface syntax to layout-resolved forms
+    ( L $\rightarrow$ LR $\rightarrow$ CR ) culminating in generated C code that
+    preserves structure and alignment.
+    \item \textbf{A Prototype Implementation —} a working Cedar compiler
+    implemented in Haskell, integrating parsing, type checking layout matching,
+    and code generation.
+    \item \textbf{Empirical Evaluation via Case Studies —}  reproduction
+    of Dargent examples to demonstrate Cedar's usability and internal
+    consistency.
+    \item \textbf{Discussion of Design Trade-offs and Future Verification
+    Pathways —} identifying the boundaries between declarative specification,
+    compiler automation, and machine-checkable proof of correctness.
+\end{itemize}
+
+Collectively, these outcomes advance Cedar from a concept to a more
+complete research language, and contribute new insights into the design of
+trustworthy data-layout languages for C.
+
+\subsection{Thesis Structure}
+The remainder of this thesis is organised as follows:
+\begin{itemize}
+    \item \textbf{Chapter 2} reviews background material on C memory layouts,
+    verified compilation, the Cogent and Dargent frameworks, and the origins
+    of Cedar.
+    \item \textbf{Chapter 3} describes the research methodology and language design,
+    detailing Cedar's intermediate representations and translation
+    pipeline.
+    \item \textbf{Chapter 4} presents the implementation and evaluation,
+    including case case studies. 
+    \item \textbf{Chapter 5} discusses design implications, limitations,
+    and directions for future verification and usability improvements.
+    \item \textbf{Chapter 6} concludes with a summary of findings and prospects
+    for integrating Cedar into broader verified-systems toolchains.
+    
+\end{itemize}
+
+
