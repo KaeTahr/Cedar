@@ -1,7 +1,9 @@
 \documentclass[12pt]{article} 
 \usepackage{graphicx}
 \usepackage[bottom]{footmisc}
-\usepackage[utf8]{inputenc} \usepackage[backend=biber, style=numeric]{biblatex}
+\usepackage[utf8]{inputenc} 
+\usepackage[T1]{fontenc}
+\usepackage[backend=biber, style=numeric]{biblatex}
 \usepackage{imakeidx}
 \usepackage[toc,page]{appendix}
 \usepackage{listings}
@@ -9,7 +11,7 @@
 \usepackage{pdflscape}
 \usepackage{tabularx}
 \usepackage{longtable}
-
+\DeclareUnicodeCharacter{0308}{\"{}}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -46,5 +48,6 @@
 \begin{document}
 \maketitle
 \input{sections/4-introduction.tex}
+\input{sections/5-background_n_related_work.tex}
 \printbibliography
 \end{document}
