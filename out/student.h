@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 struct Student {
-  unsigned int data[5U];
+  unsigned int data[6U];
 };
 typedef struct Student Student;
 

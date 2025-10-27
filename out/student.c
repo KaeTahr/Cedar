@@ -70,22 +70,22 @@ void d_set_Student_Number(Student *b, uint32_t v)
 
 static uint32_t d_get_DOB_part0(const Student *b)
 {
-  return ( (uint32_t)(b->data[3U]) >> 16U) & 255U;
+  return ( (uint32_t)(b->data[3U]) >> 0U) & 255U;
 }
 
 static uint32_t d_get_DOB_part1(const Student *b)
 {
-  return ( (uint32_t)(b->data[3U]) >> 24U) & 255U;
+  return ( (uint32_t)(b->data[3U]) >> 8U) & 255U;
 }
 
 static uint32_t d_get_DOB_part2(const Student *b)
 {
-  return ( (uint32_t)(b->data[4U]) >> 0U) & 255U;
+  return ( (uint32_t)(b->data[3U]) >> 16U) & 255U;
 }
 
 static uint32_t d_get_DOB_part3(const Student *b)
 {
-  return ( (uint32_t)(b->data[4U]) >> 8U) & 255U;
+  return ( (uint32_t)(b->data[3U]) >> 24U) & 255U;
 }
 
 uint32_t d_get_DOB(const Student *b)
@@ -97,29 +97,29 @@ return (uint32_t)acc_u;
 static void d_set_DOB_part0(Student *b, uint32_t v)
 {
   b->data[3U] =
-      (b->data[3U] & ~(255U << 16U))
-    | (((255U & v) << 16U));
+      (b->data[3U] & ~(255U << 0U))
+    | (((255U & v) << 0U));
 }
 
 static void d_set_DOB_part1(Student *b, uint32_t v)
 {
   b->data[3U] =
-      (b->data[3U] & ~(255U << 24U))
-    | (((255U & v) << 24U));
+      (b->data[3U] & ~(255U << 8U))
+    | (((255U & v) << 8U));
 }
 
 static void d_set_DOB_part2(Student *b, uint32_t v)
 {
-  b->data[4U] =
-      (b->data[4U] & ~(255U << 0U))
-    | (((255U & v) << 0U));
+  b->data[3U] =
+      (b->data[3U] & ~(255U << 16U))
+    | (((255U & v) << 16U));
 }
 
 static void d_set_DOB_part3(Student *b, uint32_t v)
 {
-  b->data[4U] =
-      (b->data[4U] & ~(255U << 8U))
-    | (((255U & v) << 8U));
+  b->data[3U] =
+      (b->data[3U] & ~(255U << 24U))
+    | (((255U & v) << 24U));
 }
 
 void d_set_DOB(Student *b, uint32_t v)
@@ -134,22 +134,22 @@ void d_set_DOB(Student *b, uint32_t v)
 
 static uint32_t d_get_Grades__Maths_part0(const Student *b)
 {
-  return ( (uint32_t)(b->data[1U]) >> 16U) & 255U;
+  return ( (uint32_t)(b->data[4U]) >> 0U) & 255U;
 }
 
 static uint32_t d_get_Grades__Maths_part1(const Student *b)
 {
-  return ( (uint32_t)(b->data[1U]) >> 24U) & 255U;
+  return ( (uint32_t)(b->data[4U]) >> 8U) & 255U;
 }
 
 static uint32_t d_get_Grades__Maths_part2(const Student *b)
 {
-  return ( (uint32_t)(b->data[2U]) >> 0U) & 255U;
+  return ( (uint32_t)(b->data[4U]) >> 16U) & 255U;
 }
 
 static uint32_t d_get_Grades__Maths_part3(const Student *b)
 {
-  return ( (uint32_t)(b->data[2U]) >> 8U) & 255U;
+  return ( (uint32_t)(b->data[4U]) >> 24U) & 255U;
 }
 
 uint32_t d_get_Grades__Maths(const Student *b)
@@ -160,30 +160,30 @@ return (uint32_t)acc_u;
 
 static void d_set_Grades__Maths_part0(Student *b, uint32_t v)
 {
-  b->data[1U] =
-      (b->data[1U] & ~(255U << 16U))
-    | (((255U & v) << 16U));
+  b->data[4U] =
+      (b->data[4U] & ~(255U << 0U))
+    | (((255U & v) << 0U));
 }
 
 static void d_set_Grades__Maths_part1(Student *b, uint32_t v)
 {
-  b->data[1U] =
-      (b->data[1U] & ~(255U << 24U))
-    | (((255U & v) << 24U));
+  b->data[4U] =
+      (b->data[4U] & ~(255U << 8U))
+    | (((255U & v) << 8U));
 }
 
 static void d_set_Grades__Maths_part2(Student *b, uint32_t v)
 {
-  b->data[2U] =
-      (b->data[2U] & ~(255U << 0U))
-    | (((255U & v) << 0U));
+  b->data[4U] =
+      (b->data[4U] & ~(255U << 16U))
+    | (((255U & v) << 16U));
 }
 
 static void d_set_Grades__Maths_part3(Student *b, uint32_t v)
 {
-  b->data[2U] =
-      (b->data[2U] & ~(255U << 8U))
-    | (((255U & v) << 8U));
+  b->data[4U] =
+      (b->data[4U] & ~(255U << 24U))
+    | (((255U & v) << 24U));
 }
 
 void d_set_Grades__Maths(Student *b, uint32_t v)
@@ -198,22 +198,22 @@ void d_set_Grades__Maths(Student *b, uint32_t v)
 
 static uint32_t d_get_Grades__Physics_part0(const Student *b)
 {
-  return ( (uint32_t)(b->data[2U]) >> 16U) & 255U;
+  return ( (uint32_t)(b->data[5U]) >> 0U) & 255U;
 }
 
 static uint32_t d_get_Grades__Physics_part1(const Student *b)
 {
-  return ( (uint32_t)(b->data[2U]) >> 24U) & 255U;
+  return ( (uint32_t)(b->data[5U]) >> 8U) & 255U;
 }
 
 static uint32_t d_get_Grades__Physics_part2(const Student *b)
 {
-  return ( (uint32_t)(b->data[3U]) >> 0U) & 255U;
+  return ( (uint32_t)(b->data[5U]) >> 16U) & 255U;
 }
 
 static uint32_t d_get_Grades__Physics_part3(const Student *b)
 {
-  return ( (uint32_t)(b->data[3U]) >> 8U) & 255U;
+  return ( (uint32_t)(b->data[5U]) >> 24U) & 255U;
 }
 
 uint32_t d_get_Grades__Physics(const Student *b)
@@ -224,30 +224,30 @@ return (uint32_t)acc_u;
 
 static void d_set_Grades__Physics_part0(Student *b, uint32_t v)
 {
-  b->data[2U] =
-      (b->data[2U] & ~(255U << 16U))
-    | (((255U & v) << 16U));
+  b->data[5U] =
+      (b->data[5U] & ~(255U << 0U))
+    | (((255U & v) << 0U));
 }
 
 static void d_set_Grades__Physics_part1(Student *b, uint32_t v)
 {
-  b->data[2U] =
-      (b->data[2U] & ~(255U << 24U))
-    | (((255U & v) << 24U));
+  b->data[5U] =
+      (b->data[5U] & ~(255U << 8U))
+    | (((255U & v) << 8U));
 }
 
 static void d_set_Grades__Physics_part2(Student *b, uint32_t v)
 {
-  b->data[3U] =
-      (b->data[3U] & ~(255U << 0U))
-    | (((255U & v) << 0U));
+  b->data[5U] =
+      (b->data[5U] & ~(255U << 16U))
+    | (((255U & v) << 16U));
 }
 
 static void d_set_Grades__Physics_part3(Student *b, uint32_t v)
 {
-  b->data[3U] =
-      (b->data[3U] & ~(255U << 8U))
-    | (((255U & v) << 8U));
+  b->data[5U] =
+      (b->data[5U] & ~(255U << 24U))
+    | (((255U & v) << 24U));
 }
 
 void d_set_Grades__Physics(Student *b, uint32_t v)
