@@ -10,10 +10,10 @@ struct t1 {
 };
 typedef struct t1 t1;
 
-static inline unsigned int d_get_f1(t1 *b);
-static inline void d_set_f1(t1 *b, unsigned int v);
+unsigned int d_get_f1(const t1 *b);
+void d_set_f1(t1 *b, unsigned int v);
 
-static inline uint64_t d_get_f2(t1 *b);
-static inline void d_set_f2(t1 *b, uint64_t v);
+uint64_t d_get_f2(const t1 *b);
+void d_set_f2(t1 *b, uint64_t v);
 
 #endif

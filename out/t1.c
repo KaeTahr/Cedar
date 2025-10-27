@@ -3,62 +3,62 @@
 #include <stdint.h>
 #include "t1.h"
 
-static inline unsigned int d_get_f1_part0(t1 *b)
+static unsigned int d_get_f1_part0(const t1 *b)
 {
   return (b->data[0U] >> 0U) & 4294967295U;
 }
 
-static inline unsigned int d_get_f1(t1 *b)
+unsigned int d_get_f1(const t1 *b)
 {
   return ( (uint64_t)d_get_f1_part0(b) << 0U );
 }
 
-static inline void d_set_f1_part0(t1 *b, unsigned int v)
+static void d_set_f1_part0(t1 *b, unsigned int v)
 {
   b->data[0U] =
       (b->data[0U] & ~(4294967295U << 0U))
     | (((4294967295U & v) << 0U));
 }
 
-static inline void d_set_f1(t1 *b, unsigned int v)
+void d_set_f1(t1 *b, unsigned int v)
 {
   d_set_f1_part0(b, (unsigned int)((v >> 0U) & 4294967295U));
 }
 
 
-static inline unsigned int d_get_f2_part0(t1 *b)
+static unsigned int d_get_f2_part0(const t1 *b)
 {
   return (b->data[1U] >> 0U) & 4294967295U;
 }
 
-static inline unsigned int d_get_f2_part1(t1 *b)
+static unsigned int d_get_f2_part1(const t1 *b)
 {
   return (b->data[2U] >> 0U) & 4294967295U;
 }
 
-static inline uint64_t d_get_f2(t1 *b)
+uint64_t d_get_f2(const t1 *b)
 {
-  return ( (uint64_t)d_get_f2_part0(b) << 0U ) | ( (uint64_t)d_get_f2_part1(b) << 32U );
+  return ( (uint64_t)d_get_f2_part0(b) << 32U ) | ( (uint64_t)d_get_f2_part1(b) << 0U );
 }
 
-static inline void d_set_f2_part0(t1 *b, unsigned int v)
+static void d_set_f2_part0(t1 *b, unsigned int v)
 {
   b->data[1U] =
       (b->data[1U] & ~(4294967295U << 0U))
     | (((4294967295U & v) << 0U));
 }
 
-static inline void d_set_f2_part1(t1 *b, unsigned int v)
+static void d_set_f2_part1(t1 *b, unsigned int v)
 {
   b->data[2U] =
       (b->data[2U] & ~(4294967295U << 0U))
     | (((4294967295U & v) << 0U));
 }
 
-static inline void d_set_f2(t1 *b, uint64_t v)
+void d_set_f2(t1 *b, uint64_t v)
 {
-  d_set_f2_part0(b, (unsigned int)((v >> 0U) & 4294967295U));
-  d_set_f2_part1(b, (unsigned int)((v >> 32U) & 4294967295U));
+  d_set_f2_part0(b, (unsigned int)((v >> 32U) & 4294967295U));
+  d_set_f2_part1(b, (unsigned int)((v >> 0U) & 4294967295U));
 }
 
 

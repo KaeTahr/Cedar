@@ -10,6 +10,7 @@ import Data.Bits (shiftL)
 import Cedar.CodeGen.Allocation (AlignedBitRange(..))
 import Cedar.Layout.ToCodeGen (CGStruct(..), CGField(..))
 import Cedar.Layout.Surface (Endianness(..))
+import Cedar.Compat.Basic (Size(..))
 
 -- ===== public files =====
 
@@ -35,8 +36,8 @@ emitHeader (CGStruct typeName wordCount fields) =
     guard nm = map (\c -> if c == ' ' then '_' else toUpper c) nm
     cRetType f = if totalBits (cgRanges f) <= 32 then "unsigned int" else "uint64_t"
     protoForField f =
-      [ "static inline " ++ cRetType f ++ " d_get_" ++ cgName f ++ "(" ++ typeName ++ " *b);"
-      , "static inline void d_set_" ++ cgName f ++ "(" ++ typeName ++ " *b, " ++ cRetType f ++ " v);"
+      [ cRetType f ++ " d_get_" ++ cgName f ++ "(const " ++ typeName ++ " *b);"
+      , "void d_set_" ++ cgName f ++ "(" ++ typeName ++ " *b, " ++ cRetType f ++ " v);"
       , ""
       ]
 
@@ -58,60 +59,79 @@ emitImpl (CGStruct typeName _ fields) =
 
 emitFieldFns :: String -> CGField -> [String]
 emitFieldFns typeName (CGField fname brs ω) =
-  let partNames = [ "d_get_" ++ fname ++ "_part" ++ show i | i <- [0..length brs - 1] ]
-      setPartNames = [ "d_set_" ++ fname ++ "_part" ++ show i | i <- [0..length brs - 1] ]
-      -- getters for each part
-      partGets  = zipWith (mkPartGet typeName) partNames brs
-      -- final get that assembles them
-      getFun    = mkWholeGet fname partNames brs
-      -- setters for each part
-      partSets  = zipWith (mkPartSet typeName) setPartNames brs
-      -- final set that slices value
-      setFun    = mkWholeSet fname setPartNames brs
+  let partGetNames = [ "d_get_" ++ fname ++ "_part" ++ show i | i <- [0..length brs - 1] ]
+      partSetNames = [ "d_set_" ++ fname ++ "_part" ++ show i | i <- [0..length brs - 1] ]
+      -- getters for each part (static, file-local)
+      partGets  = zipWith (mkPartGet typeName) partGetNames brs
+      -- final get that assembles them (endianness-aware)
+      getFun    = mkWholeGet typeName ω fname partGetNames brs
+      -- setters for each part (static, file-local)
+      partSets  = zipWith (mkPartSet typeName) partSetNames brs
+      -- final set that slices value (endianness-aware)
+      setFun    = mkWholeSet typeName ω fname partSetNames brs
   in partGets ++ [getFun] ++ partSets ++ [setFun]
+
   where
+    mkPartGet :: String -> String -> AlignedBitRange -> String
     mkPartGet tn nm (AlignedBitRange sz boff woff) =
       unlines
-        [ "static inline unsigned int " ++ nm ++ "(" ++ tn ++ " *b)"
+        [ "static unsigned int " ++ nm ++ "(const " ++ tn ++ " *b)"
         , "{"
         , "  return (b->data[" ++ show woff ++ "U] >> " ++ show boff ++ "U) & " ++ show (mask32 sz) ++ "U;"
         , "}"
         ]
-    mkWholeGet nm partNs ranges =
-      let shifts = scanl' (+) 0 [ bitSizeABR r | r <- ranges ]
-          terms  = zipWith (\n s -> "( (uint64_t)" ++ n ++ "(b) << " ++ show s ++ "U )") partNs shifts
-          retTy  = if totalBits ranges <= 32 then "unsigned int" else "uint64_t"
+
+    mkWholeGet :: String -> Endianness -> String -> [String] -> [AlignedBitRange] -> String
+    mkWholeGet tn omega nm partNs ranges =
+      let sizes  = map (fromIntegral . bitSizeABR) ranges :: [Int]
+          shifts = shiftsFor omega sizes
+          total  = sum sizes
+          retTy  = if total <= 32 then "unsigned int" else "uint64_t"
+          terms  = zipWith
+                     (\fn off -> "( (uint64_t)" ++ fn ++ "(b) << " ++ show off ++ "U )")
+                     partNs
+                     shifts
       in  unlines
-        [ "static inline " ++ retTy ++ " d_get_" ++ nm ++ "(" ++ typeName ++ " *b)"
-        , "{"
-        , "  return " ++ intercalate " | " terms ++ ";"
-        , "}"
-        ]
+            [ retTy ++ " d_get_" ++ nm ++ "(const " ++ tn ++ " *b)"
+            , "{"
+            , "  return " ++ intercalate " | " terms ++ ";"
+            , "}"
+            ]
+
+    mkPartSet :: String -> String -> AlignedBitRange -> String
     mkPartSet tn nm (AlignedBitRange sz boff woff) =
       unlines
-        [ "static inline void " ++ nm ++ "(" ++ tn ++ " *b, unsigned int v)"
+        [ "static void " ++ nm ++ "(" ++ tn ++ " *b, unsigned int v)"
         , "{"
         , "  b->data[" ++ show woff ++ "U] ="
         , "      (b->data[" ++ show woff ++ "U] & ~(" ++ show (mask32 sz) ++ "U << " ++ show boff ++ "U))"
         , "    | (((" ++ show (mask32 sz) ++ "U & v) << " ++ show boff ++ "U));"
         , "}"
         ]
-    mkWholeSet nm partNs ranges =
-      let offsets = scanl' (+) 0 [ bitSizeABR r | r <- ranges ]
+
+    mkWholeSet :: String -> Endianness -> String -> [String] -> [AlignedBitRange] -> String
+    mkWholeSet tn omega nm partNs ranges =
+      let sizes   = map (fromIntegral . bitSizeABR) ranges :: [Int]
+          shifts  = shiftsFor omega sizes
+          total   = sum sizes
+          argTy   = if total <= 32 then "unsigned int" else "uint64_t"
           lines'  = zipWith
-                      (\n off -> "  " ++ n ++ "(b, (unsigned int)((v >> " ++ show off ++ "U) & " ++ show (mask32 (sizeAtOff off ranges)) ++ "U));")
-                      partNs offsets
-          argTy   = if totalBits ranges <= 32 then "unsigned int" else "uint64_t"
+                      (\n off ->
+                          "  " ++ n ++ "(b, (unsigned int)((v >> " ++ show off ++ "U) & "
+                          ++ show (mask32 (sizeAtOff (fromIntegral off) ranges)) ++ "U));")
+                      partNs
+                      shifts
       in unlines
-        ( [ "static inline void d_set_" ++ nm ++ "(" ++ typeName ++ " *b, " ++ argTy ++ " v)"
+        ( [ "void d_set_" ++ nm ++ "(" ++ tn ++ " *b, " ++ argTy ++ " v)"
           , "{"
           ]
           ++ lines'
           ++ [ "}" , "" ]
         )
 
--- helpers
+-- ===== helpers =====
 
+-- Sum of sizes (in bits) for a field; your bitSizeABR returns an Integer-sized "Size".
 totalBits :: [AlignedBitRange] -> Integer
 totalBits = sum . map bitSizeABR
 
@@ -123,6 +143,18 @@ sizeAtOff off ranges =
       offsets = scanl' (+) 0 sizes   -- [0, s0, s0+s1, ...]
       idx     = length (takeWhile (< off) offsets)
   in  sizes !! idx
+
+-- Given field endianness ω and the bit-sizes of each part (low→high order),
+-- return the shift offsets to place each part inside the whole value.
+shiftsFor :: Endianness -> [Int] -> [Int]
+shiftsFor ω sizes =
+  let leOffs = scanl (+) 0 sizes
+      total  = sum sizes
+      beShift le s = total - (le + s)
+  in case ω of
+       LE -> leOffs
+       ME -> leOffs         -- treat machine as LE unless you add per-target logic
+       BE -> zipWith beShift leOffs sizes
 
 -- mask for up to 32-bit parts (single word lane)
 mask32 :: Integer -> Integer

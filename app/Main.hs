@@ -15,7 +15,7 @@ studentLR :: DataLayout [AlignedBitRange]
 studentLR =
   Layout $ RecordLayout $ M.fromList
     [ ( "f1", PrimLayout [AlignedBitRange 32 0 0] ME )
-    , ( "f2", PrimLayout [AlignedBitRange 32 0 1, AlignedBitRange 32 0 2] ME )
+    , ( "f2", PrimLayout [AlignedBitRange 32 0 1, AlignedBitRange 32 0 2] BE )
     ]
 
 main :: IO ()
