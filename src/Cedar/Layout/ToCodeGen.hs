@@ -1,47 +1,53 @@
 module Cedar.Layout.ToCodeGen
-  ( CGField(..), CGStruct(..)
+  ( CGStruct(..)
+  , CGField(..)
   , layoutRecordToCGStruct
-  , wordCountFromStruct
   ) where
 
 import qualified Data.Map as M
+
 import Cedar.CodeGen.Allocation (AlignedBitRange(..))
-import Cedar.Layout.Core
 import Cedar.Layout.Surface (Endianness(..))
+import Cedar.Layout.Core (DataLayout(..), DataLayout'(..))
+import Cedar.Compat.Basic (Size(..))  -- <-- add this
+
+-- Codegen-facing struct description
+data CGStruct = CGStruct
+  { cgTypeName  :: String
+  , cgWordCount :: Int
+  , cgFields    :: [CGField]
+  }
 
 data CGField = CGField
   { cgName   :: String
   , cgRanges :: [AlignedBitRange]
   , cgEndian :: Endianness
-  } deriving (Show, Eq)
+  , cgSigned :: Bool
+  }
 
-data CGStruct = CGStruct
-  { cgTypeName :: String
-  , cgWordCount :: Int
-  , cgFields   :: [CGField]
-  } deriving (Show, Eq)
+-- convert Size (Integer-backed) to Int
+toInt :: Size -> Int
+toInt = fromIntegral
 
--- Compute words needed from AlignedBitRanges (32-bit lanes assumed here)
-wordsNeeded :: [AlignedBitRange] -> Int
-wordsNeeded rs =
-  let maxWord = maximum (0 : [ fromIntegral w | AlignedBitRange _ _ w <- rs ])
-  in maxWord + (if null rs then 0 else 1)
-
-wordCountFromStruct :: CGStruct -> Int
-wordCountFromStruct (CGStruct _ _ fs) =
-  maximum (1 : [ wordsNeeded (cgRanges f) | f <- fs ])
-
--- Bridge: only handles RecordLayout of PrimLayout for now
 layoutRecordToCGStruct :: String -> DataLayout [AlignedBitRange] -> CGStruct
 layoutRecordToCGStruct typeName (Layout (RecordLayout mp)) =
   let fields =
-        [ CGField { cgName = fname
-                  , cgRanges = rs
-                  , cgEndian = ω
-                  }
-        | (fname, PrimLayout rs ω) <- M.toList mp
+        [ CGField fname ranges omega False
+        | (fname, PrimLayout ranges omega) <- M.toList mp
         ]
-      wc = maximum (1 : [ wordsNeeded (cgRanges f) | f <- fields ])
-  in CGStruct { cgTypeName = typeName, cgWordCount = wc, cgFields = fields }
-layoutRecordToCGStruct _ _ =
-  error "layoutRecordToCGStruct: expected Layout (RecordLayout ...)"
+
+      -- FIX: convert wordOffsetABR (Size) -> Int before maximum
+      maxLane :: Int
+      maxLane =
+        maximum (0 : [ toInt woff
+                     | CGField _ rs _ _ <- fields
+                     , AlignedBitRange _ _ woff <- rs
+                     ])
+
+      wordCount :: Int
+      wordCount = maxLane + 1
+
+  in CGStruct typeName wordCount fields
+
+layoutRecordToCGStruct typeName _ =
+  CGStruct typeName 0 []
