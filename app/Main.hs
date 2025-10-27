@@ -1,33 +1,58 @@
 module Main where
 
 import qualified Data.ByteString.Char8 as B
-import qualified Data.Map as M
 import System.FilePath ((</>))
 import System.Directory (createDirectoryIfMissing)
 
-import Cedar.CodeGen.CodeGen (emitHeader, emitImpl)
-import Cedar.Layout.ToCodeGen (layoutRecordToCGStruct)
-import Cedar.Layout.Core (DataLayout(..), DataLayout'(..))
-import Cedar.CodeGen.Allocation (AlignedBitRange(..))
-import Cedar.Layout.Surface (Endianness(..))
+import Cedar.Pipeline (compileToStrings)
 
-studentLR :: DataLayout [AlignedBitRange]
-studentLR =
-  Layout $ RecordLayout $ M.fromList
-    [ ( "f1", PrimLayout [AlignedBitRange 32 0 0] ME )
-    , ( "f2", PrimLayout [AlignedBitRange 32 0 1, AlignedBitRange 32 0 2] BE )
+-- semantic ASTs
+import qualified Cedar.Semantic.C as C
+import qualified Cedar.Semantic.L as L
+
+
+-- C
+studentC :: C.CType
+studentC = C.Struct [
+    ("Student Number", C.Int C.I32 C.Signed C.noattr), 
+    ("DOB", C.Int C.I32 C.Signed C.noattr), 
+    ("Grades", C.Struct [
+        ("Maths", C.Int C.I32 C.Signed C.noattr),
+        ("Physics", C.Int C.I32 C.Signed C.noattr)
+        ])
     ]
+
+-- L
+studentL :: L.Layout
+studentL = L.Struct (L.AbsOffset (L.Bit 0))
+    [
+    ("Student Number", L.Primitive (L.Byte 4) (L.AbsOffset (L.Byte 0)) L.LE),
+    ("DOB", L.Primitive (L.Byte 4) (L.RelOffset "Grades" (L.After (L.Byte 0))) L.LE),
+    ("Grades", L.Struct (L.RelOffset "Student Number" (L.After (L.Byte 2))) [
+        ("Maths", L.Primitive (L.Byte 4) (L.AbsOffset (L.Byte 0)) L.BE),
+        ("Physics", L.Primitive (L.Byte 4) (L.RelOffset "Maths" (L.After (L.Byte 0))) L.BE)
+        ] L.ME)
+    ] L.LE
+
 
 main :: IO ()
 main = do
   let outDir   = "out"
-      typeName = "t1"
-      cg       = layoutRecordToCGStruct typeName studentLR
+      typeName = "Student"
+
+      (hdr, impl) = compileToStrings typeName studentC studentL
 
   createDirectoryIfMissing True outDir
-  B.writeFile (outDir </> (map toLower' typeName ++ ".h")) (B.pack (emitHeader cg))
-  B.writeFile (outDir </> (map toLower' typeName ++ ".c")) (B.pack (emitImpl cg))
-  putStrLn "Generated C in ./out/"
+  let base = fmap toLower' typeName
+      hPath = outDir </> base ++ ".h"
+      cPath = outDir </> base ++ ".c"
+
+  B.writeFile hPath (B.pack hdr)
+  B.writeFile cPath (B.pack impl)
+  putStrLn "Generated C in ./out/:"
+  putStrLn ("  " ++ hPath)
+  putStrLn ("  " ++ cPath)
+
   where
     toLower' c | 'A' <= c && c <= 'Z' = toEnum (fromEnum c + 32)
                | otherwise            = c

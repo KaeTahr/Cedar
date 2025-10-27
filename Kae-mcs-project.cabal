@@ -20,11 +20,24 @@ library
       Cedar.Layout.Core
       Cedar.Compat.Basic
       Cedar.Layout.ToCodeGen
+      Cedar.Pipeline
+      Cedar.Bridge.LRToCG
+      Cedar.Semantic.BasicType
+      Cedar.Semantic.C
+      Cedar.Semantic.C_to_CR
+      Cedar.Semantic.CR
+      Cedar.Semantic.L
+      Cedar.Semantic.LR
+      Cedar.Semantic.L_to_LR
+      Cedar.Semantic.CR_LR_matching
+
+
   build-depends:
       base >=4.14 && <5,
       containers,
       text,
-      bytestring
+      bytestring,
+      mtl
 
 executable cedar-demo
   import:              common-settings
@@ -36,4 +49,14 @@ executable cedar-demo
       directory,
       filepath,
       bytestring,
+      mtl,
       Kae-mcs-project
+  ghc-options: 
+      -Wall
+      -Wno-unused-imports
+      -Wno-unused-matches
+      -Wno-name-shadowing
+      -Wno-missing-pattern-synonym-signatures
+      -Wno-compat-unqualified-imports
+
+    

@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs #-}
 module Cedar.Semantic.L where
 
 -- In ByteBit/Bit/Byte Representation

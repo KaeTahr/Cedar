@@ -1,3 +1,8 @@
+-- Depracated?
+-- This file was used for the demo pipeline of hardcoded LRs
+-- LR/LRToCodeGen implements new functionality
+-- File is left for completion of previous examples
+
 module Cedar.Layout.ToCodeGen
   ( CGStruct(..)
   , CGField(..)
