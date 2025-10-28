@@ -1,0 +1,106 @@
+\section{Methodology and System Design}
+This chapter describes the design rationale, research methodology,
+and overall system architecture of \textbf{Cedar}, the
+declarative data-layout language developed in this project.
+While the previous chapter surveyed existing approaches to memory
+control and identified the research gap, this chapter
+focuses on \textit{how} Cedar was conceived and realized as a research
+prototype.
+It outlines the methodology that guided its design, the principles
+underlying its architecture, and the language features intended to
+balance flexibility, safety, and practicality.
+The aim is to demonstrate a rigorous iterative process of language
+design and evaluation rather than a purely implementation-driven
+effort.
+The Chapter starts by introducing the research methodology. It then
+details Cedar's conceptual model and language design.
+Finally, it discusses the compiler architecture and implementation
+strategy. 
+\subsection{Research Methodology and Approach}
+Cedar was developed using a \textbf{design-and-evaluation} methodology
+characteristic of programming-language and systems
+research~\autocite{incremental_development,acm_programming_language_dev}
+Rather than testing a fixed hypothesis experimentally, the project
+employed a \textbf{iterative artefact construction} to explore
+a design space: declarative layout specification for C.
+Each design iteration produced a working prototype, which was
+then analyzed for expressiveness, soundness, correctness and usability
+before informing the next refinement cycle.
+This methodology treats the artefact—the cedar compiler itself—as a
+\textbf{research instrument}, whose development both embodies and test
+the underlying ideas.
+
+\subsubsection{Design-Science Perspective}
+The project follows the \textit{design-science}~\autocite{hevner2004design},
+in which scientific knowledge is advanced by creating and evaluating
+artifacts that address identified problems. Here, the problem is the lack
+of principled support for specifying and checking  data layouts
+in C.
+
+The research contribution therefore lies not in empirical measurement, but in
+articulating, implementing and critically assessing a novel design
+that improves upon existing practices. Cedar's prototype serves as a
+\textbf{proof of concept}, enabling examination of how declarative
+layout specifications interact with C's type system and semantics.
+
+\subsubsection{Research Objectives}
+The design and evaluation cycles where guided by three objectives:
+\begin{itemize}
+    \item \textbf{Expressiveness:} Can a concise, declarative syntax
+    capture common C layout idioms such as packed structs, arrays and
+    tagged unions?
+    \item \textbf{Correctness:} Can the compiler statically detect mismatches
+    between a declared layout and its corresponding C type?
+    \item \textbf{Practicality:} Can the language integrate with existing
+    C toolchains without requiring substantial changes to compilers or
+    build systems?
+\end{itemize}
+
+Each objective influenced both language features and implementation choices.
+Expressiveness informed syntax design, correctness motivated
+structural-matching and checking algorithms; practicality shaped
+decisions about the compilation target and model.
+
+\subsubsection{Iterative Development Process}
+Development proceeded through several iterations:
+\begin{enumerate}
+    \item \textbf{Initial Design Sketch—} Based on the Dargent\autocite{dargent1} model
+    of type-layout separation, a minimal grammar and protype were implemente dto test
+    feasibility.
+    \item \textbf{Semantic Model Definition—} Intermediate representations
+    (L, LR, CR) were introduced to formalize layout semantics and enable
+    static checking
+    \item \textbf{Prototype Implementation—} Core parsing, checking, and partial
+    code-generation passes were implemented in Haskell to validate the
+    translation pipeline.
+    \item \textbf{Evaluation and Refinement—} Representative examples
+    (adapted from Dargent and Cogent) were compiled, analyzed, and used to
+    refine grammar and error reporting.
+\end{enumerate}
+
+These iterations reflect a \textbf{constructive research cycle}—build, observe,
+refine—rather than a waterfall model.
+At each stage, theoretical design principles were confronted with the
+practical realities of C's type
+system, ensuring that the resulting artifact addressed real constraints
+
+\subsubsection{Scope and Limitations}
+%TODO: Just how far did we come?
+The project's scope was deliberately bounded to enable focused 
+evaluation. 
+The prototype supports a functional core of layout constructs—
+\texttt{layout}, \texttt{at}, \texttt{before}, \texttt{after}—sufficient
+to assess the feasibility of declarative layout checking.
+Features such as bit-fields, flexible arrays, and recursive layout types
+were deferred to future work. This selective implementation does not
+weaken the methodology; rather, it isolated the aspects most
+relevant to the research question.
+
+\subsubsection{Summary of Methodological Focus}
+Overall, the methodology can be summarized as \textbf{research through design}.
+Cedar was conceived not to replace C but to \textit{investigate} whether 
+declarative layout descriptions can coexist with its low-level semantics.
+By iteratively designing, implementing, and analyzing a working compiler, the
+project aims to contribute insights into how language design can improve
+reliability and clarity in systems programming without sacrificing 
+control or performance
