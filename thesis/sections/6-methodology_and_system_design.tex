@@ -1,106 +1,191 @@
-\section{Methodology and System Design}
-This chapter describes the design rationale, research methodology,
-and overall system architecture of \textbf{Cedar}, the
-declarative data-layout language developed in this project.
-While the previous chapter surveyed existing approaches to memory
-control and identified the research gap, this chapter
-focuses on \textit{how} Cedar was conceived and realized as a research
-prototype.
-It outlines the methodology that guided its design, the principles
-underlying its architecture, and the language features intended to
-balance flexibility, safety, and practicality.
-The aim is to demonstrate a rigorous iterative process of language
-design and evaluation rather than a purely implementation-driven
-effort.
-The Chapter starts by introducing the research methodology. It then
-details Cedar's conceptual model and language design.
-Finally, it discusses the compiler architecture and implementation
-strategy. 
-\subsection{Research Methodology and Approach}
-Cedar was developed using a \textbf{design-and-evaluation} methodology
-characteristic of programming-language and systems
-research~\autocite{incremental_development,acm_programming_language_dev}
-Rather than testing a fixed hypothesis experimentally, the project
-employed a \textbf{iterative artefact construction} to explore
-a design space: declarative layout specification for C.
-Each design iteration produced a working prototype, which was
-then analyzed for expressiveness, soundness, correctness and usability
-before informing the next refinement cycle.
-This methodology treats the artefact—the cedar compiler itself—as a
-\textbf{research instrument}, whose development both embodies and test
-the underlying ideas.
+\section{Methodology and Implementation}
+This chapter presents the design and implementation of
+\textbf{Cedar}, a prototype language and compiler for describing
+C layouts declaratively.
+The goal of the project is to give programmers
+\textbf{greater trust} that in-memory representations of data structures
+corresponds to their intent.
+Cedar achieves this bya introducing a small external language
+for layout declarations, paired with a static checker that validates 
+those declarations against C type definitions and generates
+layout consistent C code.
 
-\subsubsection{Design-Science Perspective}
-The project follows the \textit{design-science}~\autocite{hevner2004design},
-in which scientific knowledge is advanced by creating and evaluating
-artifacts that address identified problems. Here, the problem is the lack
-of principled support for specifying and checking  data layouts
-in C.
+While chapter 2 reviewed related work, this chapter focuses on what
+was built: the theoretical foundations on which Cedar stands, the kind
+of layouts it supports, and the design of its grammar and compilation
+pipeline.
+The work draws on two main sources of inspiration—\textbf{CompCert} and
+\textbf{Dargent}—whose ideas on form the conceptual basis for
+Cedar's semantics and tooling.
 
-The research contribution therefore lies not in empirical measurement, but in
-articulating, implementing and critically assessing a novel design
-that improves upon existing practices. Cedar's prototype serves as a
-\textbf{proof of concept}, enabling examination of how declarative
-layout specifications interact with C's type system and semantics.
+\subsection{Foundations: CompCert and Dargent}
+Cedar's design is built upon the semantic foundations provided by
+\textbf{CompCert}~\cite{leroy2009formal}, and the declarative layout
+principles introduced by \textbf{Dargent}~\cite{dargent}.
+Understanding these two systems explains both the motivation
+and structure of Cedar.
 
-\subsubsection{Research Objectives}
-The design and evaluation cycles where guided by three objectives:
+\subsubsection{CompCert verified C semantics as a foundation}
+CompCert~\autocite{compcert} is a formally verified compiler of the C language
+Its significance lies 
+in \textbf{formal definition of the C memory model}~\autocite{leroy2012compcert},
+which specified how C objects are represented as contiguous blocks of bytes,
+how pointer arithmetic and aliasing work, and under what condition two
+memory states can be considered equivalent.
+Although Cedar is not yet built \textit{within} CompCert, it adopts
+the same conceptual views on C memory: objects are typed, laid out in
+addressable bytes, and subjected to well-defined alignment and
+padding rules.
+
+By grounding Cedar's reasoning in this model, layout checking can be 
+interpreted consistently within verified C semantics.
+For example, when Cedar computes bit-ranges, and checks for non-overlapping
+fields, it effectively enforces that the resulting layout 
+would be \textbf{well-formed under CompCerts memory abstraction}. The
+connection ensures that, if Cedar layouts were eventually compiled through
+CompCert, their structural assumptions would remain sound.
+
+\subsubsection{Dargent: declarative layouts and type-layout separation}
+While CompCert provides the semantic bedrock, Cedar's language design
+follows the philosophy of \textbf{Dargent}~\autocite{dargent}.
+Dargent introduced a declarative approach to specifying how algebraic data types
+are represented in memory, separating the physical layout from the logical
+structure.
+
+Cedar adopts key ideas—\textbf{type-layout separation} and \textbf{explicit
+field placement}—but targets them for plain C rather than Cogent. Unlike Dargent,
+Cedar does not require a restricted functional language, or a theorem prover;
+it provides lightweight static checking that enforces the same
+well-formedness properties. These adaptations transform Dargent's research
+concept into a more practical, C-oriented tool.
+
+\subsubsection{Bridging the Two influences}
+Cedar can thus be viewed as a \textbf{bridge between CompCert and Dargent}:
+From CompCert, it inherits a precise understanding of how C objects
+occupy memory; from Dargent, it inherits a declarative notation for describing
+that occupation explicitly.
+Cedar's goal is to close the gap between declarative layout specifications
+in self-contained languages, and the C ecosystem, producing verifiable code
+that remain compatible with existing C compilers.
+
+The remainder of this chapter builds on these foundations.
+We continue by describing the subset of C types supported by Cedar and how
+layouts are represented. Later we detail the language patterns and features.
+Finally, we summarize the compiler architecture that realizes it.
+
+%Figure of Cedar's lineage
+\subsection{Supported C Types and Layout Model}
+Cedar operates over a well-defined subset of the C type system that
+reflect the representations defined by CompCert. The
+protottype focuses on data structures wholse layout is
+statiscally determinable: \textbf{structures, arrays, and
+tagged unions}. These cases cover the majority of layout-sensitive
+code in low-level programming while remainng tractable for static
+checking.
+
+\subsubsection{Structures}
+Cedar treats C \texttt{struct} as ordered collections of named
+fields occupying contiguous regions of memory.
+Each field has a known size and alignment derived from its
+base type.
+A layout declaration for a structure describes the physical
+order and spacing of its fields using placement
+directives
+such as \texttt{at}, \texttt{before}, and \texttt{after}.
+During checking, Cedar ensures that:
 \begin{itemize}
-    \item \textbf{Expressiveness:} Can a concise, declarative syntax
-    capture common C layout idioms such as packed structs, arrays and
-    tagged unions?
-    \item \textbf{Correctness:} Can the compiler statically detect mismatches
-    between a declared layout and its corresponding C type?
-    \item \textbf{Practicality:} Can the language integrate with existing
-    C toolchains without requiring substantial changes to compilers or
-    build systems?
+    \item All fields of the corresponding C \texttt{struct}  are
+    represented exactly once,
+    \item No two fields overlap in their bit ranges, and
+    \item The overall size and alignment conform to the
+    base types requirements.
 \end{itemize}
 
-Each objective influenced both language features and implementation choices.
-Expressiveness informed syntax design, correctness motivated
-structural-matching and checking algorithms; practicality shaped
-decisions about the compilation target and model.
+This model allows Cedar to detect and properly handle changes that could
+otherwise be silently mishandled by compiler-specific padding or mis-ordered
+field declarations—one of the most common causes of data-layout bugs in C.
 
-\subsubsection{Iterative Development Process}
-Development proceeded through several iterations:
-\begin{enumerate}
-    \item \textbf{Initial Design Sketch—} Based on the Dargent\autocite{dargent1} model
-    of type-layout separation, a minimal grammar and protype were implemente dto test
-    feasibility.
-    \item \textbf{Semantic Model Definition—} Intermediate representations
-    (L, LR, CR) were introduced to formalize layout semantics and enable
-    static checking
-    \item \textbf{Prototype Implementation—} Core parsing, checking, and partial
-    code-generation passes were implemented in Haskell to validate the
-    translation pipeline.
-    \item \textbf{Evaluation and Refinement—} Representative examples
-    (adapted from Dargent and Cogent) were compiled, analyzed, and used to
-    refine grammar and error reporting.
-\end{enumerate}
+\subsubsection{Arrays} 
+Arrays are represented as repeated layouts of a uniform elemenet type.
+Cedar supports both fixed-length and statically known arrays.
+The layout checked verifies that the element layout
+is well-formed and then replicates its size and alignment
+across the declared array length.
+Array support enables Cedar to express memory regions such as
+device register tables, or network buffers that consist of repeated
+records.
 
-These iterations reflect a \textbf{constructive research cycle}—build, observe,
-refine—rather than a waterfall model.
-At each stage, theoretical design principles were confronted with the
-practical realities of C's type
-system, ensuring that the resulting artifact addressed real constraints
+\subsubsection{Tagged Unions}
+Cedar also supports \textbf{tagged unions}, where a discriminant
+field identifies which variant of a data type is active.
+Layouts for tagged unions specify both the location of the tag
+and the placement of each variant.
+iThe tag is an explicitly field of a known integer type, and each variant
+layout is checked independently for completeness and non-overlap
+Untyped or overlapping unions—common in legacy C—are not yet supported,
+as their semantics fall outside CompCert's well-defined
+memory model.
+
+\subsubsection{Primitive and Derived Types}
+Base types such as \texttt{char}, \texttt{short}, \texttt{int}, \texttt{long},
+and their fixed-width equivalents (\texttt{int8\_t}, \texttt{uint32\_t}, etc.)
+are treated as atomic elements with known bit sizes and alignment constraints.
+Cedar assumes the same type sizes as the host compiler, which can be
+configured when the tool is built.
+Pointer types are recognized but not yet given explicit layouts;
+they are treated as opaque machine words, leaving pointer
+validity and aliasing to the underlying C semantics.
+Future extensions could integrate CompCert's pointer-value
+model to reason about pointer fields more precisely.
+
+\subsubsection{Layout Representation}
+Internally, every Cedar layout is reduced to a \textbf{set of
+non-overlapping bit-ranges} withing a contiguous address space.
+Each range corresponds to a field array element and is annotated with its
+logical name, type, and alignment.
+FIGURE illustrates this mapping for a simple \textttt{struct} example.
+
+%TODO Figure of example
+% layout Student at 0 {}
+% name: char[32]
+% id: uint43__t after name
+% grade: uint8_t after id
+
+The compiler computer explicit offsets—\texttt{name} [0-255],
+\texttt{id} [256-287], \texttt{grade}[288-295]—and verifies
+that these regions are contiguous and non-overlapping.
+
+This representation follows the same notion of "memory chunk" used in CompCert,
+where each object occupies a sequence of bytes and field addresses are
+computed as offsets within that chunk.
+By maintaining this correspondence, Cedar's checked
+layouts can be compiled through any C toolchain, including CompCert,
+without violating its memory-safe assumptions.
 
 \subsubsection{Scope and Limitations}
-%TODO: Just how far did we come?
-The project's scope was deliberately bounded to enable focused 
-evaluation. 
-The prototype supports a functional core of layout constructs—
-\texttt{layout}, \texttt{at}, \texttt{before}, \texttt{after}—sufficient
-to assess the feasibility of declarative layout checking.
-Features such as bit-fields, flexible arrays, and recursive layout types
-were deferred to future work. This selective implementation does not
-weaken the methodology; rather, it isolated the aspects most
-relevant to the research question.
+The current prototype omits constructs whose semantics 
+complicate static layout reasoning, such as: bitfields,
+flexible array members, nested or recursive layouts, and untagged unions.
+These features will be considered in future work
+once the core checking mechanisms are stable.
+Despite these restrictions, the implemented subset is expressive
+enough to capture common data representations used in
+device drivers, network protocols, and binary file formats.
 
-\subsubsection{Summary of Methodological Focus}
-Overall, the methodology can be summarized as \textbf{research through design}.
-Cedar was conceived not to replace C but to \textit{investigate} whether 
-declarative layout descriptions can coexist with its low-level semantics.
-By iteratively designing, implementing, and analyzing a working compiler, the
-project aims to contribute insights into how language design can improve
-reliability and clarity in systems programming without sacrificing 
-control or performance
+\subsection{Cedar Language Design and Core Features}
+Cedar extends C with a minimal set of declarative constructs for speciffying
+hata data structures are laid out in memory.
+Its synteax follows C's lexical convnetions but introduces
+new top-level \texttt{layout} blocks
+that describe the physical
+placement of fields.
+These layouts declarations are currently written in separate
+\texttt{.cedar} source file and linked to existing C type
+definition.
+The language is intentionally small: its expressiveness
+comes from composable placement directives rather than
+complex new forms.
+
+\subsection{Core Grammar}
+FIGURE sumarrizes the grammar of Cedar's core langauge, adapted from
+Anderson's proposal~\autocite{cedar_george}.
