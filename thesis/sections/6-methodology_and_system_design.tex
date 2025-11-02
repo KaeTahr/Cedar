@@ -187,5 +187,207 @@ comes from composable placement directives rather than
 complex new forms.
 
 \subsection{Core Grammar}
-FIGURE sumarrizes the grammar of Cedar's core langauge, adapted from
+FIGURE summarizes the grammar of Cedar's core language, adapted from
 Anderson's proposal~\autocite{cedar_george}.
+
+%figure of the grammar George
+
+Each \texttt{layout} declaration associates a name (matching a C type) with
+a collection of fields. Each field declaration specifies the type and
+placement of a field relative to the layout's origin
+or to other fields.
+
+The \texttt{placement} clause may be absolute (\texttt{at}) or relative
+(\texttt{before}/\texttt{after}).
+The grammar permits only one-level nesting of layouts in the current
+prototype; recursive or parametric layouts are excluded.
+
+%Example of student layout
+
+In this example, the \texttt{Student} layout begins at offset 0.
+The field \texttt{name} is an array of 32 characters
+occupying the first 256 bits; \texttt{id} is placed immediately
+after it, and \texttt{grade} follows \texttt{id}.
+Offsets are computed automatically during the layout-checking phase.
+If two fields were to overlap, or if a field were missing compared
+to the associated C type, the checked
+would reject the layout.
+
+%Figure annotated same example as above.
+
+\subsubsection{Language Semantics}
+Cedar's semantics are deliberately simple and static.
+Each layout defines a total mapping from logical fields to \textbf{bit-ranges}
+within a contiguous address space.
+The compiler computes these ranges deterministically based on field
+sizes and placement directives.
+
+\textbf{Key properties enforced by the checked:}
+\begin{itemize}
+    \item \textbf{Completeness} — every field of the corresponding C type
+    must appear in the layout.
+    \item \textbf{Non-overlap} — no two fields occupy intersecting bit ranges 
+    \item \textbf{Order Consistency} — relative directives (\texttt{before}/\texttt{after})
+    must refer to existing fields.
+    \item \textbf{Alignment} — offsets must respect the alignment constraints
+    of their base types.
+\end{itemize}
+
+A layout satisfying these rules is \textit{well-formed}. The checking
+algorithm ensures that every accepted layout could correspond to a valid C
+memory representation.
+
+\subsubsection{Design Considerations}
+Cedar's syntax is intentionally declarative rather than arithmetic.
+Instead of writing numeric offsets directly, programmers
+express structural relationships—"\texttt{id} after \texttt{name}"—that
+the compiler resolves into precise addresses.
+This improves readability and reduces the risk of human error, while
+still allowing absolute placement (\texttt{at}) when required
+for interoperability with binary formats and hardware registers.
+
+To keep the semantics tractable, Cedar omits features like computed
+field expressions or conditional layouts.
+The resulting language is small enough to reason about statically and
+expressive enough to describe practical C structures.
+
+\subsubsection{Supported Directives Summary}
+\begin{center}
+    \begin{tabular}{|| c c c||}
+        \hline
+        Directive & Purpose & Example \\ [0.5ex]
+        \hline\hline
+        \texttt{at} & Absolute placement.  & \texttt{id : u32 at 64;} \\
+        \hline
+        \texttt{after} & Place field immediately after another. & \texttt{grade : u8 after id;} \\
+        \hline
+        \texttt{before} & Place field immediately before another. & \texttt{prefix : u8 before name;} \\
+        \hline
+        \texttt{layout} & Define a new layout block. & \texttt{layout Student { ... }} \\
+        \hline
+    \end{tabular}
+\end{center}
+
+Together , the grammar and these directives define Cedar's core language.
+They form the user-facing layer of the system which is then translated by
+the compiler into a sequence of well-defined intermediate representations.
+These representations capture progressively more information
+about the layout, allowing the checked to validate and later generate code
+for the specified structures.
+
+\subsection{Compiler Architecture}
+Cedar's compiler is organized as a sequence of pure translation stages
+that progressively enrich the information available about each layout.
+This implementation is lightweight and research-oriented.
+
+%Figure about compiler flow
+
+Each stage transforms the program into a slightly more concrete form,
+preserving the structure while adding derived information such as absolute
+offsets and alignment constraints.
+
+\subsubsection{Parsing and Resolution}
+The grammar is parsed into a structure abstract syntax tree (\texttt{L}).
+A resolution pass then substitutes symbolic references (e.g., \texttt{after name})
+with explicit dependencies between fields.
+At this point the layout is still declarative: field positions are
+described relative to one another rather than as numeric offsets.
+
+\subsubsection{Static Checking}
+In the checking phase, the compiler computes explit bit-ranges
+for every fied, producing the \textbf{checked representation (CR)}.
+This representation encodes all the information needed to
+verify layout correctness: field offsets,
+sizes, alignments, and total layout size.
+The checker enforces the well-formedness properties—completeness, non-overlap,
+order consistency, and alignment.
+If any rule is violated, the compiler reports an error with the offending
+field and dependency chain.
+
+\subsubsection{Code Generation}
+Once a layout is verified, Cedar emits equivalent C code.
+The generated output includes the corresponding declaration
+and a set of helper functions for reading and writing fields according to
+the checked layout.
+No runtime library or special compiler support is required; the output
+can be compiled by any existing C toolchain.
+This makes this version of Cedar a self-contained pre-processing
+step rather than a modification to the C language itself.
+
+\subsubsection{Design Rationale}
+The architecture emphasizes two main principles:
+\begin{enumerate}
+    \item \textbf{Transparency}. Each representation (L, LR, CR) can
+    be inspected, making the compiler's reasoning traceable
+    \item \textbf{Modularity}. Additional analyses or transformations
+    can be inserted between stages without disrupting others.
+\end{enumerate}
+
+This design allow Cedar to be extended in the future with
+additional features, and potentially support for automated
+verification, similar to Dargent.
+
+It provides a practical foundation for Cedar's prototype: small enough
+to experiment with, buth structured in a way that preserves the formal
+clarity of its inspirations.
+
+\subsection{Achievements and Scope}
+The Cedar prototype demonstrated that declarative data-layout specification
+can be integrated directly into the C programming environment in a practical
+way.
+Its development produced a complete end-to-end toolchain—from parsing and static
+checking of layout descriptions to the generation of layout-consistent C
+code—that validates the design concepts outlined in this chapter.
+
+\subsubsection{Implemented Features}
+The current implementation supports:
+
+\begin{itemize}
+    \item \textbf{Declarative layout defintions} for \texttt{structs},
+    fixed-size arrays, and tagged unions.
+    \item \textbf{Placement directives} (\texttt{at}, \texttt{before}, \texttt{after})
+    that determine field ordering and spacing.
+    \item \textbf{Automatic offset computation} and total-size calculation.
+    \item \textbf{C code generation} producing equivalent declarations
+    and accessor functions.
+\end{itemize}
+
+Each of these features we tested on representative examples derived from
+Dargent's examples and from common systems-programming idioms such as
+device registers. The prototype successfully detected layout mismatches
+and generated compilable C code for all supported constructs.
+
+\subsubsection{Scope and Limitations}
+Cedar intentionally restricts its expressiveness to keep checking decidable
+and the implementation lightwieght.
+The prototype does \textbf{not} yet support:
+\begin{itemize}
+    \item Bit-fields or overlapping union members;
+    \item Flexible array members or dynamically sized layouts;
+    \item Nested or recursive layout definitions;
+    \item Automated diagnostic recovery;
+\end{itemize}
+
+These omissions do not reflect missing functionality but a deliberate research
+boundary: the implemented subset is sufficient to evaluate Cedar's design
+principles and verify that they operate coherently within C's type system.
+The language design and compiler architecture are modular enough that
+these features could be added in future versions without
+major restructuring.
+
+\subsubsection{Practical Outcome}
+The resulting system is a functioning compiler that demonstrates:
+\begin{enumerate}
+    \item Declarative layout syntax can describe C data structures succinctly;
+    \item Static checking can verify structural inconsistencies that ordinary
+    C compilers accept silently;
+    \item Generated code remains portable and compatible with existing toolchains.
+\end{enumerate}
+
+Together, these results validate Cedar's underlying hypothesis: that
+separating layout intent from C type declarations can improve
+programmers' confidence in the correctness of low-level data representations.
+
+The next chapter presents concrete example and results, illustrating how
+Cedar's layout translate into verified C code and how its checker behaves
+on representative cases.
