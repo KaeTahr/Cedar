@@ -8,18 +8,26 @@ data Prim
 data Endian = LE | BE | ME
   deriving (Eq,Show)
 
+data POffset
+  = AbsB Int
+  | RelAfter  String Int
+  | RelBefore String Int
+  deriving (Eq,Show)
+
 data PType
   = TPrim Prim
   | TArray PType Int
-  | TRecord [PField]
+  | TRecord POffset [PField]   -- record carries its own base offset
   deriving (Eq,Show)
 
 data PField = PField
   { pfName   :: String
   , pfType   :: PType
-  , pfOffB   :: Int        -- absolute byte offset
+  , pfOff    :: POffset
   , pfEndian :: Maybe Endian
   } deriving (Eq,Show)
 
-data TopDecl = TypeDecl String PType
+data TopDecl
+  = TypeDecl   String PType
+  | LayoutDecl String PType
   deriving (Eq,Show)

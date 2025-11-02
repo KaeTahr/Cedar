@@ -22,18 +22,24 @@ run :: FilePath -> String -> FilePath -> IO ()
 run inFile typeName outDir = do
   src <- readFile inFile
   let toks = alexScanTokens src
-      decls = parseString toks
-      pick = [ d | d@(TypeDecl nm _) <- decls, nm == typeName ]
+  let decls = parseString toks
+
+  -- pick the decl by name, accepting either TypeDecl or LayoutDecl
+  let pick = [ d | d@(TypeDecl nm _)   <- decls, nm == typeName ]
+          ++ [ d | d@(LayoutDecl nm _) <- decls, nm == typeName ]
+
   case pick of
     (d:_) -> do
-      let (cTy, lLay) = lowerToCL d
-          (hdr, impl) = compileToStrings typeName cTy lLay
+      let (cType, lLayout) = lowerToCL d
+      let (hdr, impl) = compileToStrings typeName cType lLayout
       createDirectoryIfMissing True outDir
       let base = map toLower' typeName
       B.writeFile (outDir </> base ++ ".h") (B.pack hdr)
       B.writeFile (outDir </> base ++ ".c") (B.pack impl)
       putStrLn "OK"
     _ -> fail ("Type not found: " ++ typeName)
+    [] ->
+      error ("No declaration named " ++ show typeName ++ " found")
   where
     toLower' c | 'A' <= c && c <= 'Z' = toEnum (fromEnum c + 32)
                | otherwise            = c

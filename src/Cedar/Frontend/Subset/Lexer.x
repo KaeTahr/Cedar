@@ -16,11 +16,14 @@ $space+                           ;
 "//".*                            ;
 
 "type"                            { \_ -> KwType }
+"layout"                          { \_ -> KwLayout }
 "record"                          { \_ -> KwRecord }
 "endian"                          { \_ -> KwEndian }
 "LE"                              { \_ -> KwLE }
 "BE"                              { \_ -> KwBE }
 "ME"                              { \_ -> KwME }
+"after"                           { \_ -> KwAfter }
+"before"                          { \_ -> KwBefore }
 
 "U8"                              { \_ -> TyU8 }
 "U16"                             { \_ -> TyU16 }
@@ -40,6 +43,7 @@ $space+                           ;
 "@"                               { \_ -> At }
 "B"                               { \_ -> BByte }
 "="                               { \_ -> Eq }
+";"                               { \_ -> Semi }
 "|"                               { \_ -> Pipe }
 
 $alpha $alnum*                    { \s -> Ident s }
@@ -49,10 +53,12 @@ $digit+                           { \s -> IntLit (read s) }
 
 {
 data Token
-  = KwType | KwRecord
+  = KwType | KwLayout
+  | KwRecord
   | KwEndian | KwLE | KwBE | KwME
+  | KwAfter | KwBefore
   | TyU8 | TyU16 | TyU32 | TyU64 | TyI8 | TyI16 | TyI32 | TyI64
-  | LBrace | RBrace | LBrack | RBrack | Colon | Comma | At | BByte | Eq | Pipe
+  | LBrace | RBrace | LBrack | RBrack | Colon | Comma | At | BByte | Eq | Semi | Pipe
   | Ident String | Quoted String | IntLit Int
   deriving (Show, Eq)
 }
