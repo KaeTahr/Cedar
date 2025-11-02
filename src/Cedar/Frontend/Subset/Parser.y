@@ -32,20 +32,31 @@ import Cedar.Frontend.Subset.Lexer
 %%
 
 Start :: { [TopDecl] }
-  : DeclList                      { $1 }
+  : DeclList                                { $1 }
 
 DeclList :: { [TopDecl] }
-  :                                 { [] }
-  | DeclList Decl                   { $1 ++ [$2] }
+  :                                          { [] }
+  | DeclList Decl                            { $1 ++ [$2] }
 
 Decl :: { TopDecl }
-  : KwType   Ident Eq Type                { TypeDecl   $2 $4 }
-  | KwLayout Ident Eq Type Semi           { LayoutDecl $2 $4 }
+  : KwType   Ident Eq Type                   { TypeDecl   $2 $4 }
+  | KwLayout Ident Eq Type Semi              { LayoutDecl $2 $4 }
 
-Type :: { PType }
-  : PrimTy                                { TPrim $1 }
-  | Type LBrack IntLit RBrack             { TArray $1 $3 }
-  | KwRecord LBrace Fields RBrace Offset  { TRecord $5 $3 }
+-- Types ---------------------------------------------------
+
+Type :: { PType }                   -- used at top-level layouts; may be a record-with-offset
+  : RecordTy                        { $1 }
+  | NonRecType                      { $1 }   -- (top-level prim/array is allowed if you want)
+
+-- Non-record types (do not carry their own offset)
+NonRecType :: { PType }
+  : PrimTy                          { TPrim $1 }
+  | NonRecType LBrack IntLit RBrack { TArray $1 $3 }
+
+-- Record type *does* carry its own offset
+RecordTy :: { PType }
+  : KwRecord LBrace Fields RBrace Offset
+      { TRecord $5 $3 }
 
 PrimTy :: { Prim }
   : TyU8  { U8 }  | TyU16 { U16 } | TyU32 { U32 } | TyU64 { U64 }
@@ -55,28 +66,53 @@ PrimTy :: { Prim }
                       n -> error ("unsupported byte size: " ++ show n)
                   }
 
+-- Offsets -------------------------------------------------
+
 Offset :: { POffset }
-  : At IntLit BByte                         { AbsB $2 }
-  | At Name KwAfter  IntLit BByte           { RelAfter  $2 $4 }
-  | At Name KwBefore IntLit BByte           { RelBefore $2 $4 }
+  : At IntLit BByte                 { AbsB $2 }
+  | At Name KwAfter  OptSize        { RelAfter  $2 $4 }
+  | At Name KwBefore OptSize        { RelBefore $2 $4 }
+  | KwAfter  Name OptSize           { RelAfter  $2 $3 }
+  | KwBefore Name OptSize           { RelBefore $2 $3 }
+
+AbsOffset :: { POffset }
+  : At IntLit BByte                          { AbsB $2 }
+
+RelOffset :: { POffset }
+  -- “@ base after/before [nB]”
+  : At Name KwAfter  OptSize                 { RelAfter  $2 $4 }
+  | At Name KwBefore OptSize                 { RelBefore $2 $4 }
+  -- postfix “after/before base [nB]”
+  | KwAfter  Name OptSize                    { RelAfter  $2 $3 }
+  | KwBefore Name OptSize                    { RelBefore $2 $3 }
+
+
+OptSize :: { Int }
+  : IntLit BByte                    { $1 }
+  |                                 { 0 }
+
+-- Fields --------------------------------------------------
 
 Fields :: { [PField] }
-  :                                   { [] }
-  | Fields Field                      { $1 ++ [$2] }
-  | Fields Field Comma                { $1 ++ [$2] }
+  : Field                           { [$1] }
+  | Fields Comma Field              { $1 ++ [$3] }
 
 Field :: { PField }
-  : Name Colon Type Offset                        { PField $1 $3 $4 Nothing }
-  | Name Colon Type Offset KwEndian End           { PField $1 $3 $4 (Just $6) }
-
+  -- case 1: record type already carries @...
+  : Name Colon RecordTy                    { PField $1 $3 (AbsB 0) Nothing }
+    -- ^ we ignore the (AbsB 0) in PField; your Lower step should pull the offset from the TRecord
+  -- case 2: non-record type requires an explicit offset
+  | Name Colon NonRecType Offset          { PField $1 $3 $4 Nothing }
+  | Name Colon NonRecType Offset KwEndian End
+                                          { PField $1 $3 $4 (Just $6) }
 Name :: { String }
-  : Ident   { $1 }
-  | Quoted  { $1 }
+  : Ident                                    { $1 }
+  | Quoted                                   { $1 }
 
 End :: { Endian }
   : KwLE { LE } | KwBE { BE } | KwME { ME }
 
 {
 parseError :: [Token] -> a
-parseError _ = error "Parse error"
+parseError ts = error ("Parse error. Next tokens: " ++ take 200 (show ts))
 }

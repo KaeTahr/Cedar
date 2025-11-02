@@ -1,8 +1,5 @@
-type Student = record {
-  "Student Number": U32 @ 0B endian LE,
-  DOB:               U32 @ 12B,
-  Grades: record {
-    Maths:   U32 @ 8B  endian BE,
-    Physics: U32 @ 12B endian BE
-  } @ 8B
-}
+layout Before = record {
+  a : 1B @ 2B,
+  b : 1B before a,
+  c : 1B before a 1B
+} @ 0B;
