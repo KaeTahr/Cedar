@@ -1,95 +1,46 @@
-\section{Implementation and Evaluation}
-The previous chapter outlined the design principles and methodological
-foundations guiding the development of Cedar. This chapter presents the
-\textbf{realized prototype}, describing its implementation,
-internal architecture, and preliminary evaluation. The aim is not to
-demonstrate a production-ready compiler but to validate the design's
-feasibility and examine how declarative layout specifications can
-operate directly within the C ecosystem. The Cedar prototype serves as a
-\textit{proof of concept} for the design-science process described earlier:
-it embodies a set of language features and checking mechanisms from which
-insights about expressiveness, soundness, and practicality can be drawn.
+\section{Evaluation and Results}
+This chapter demonstrates how the Cedar prototype
+performs on representative examples of C data-layout specifications.
+It evaluates the language in terms of 
+\textbf{expressiveness}, \textbf{correctness},
+and \textbf{practicality}—the same goals that motivated its design.
+Rather than formal experiments or extensive benchmarks, the evaluation
+focuses on a small set of illustrative examples that reflect typical
+systems-programming tasks: defining packed records, illustrative examples,
+and tagged unions.
+For each example, Cedar layouts were written, checked, and
+translated into C code, and the outputs were compiled with a standard
+C compiler to verify that they are syntactically valid and
+structurally correct.
 
-This chapter begins by providing an overview of the compiler's implementation
-and module organization. It then delves into descriptions of
-intermediate representations and key components—layout checking, type
-matching, and code generation. Finally, it reports evaluation results
-obtained form layout examples and reflects on design trade-ffs and lessons
-learned.
+We continue by describing the evaluation process and criteria.
+Later, we present examples, results and analysis, followed by a short
+discussion of limitations and possible extensions.
 
-\subsection{Language Syntax and Grammar}
-Cedar extends the C programming language with a small set of
-\textbf{declarative constructs} for describing how data is represented
-in memory. Its syntax is intentionally compact and close to C, so that
-programmers can reason about physical layout without leaving 
-the familiar idioms of systems programming. A Cedar source file
-defines one or more \textbf{layout declaration} that specify
-the mapping between a logical C type and its concrete in-memory
-representation. Each layout is associated with a base C type and describes
-the placement, alignment, and size of its fields using a combination
-of absolute and relative directives.
+\subsection{Evaluation Methodology}
+The evaluation is designed to show that Cedar's declarative layout
+model works coherently for real C constructs and to identify its
+current limitations. Because Cedar is a prototype language rather than a
+production compiler, the assessment emphasizes \textbf{correctness}
+and \textbf{tool behaviour} rather than raw performance. 
 
-\subsubsection{Core Syntax}
-%Figure
-This grammar captures only the layout-level constructs; standard C syntax
-for type declarations is assumed to exists
-in companion \texttt{.h} or \texttt{.c} files. Layout declarations may
-appear in any order, and can reference previously defined layouts through
-identifiers.
+\subsubsection{Evaluation Criteria}
+The evaluation is designed to show that Cedar's declarative layout
+model works coherently for real C constructs and to identify
+its current limitations.
 
-\subsubsection{Example}
-%code snippet
-This example declares a memory layout for the \texttt{Student} structure.
-The layout begins at bit offset 0.
-Each field specifies a C type and a placement directive:
-\begin{itemize}
-    \item \texttt{name} is a fixed-size character array occupying the first 256 bits.
-    \item \texttt{id} is placed immediately \textit{after} \texttt{name}, inheriting its offset plus size.
-    \item \texttt{grade} follows \texttt{id}.
-\end{itemize}
-
-Cedar's compiler resolves these relationships to compute
-explicit bit-ranges and verify that fields neither overlap nor exceed
-the enclosing structure's bounds.
-
-\subsubsection{Design Rationale}
-The syntax follows three guiding principles:
 \begin{enumerate}
-    \item  \textbf{Familiarity:} preserve C's lexical style so existing 
-    programmers can adopt Cedar easily.
-    \item \textbf{Clarity:} keep layouts readable by expressing relationships
-    (\texttt{after}, \texttt{before}) rather than numeric offsets.
-    \item \textbf{Analyze-ability:} restrict constructs to a small, statically
-    checkable core that can be reasoned about formally in future work.
+    \item \textbf{Expressiveness} — how easily comm
+    
+    \item \textbf{Correctness:} Do the generated C code and layout
+    specifications accurately reflect the intended data layouts?
+    This is evaluated by inspecting the generated code for syntactic
+    correctness and by compiling it with a standard C compiler to
+    ensure it adheres to C language rules.
+    
+    \item \textbf{Practicality:} Is Cedar practical for real-world use?
+    This includes considerations of usability, clarity of layout
+    specifications, and the ease of integrating Cedar-generated code
+    into existing C projects. Feedback from users attempting to write
+    Cedar layouts is also considered.
 \end{enumerate}
-The existing prototype currently omits recursive and parametric layouts,
-focusing on straightforward records and arrays. These restrictions simplify
-reasoning about offsets and enable predictable code generation. Later
-chapters discuss how these constructs translate through
-the compiler pipeline and
-into generated C code.
-
-%Figure on how a layout is transofrmed into intermediate representations
-% and finally C code.
-
-
-\subsection{Implementation Overview}
-Cedar has been implemented as \textbf{modular Haskell compiler}. 
-The implementation follows a multi-stage architecture. 
-
-%Figure illustrating the flow of the compiler
-
-\subsubsection{Structure and Tooling}
-The compiler is organized into clearly separated modules:
-
-\begin{center}
-\begin{tabular}{||c c ||}
-    \hline
-    \textbf{Module} & \textbf{Responsibility} \\ [0.5 ex] 
-    \hline\hline
-    \texttt{Surface.hs} & Defines the abstract syntax for user-facing Cedar constructs. \\
-    \hline
-    \texttt{Lexer.x and Parser.y} & Tokenize and parse \texttt{.cedar} files. \\
-    \hline
-\end{tabular}
-\end{center}
