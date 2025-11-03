@@ -20,11 +20,31 @@ library
       Cedar.Layout.Core
       Cedar.Compat.Basic
       Cedar.Layout.ToCodeGen
+      Cedar.Pipeline
+      Cedar.Bridge.LRToCG
+      Cedar.Semantic.BasicType
+      Cedar.Semantic.C
+      Cedar.Semantic.C_to_CR
+      Cedar.Semantic.CR
+      Cedar.Semantic.L
+      Cedar.Semantic.LR
+      Cedar.Semantic.L_to_LR
+      Cedar.Semantic.CR_LR_matching
+      Cedar.Frontend.Subset.AST
+      Cedar.Frontend.Subset.Lexer
+      Cedar.Frontend.Subset.Parser
+      Cedar.Frontend.Subset.Lower
+
+
   build-depends:
       base >=4.14 && <5,
       containers,
       text,
-      bytestring
+      bytestring,
+      mtl,
+      array,
+      directory,
+      filepath
 
 executable cedar-demo
   import:              common-settings
@@ -36,18 +56,21 @@ executable cedar-demo
       directory,
       filepath,
       bytestring,
-      Kae-mcs-project,
+      mtl,
+      Kae-mcs-project
+  ghc-options: 
+      -Wall
+      -Wno-unused-imports
+      -Wno-unused-matches
+      -Wno-name-shadowing
+      -Wno-missing-pattern-synonym-signatures
+      -Wno-compat-unqualified-imports
 
-executable semantic
-  import:              common-settings
-  hs-source-dirs:      semantic
-  main-is:             Main.hs
+    
+executable cedarc
+  hs-source-dirs: app
+  main-is: cedarc.hs
   build-depends:
-      base,
-      bytestring,
-      text,
-      aeson,
-      directory,
-      filepath,
-      Kae-mcs-project,
-      semantic
+      base, bytestring, containers, mtl, Kae-mcs-project, array,
+      directory, filepath
+  default-language: Haskell2010
