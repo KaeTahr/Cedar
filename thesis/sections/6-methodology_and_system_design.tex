@@ -1,5 +1,5 @@
 \section{Methodology and Implementation}
-This chapter presents the design and implementation of
+This chapter presents the design principles and implementation of
 \textbf{Cedar}, a prototype language and compiler for describing
 C layouts declaratively.
 The goal of the project is to give programmers
@@ -10,7 +10,7 @@ for layout declarations, paired with a static checker that validates
 those declarations against C type definitions and generates
 layout consistent C code.
 
-While chapter 2 reviewed related work, this chapter focuses on what
+While we previously reviewed related work, this chapter focuses on what
 was built: the theoretical foundations on which Cedar stands, the kind
 of layouts it supports, and the design of its grammar and compilation
 pipeline.
@@ -74,13 +74,13 @@ layouts are represented. Later we detail the language patterns and features.
 Finally, we summarize the compiler architecture that realizes it.
 
 %Figure of Cedar's lineage
-\subsection{Supported C Types and Layout Model}
+\subsection{Language Overview}
 Cedar operates over a well-defined subset of the C type system that
 reflect the representations defined by CompCert. The
-protottype focuses on data structures wholse layout is
-statiscally determinable: \textbf{structures, arrays, and
+prototype focuses on data structures whose layout is
+statically determinable: \textbf{structures, arrays, and
 tagged unions}. These cases cover the majority of layout-sensitive
-code in low-level programming while remainng tractable for static
+code in low-level programming while remaining tractable for static
 checking.
 
 \subsubsection{Structures}
@@ -114,17 +114,6 @@ across the declared array length.
 Array support enables Cedar to express memory regions such as
 device register tables, or network buffers that consist of repeated
 records.
-
-\subsubsection{Tagged Unions}
-Cedar also supports \textbf{tagged unions}, where a discriminant
-field identifies which variant of a data type is active.
-Layouts for tagged unions specify both the location of the tag
-and the placement of each variant.
-iThe tag is an explicitly field of a known integer type, and each variant
-layout is checked independently for completeness and non-overlap
-Untyped or overlapping unions—common in legacy C—are not yet supported,
-as their semantics fall outside CompCert's well-defined
-memory model.
 
 \subsubsection{Primitive and Derived Types}
 Base types such as \texttt{char}, \texttt{short}, \texttt{int}, \texttt{long},
@@ -165,7 +154,7 @@ without violating its memory-safe assumptions.
 \subsubsection{Scope and Limitations}
 The current prototype omits constructs whose semantics 
 complicate static layout reasoning, such as: bitfields,
-flexible array members, nested or recursive layouts, and untagged unions.
+flexible array members, recursive layouts, and untagged unions.
 These features will be considered in future work
 once the core checking mechanisms are stable.
 Despite these restrictions, the implemented subset is expressive
@@ -173,9 +162,9 @@ enough to capture common data representations used in
 device drivers, network protocols, and binary file formats.
 
 \subsection{Cedar Language Design and Core Features}
-Cedar extends C with a minimal set of declarative constructs for speciffying
-hata data structures are laid out in memory.
-Its synteax follows C's lexical convnetions but introduces
+Cedar extends C with a minimal set of declarative constructs for specifying
+how data structures are laid out in memory.
+Its syntax follows C's lexical convnetions but introduces
 new top-level \texttt{layout} blocks
 that describe the physical
 placement of fields.
@@ -186,7 +175,7 @@ The language is intentionally small: its expressiveness
 comes from composable placement directives rather than
 complex new forms.
 
-\subsection{Core Grammar}
+\subsubsection{Core Grammar}
 FIGURE summarizes the grammar of Cedar's core language, adapted from
 Anderson's proposal~\autocite{cedar_george}.
 
@@ -197,12 +186,16 @@ a collection of fields. Each field declaration specifies the type and
 placement of a field relative to the layout's origin
 or to other fields.
 
-The \texttt{placement} clause may be absolute (\texttt{at}) or relative
+The \texttt{placement} clause may be absolute (\texttt{\@}) or relative
 (\texttt{before}/\texttt{after}).
-The grammar permits only one-level nesting of layouts in the current
-prototype; recursive or parametric layouts are excluded.
+Recursive or parametric layouts are excluded.
 
 %Example of student layout
+%layout Student = record {
+%  name  : U8[32] @ 0B,
+%  id    : U32    after name,
+%  grade : U8     after id
+%} @ 0B;
 
 In this example, the \texttt{Student} layout begins at offset 0.
 The field \texttt{name} is an array of 32 characters
@@ -238,12 +231,12 @@ algorithm ensures that every accepted layout could correspond to a valid C
 memory representation.
 
 \subsubsection{Design Considerations}
-Cedar's syntax is intentionally declarative rather than arithmetic.
-Instead of writing numeric offsets directly, programmers
+Cedar's syntax supports declarative rather than arithmetic.
+Instead of writing numeric offsets directly, programmers may
 express structural relationships—"\texttt{id} after \texttt{name}"—that
 the compiler resolves into precise addresses.
 This improves readability and reduces the risk of human error, while
-still allowing absolute placement (\texttt{at}) when required
+still allowing absolute placement (\texttt{@}) when required
 for interoperability with binary formats and hardware registers.
 
 To keep the semantics tractable, Cedar omits features like computed
@@ -257,7 +250,7 @@ expressive enough to describe practical C structures.
         \hline
         Directive & Purpose & Example \\ [0.5ex]
         \hline\hline
-        \texttt{at} & Absolute placement.  & \texttt{id : u32 at 64;} \\
+        \texttt{@} & Absolute placement.  & \texttt{id : u32 @ 64B;} \\
         \hline
         \texttt{after} & Place field immediately after another. & \texttt{grade : u8 after id;} \\
         \hline
@@ -276,7 +269,7 @@ about the layout, allowing the checked to validate and later generate code
 for the specified structures.
 
 \subsection{Compiler Architecture}
-Cedar's compiler is organized as a sequence of pure translation stages
+Cedar's compiler is organized as a sequence of \textbf{pure translation stages}
 that progressively enrich the information available about each layout.
 This implementation is lightweight and research-oriented.
 
@@ -290,29 +283,56 @@ offsets and alignment constraints.
 The grammar is parsed into a structure abstract syntax tree (\texttt{L}).
 A resolution pass then substitutes symbolic references (e.g., \texttt{after name})
 with explicit dependencies between fields.
+Each field returns its declared attributes—type, byte offset, relative placement,
+and optional endianness.
 At this point the layout is still declarative: field positions are
 described relative to one another rather than as numeric offsets.
 
-\subsubsection{Static Checking}
-In the checking phase, the compiler computes explit bit-ranges
-for every fied, producing the \textbf{checked representation (CR)}.
-This representation encodes all the information needed to
-verify layout correctness: field offsets,
-sizes, alignments, and total layout size.
-The checker enforces the well-formedness properties—completeness, non-overlap,
-order consistency, and alignment.
-If any rule is violated, the compiler reports an error with the offending
-field and dependency chain.
+The parser currently supports: Nested constructs, quoted field names, and forward
+references between fields. Comments and diagnostics, and multiple layouts per
+field are not yet implemented. Parse errors are reported generically.
 
+\subsubsection{Static Checking}
+In the next stage (LR), the compiler resolves \textbf{relative placements} and
+\textbf{nesting}. Every symbolic reference (\texttt{after x}, \texttt{before y})
+is replaced with a concrete byte offset computed from previously defined fields.
+Nested \texttt{record} blocks are \textbf{flattenned} into a single
+linear sequence of fields using compound names (e.g., \texttt{grade_maths}).
+Endianness and element size information are propagated through this transformation.
+
+The resulting \textit{lowered representation (LR)} is a canonical, order-independent
+list of fields, each with a fixed, offset, size and endianness tag.
+
+The \textbf{checked representation (CR)}  introduces explicit byte ranges.
+Offsets are multiplied by eight to produce bit ranges for each field, which
+allow the code generator to reason about sub-word accessess and multi-word
+values.
+Cedar performs basic consistency checks during this phase:
+
+\begin{itemize}
+    \item fields do not overlap,
+    \item offsets must be non-negative and monotonically increasing, and
+    \item all fields must have defined sizes.
+\end{itemize}
+
+Full alignment checking, total-size verification, and overlap proofs are
+not yet implemented, but the structure is designed to accommodate them later
 \subsubsection{Code Generation}
-Once a layout is verified, Cedar emits equivalent C code.
-The generated output includes the corresponding declaration
-and a set of helper functions for reading and writing fields according to
-the checked layout.
-No runtime library or special compiler support is required; the output
-can be compiled by any existing C toolchain.
-This makes this version of Cedar a self-contained pre-processing
-step rather than a modification to the C language itself.
+The final stage translated the checked representation into compile-able C code.
+The output consists of:
+\begin{enumerate}
+    \item A header file defining the a flat array of \texttt{uint32_t} words;
+    and
+    \item A C source file containing \textit{accessor} and \textit{mutator}
+    functions for each field.
+\end{enumerate}
+
+Nested records are emitted as flattened field names; arrays are unrolled into
+repeat accessors. Per-field endianness annotations are honoured by inserting
+byte-swap operations in generated setters and getters.
+
+No runtime support or special compiler modifications are required. The generated
+code can be compiled by any C compiler, including \textbf{GCC} and \textbf{CompCert}.
 
 \subsubsection{Design Rationale}
 The architecture emphasizes two main principles:
@@ -321,6 +341,9 @@ The architecture emphasizes two main principles:
     be inspected, making the compiler's reasoning traceable
     \item \textbf{Modularity}. Additional analyses or transformations
     can be inserted between stages without disrupting others.
+    \item \textbf{Extensibility}. The separation of passes makes it straightforward
+    to extend the language (for example, by adding union layouts or precise bit-field control)
+    without disrupting the core pipeline.
 \end{enumerate}
 
 This design allow Cedar to be extended in the future with
