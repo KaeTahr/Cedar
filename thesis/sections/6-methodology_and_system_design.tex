@@ -415,11 +415,11 @@ The next chapter presents concrete example and results, illustrating how
 Cedar's layout translate into verified C code and how its checker behaves
 on representative cases.
 
-\sbusection{Summary}
+\subsection{Summary}
 This chapter has described the design and implementation of Cedar, a 
-rototype language and compiler for declarative specification of C data
-layouts. Builidng on CompCert's precise model of C memory and Dargent'
-declarative layout philosohy, Cedar defines a practical subset of
+prototype language and compiler for declarative specification of C data
+layouts. Building on CompCert's precise model of C memory and Dargent'
+declarative layout philosophy, Cedar defines a practical subset of
 constructs—\texttt{layout}, \texttt{at}, \texttt{before}, \texttt{after}
 end simple arrays—that enable programmers to express phyisical data
 representations explicitly and check them statically.
@@ -430,13 +430,13 @@ stages into layout-consistent C code. While the current prototype implements
 only a subset of the planned language, it demonstrated the feasibility
 of integrating declarative layout checking directly into C development
 workflows.
-The system provcides static guarantees about field order, alignment,
-and completelness without altering C's execution model or
+The system provides static guarantees about field order, alignment,
+and completeness without altering C's execution model or
 requiring external verification frameworks.
 
 The following chapter presents the evaluation of Cedar through concrete
 examples and generated code.
 It examples how well the language captures real C idioms, how the
 checked behaves on representative layouts, and what these results suggest
-for future extensios of the system.
+for future extensions of the system.
 
