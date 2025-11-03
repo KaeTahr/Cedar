@@ -318,7 +318,7 @@ Cedar performs basic consistency checks during this phase:
 Full alignment checking, total-size verification, and overlap proofs are
 not yet implemented, but the structure is designed to accommodate them later
 
-\subsubsection{Code Generation}
+\subsection{Code Generation}
 The final stage translated the checked representation into compile-able C code.
 The output consists of:
 \begin{enumerate}
@@ -335,7 +335,160 @@ byte-swap operations in generated setters and getters.
 No runtime support or special compiler modifications are required. The generated
 code can be compiled by any C compiler, including \textbf{GCC} and \textbf{CompCert}.
 
-\subsubsection{Design Rationale}
+\subsubsection{Code Generation Example}
+Cedar's back end translates a checked layout into portable C that
+treats the underlying object as a flat array of 32-bit "word lanes"
+and emits \textbf{byte-accurate} accessors/mutators for each field (and,
+when needed, for each byte "part" of a multi-byte field). The generated
+code is \textbf{standalone C}: no runtime library, no compiler extensions.
+
+\subsubsection{In-memory representation}
+In this section we will follow the example of the \texttt{Student} layout:
+\begin{verbatim}
+    layout Student = record {
+  name  : U8[16] @ 0B,
+  id    : U32    @ 16B endian LE,
+  grades : record {
+    maths   : U16 @ 0B  endian BE,
+    physics : U16 @ 2B  endian BE
+  } @ 20B
+} @ 0B;
+\end{verbatim}
+
+For each layout \texttt{T}, Cedar emits a header that defines a packed container:
+
+\begin{verbatim}
+struct T {
+    unsigned int data[N];
+};
+typedef struct T T;
+\end{verbatim}
+
+\texttt{N} is chosen so that all declared byte ranges fit exactly into 32-bit words.
+In the example below, \texttt{Student} needs 6 words (24B) to hold
+\texttt{name: U8[16]} (16B), \texttt{id: U32} (4B), and \texttt{record} (4B).
+
+\begin{verbatim}
+    struct Student { unsigned int data[6U]; };
+\end{verbatim}
+
+\textbf{Addressing model.} Fields are addressed as \textbf{byte lanes} within
+\texttt{data[w]}, using shifts and masks. A U8 at byte \texttt{k} of word \texttt{w}
+is accessed by \texttt{(unint32_tdata[w] >> (k * 8)) \& 0xFF}. Multi-byte
+scalars are reconstructed from their constituent bytes according to the
+field's \textbf{declared endianness}.
+
+\subsection{Flattening of nested records and naming}
+Nested \texttt{recoerd { ... } @ off} are \textbf{flattened} with \textbf{_}
+separators. For example: 
+
+\begin{verbatim}
+    grades: record {math: U16 @0B; physics: U16 @ 2B; } @ 20B
+\end{verbatim}
+
+becomes \texttt{grades\_math} at \texttt{20B + 0B = 20B} and \texttt{grades\_physics} at \texttt{20B + 2B = 22B}.
+The header declares one getter/setter per flattened field:
+
+\begin{verbatim}
+    uint32_t d_get_grades_maths(const Student *b);
+    void d_set_grades_maths(Student *b, uint32_t v);
+\end{verbatim}
+
+\subsubsection{Scalars and Arrays}
+
+\begin{itemize}
+    \item \textbf{U8 arrays} generate one accessor per element(index in the symbol):
+    \texttt{d_get_name__0}...\texttt{d_get_name__15}. Each reads/writes
+    the corresponding byte lane.
+    \begin{verbatim}
+        static uint32_t d_get_name__4__part0(const Student *b) {
+            return ((uint32_t)(b->data[1U] >> 0U) & 255U) //byte 4 overall -> word1, lane 0
+        }
+    \end{verbatim}
+    \item U16/U32/U64 scalars are emitted as single getters/setters that \textbf{assemble}
+    and \textbf{disassemble} the value by combining 8-bit parts with shifts in the
+    declared endianness.
+\end{itemize}
+
+\subsubsection{Emdianness Policy}
+Per-field endianness is honoured by the order of byte assembly/disassembly in
+the top-level getter/setter:
+
+\begin{enumerate}
+    \item \textbf{Little-endian(}\texttt{endian LE}\textbf{)}: read/write bytes from lowest lane;
+    bytes are combined as \texttt{<< 0}, \texttt{<< 8}, \texttt{<< 16}, ...:
+    \begin{verbatim}
+        // id : U32 @ 16B endian LE  ⇒ all in data[4]
+        static uint32_t d_get_id_part0(const Student *b) { return ((uint32_t)b->data[4U] >> 0U)  & 255U; }
+        static uint32_t d_get_id_part1(const Student *b) { return ((uint32_t)b->data[4U] >> 8U)  & 255U; }
+        static uint32_t d_get_id_part2(const Student *b) { return ((uint32_t)b->data[4U] >> 16U) & 255U; }
+        static uint32_t d_get_id_part3(const Student *b) { return ((uint32_t)b->data[4U] >> 24U) & 255U; }
+
+        uint32_t d_get_id(const Student *b) {
+        uint32_t acc_u =
+            ((uint64_t)d_get_id_part0(b) << 0U)
+            | ((uint64_t)d_get_id_part1(b) << 8U)
+            | ((uint64_t)d_get_id_part2(b) << 16U)
+            | ((uint64_t)d_get_id_part3(b) << 24U);
+        return (uint32_t)acc_u;
+        }
+    \end{verbatim}
+
+    \item \textbf{Big-endian(}\texttt{endian BE}\textbf{)}: most-significant byte
+    resides at the lowest address; assembly order is reversed: For
+    \texttt{grades\_maths: U16 @ 20B endian BE}: (bytes 0-1 of data[5]):
+    \begin{verbatim}
+        static uint32_t d_get_grades__maths_part0(const Student *b){ return ((uint32_t)b->data[5U] >> 0U) & 255U; }   // MSB
+        static uint32_t d_get_grades__maths_part1(const Student *b){ return ((uint32_t)b->data[5U] >> 8U) & 255U; }   // LSB
+
+        uint32_t d_get_grades__maths(const Student *b) {
+        uint32_t acc_u =
+            ((uint64_t)d_get_grades__maths_part0(b) << 8U)   // MSB << 8
+            | ((uint64_t)d_get_grades__maths_part1(b) << 0U);  // LSB << 0
+        return (uint32_t)acc_u;
+    }
+    \end{verbatim}
+
+    \texttt{grades\_physics} is similar, using lanes 16 and 24 of \texttt{data[5]}
+    with the reversed-byte assembly.
+\end{enumerate}
+
+\textit{Machine endian} \texttt{ME} \textit{currently defaults as little-endian.}
+
+\subsubsection{Byte-part helpers and masking discipline}
+Each getter/setter is layered over private \texttt{_part<i>} helpers that 
+isolate a single 8-bit chunk. Setters update the target word with a
+\textbf{read-modify-write} using a clear-then-insert mask:
+
+\begin{verbatim}
+    b->data[w] = (b->data[w] & ~(0xFFu << lane)) | (((0xFFu & v) << lane));
+\end{verbatim}
+
+This guarantees that writing one byte lane does not disturb adjacent lanes.
+
+\subsubsection{Example: offsets and word mapping}
+\begin{enumerate}
+    \item \texttt{name: U8[16] @ 0B} \rightarrow \texttt{data[0]..data[3]}, lanesS 0, 8, 16, 24 per
+    element functions \texttt{d\_get\_name\_\_0 .. d\_get\_name\_\_15}
+    \item \texttt{id: U32 @ 16B endian LE} \rightarrow \texttt{data[4]}, lanes 0, 8, 16, 24; LE assembly (\texttt{<< 0, 8, 16, 24})
+    \item \texttt{grades\_maths: U16 @ 20B endian BE} \rightarrow \texttt{data[5]}, lanes 0, 8; BE assembly (\texttt{<< 8, 0})
+    \item \texttt{grades\_physics: U16 @ 22B endian BE} \rightarrow \texttt{data[5]}, lanes 16, 24; BE assembly (\texttt{<< 8, 0})
+\end{enumerate}
+
+%FIGURE OF THIS
+
+\subsubsection{Compilation Targets}
+The emitted code has been testted with \textbf{GCC} (for inspection via \textit{pahole})
+and \textbf{CompCert} (to verify compatibility with its memory model).
+
+\subsubsection{Current codegen limitations}
+\begin{enumerate}
+    \item The container is always a \textbf{flat} \texttt{unsigned int data[N]}; no C \textbf{struct} field nesting is emitted.
+    \item No diagnostics for overlapping byte field ranges at this stage, the code is assumed to be well-formed.
+    \item Pointers/boxed fields, tagged unions, and sub-type bit-fields are out of scope in this prototype.
+\end{enumerate}
+
+\subsection{Design Rationale}
 The architecture emphasizes two main principles:
 \begin{enumerate}
     \item \textbf{Transparency}. Each representation (L, LR, CR) can
@@ -354,8 +507,6 @@ verification, similar to Dargent.
 It provides a practical foundation for Cedar's prototype: small enough
 to experiment with, both structured in a way that preserves the formal
 clarity of its inspirations.
-
-\subsection{Code Generation Example}
 
 
 \subsection{Achievements and Scope}
@@ -384,23 +535,51 @@ Dargent's examples and from common systems-programming idioms such as
 device registers. The prototype successfully detected layout mismatches
 and generated compilable C code for all supported constructs.
 
-\subsubsection{Scope and Limitations}
-Cedar intentionally restricts its expressiveness to keep checking decidable
-and the implementation lightwieght.
-The prototype does \textbf{not} yet support:
-\begin{itemize}
-    \item Bit-fields or overlapping union members;
-    \item Flexible array members or dynamically sized layouts;
-    \item Nested or recursive layout definitions;
-    \item Automated diagnostic recovery;
-\end{itemize}
+\subsubsection{Implementation Coverage}
+In this table we summarize the functionality currently implemented in the
+Cedar prototype, based on the grammar and pipeline described in
+the previous sections. The implementation realizes the
+\textit{record-offset-endianness} fragment of the Dargent layout language
+and provides a complete -end-to-end compiler from parsing to C code
+generation.
 
-These omissions do not reflect missing functionality but a deliberate research
-boundary: the implemented subset is sufficient to evaluate Cedar's design
-principles and verify that they operate coherently within C's type system.
-The language design and compiler architecture are modular enough that
-these features could be added in future versions without
-major restructuring.
+\begin{center}
+    \begin{tabular}{|| c c c ||}
+        \hline
+        Feature & Status & Notes \\ [0.5ex]
+        \hline\hline
+        Layout declarations(\texttt{layout Name = record {...}}) & Implemented & Only one layout per file.  \\
+        \hline
+        Nested records & Implemented & Arbitrary depth; flattened in code generation \\
+        \hline
+        Absolute offsets (\texttt{@ n B}) & Implemented & Byte-based; no bit-granularity arithmetic \\
+        \hline
+        Relative offsets (\texttt{after}/\texttt{before}) & Implemented & Top-level only. \\
+        \hline
+        Per-field endianness (LE, BE, ME) & Implemented & ME defaults to LE \\
+        \hline
+        Uniform arrays (\texttt{type[n]}) & Implemented & Fixed-size only. No bounds checking \\
+        \hline
+        Quoted field names & Implemented & Support fields with names such as \texttt{"Field Name"} \\
+        \hline
+        Forward references between fields & Implemented & Declarative, order-independent layouts. \\
+        \hline
+        Signed integers & Partial & Handles by the parser, but not generated in codegen
+        \hline
+        Unions/variants & Not implemented & Planned for future work. \\
+        \hline
+        Sub-type bit-fields (1<B) & Not implemented & Not supported. \\
+        \hline
+        Complex offset expressions (arithmetic) & Not implemented & No evaluation of \texttt{a +1B} \\
+        \hline
+        Mixed-endian composited & Not implemented & No canonicalized \\
+        \hline
+        Comments and diagnostics & Not implemented & Comments are not lexed; generic parse errors only. \\
+        \hline
+        Pointer/boxed fields & Not implemented & Treated as opaque machine words. \\
+        \hline
+    \end{tabular}
+\end{center}
 
 \subsubsection{Practical Outcome}
 The resulting system is a functioning compiler that demonstrates:
@@ -424,7 +603,7 @@ This chapter has described the design and implementation of Cedar, a
 prototype language and compiler for declarative specification of C data
 layouts. Building on CompCert's precise model of C memory and Dargent'
 declarative layout philosophy, Cedar defines a practical subset of
-constructs—\texttt{layout}, \texttt{at}, \texttt{before}, \texttt{after}
+constructs—\texttt{layout}, \texttt{@}, \texttt{before}, \texttt{after}
 end simple arrays—that enable programmers to express phyisical data
 representations explicitly and check them statically.
 
@@ -441,6 +620,6 @@ requiring external verification frameworks.
 The following chapter presents the evaluation of Cedar through concrete
 examples and generated code.
 It examples how well the language captures real C idioms, how the
-checked behaves on representative layouts, and what these results suggest
+checker behaves on representative layouts, and what these results suggest
 for future extensions of the system.
 

@@ -10,16 +10,61 @@ struct Student {
 };
 typedef struct Student Student;
 
-uint32_t d_get_Student_Number(const Student *b);
-void d_set_Student_Number(Student *b, uint32_t v);
+uint32_t d_get_name__0(const Student *b);
+void d_set_name__0(Student *b, uint32_t v);
 
-uint32_t d_get_DOB(const Student *b);
-void d_set_DOB(Student *b, uint32_t v);
+uint32_t d_get_name__1(const Student *b);
+void d_set_name__1(Student *b, uint32_t v);
 
-uint32_t d_get_Grades__Maths(const Student *b);
-void d_set_Grades__Maths(Student *b, uint32_t v);
+uint32_t d_get_name__2(const Student *b);
+void d_set_name__2(Student *b, uint32_t v);
 
-uint32_t d_get_Grades__Physics(const Student *b);
-void d_set_Grades__Physics(Student *b, uint32_t v);
+uint32_t d_get_name__3(const Student *b);
+void d_set_name__3(Student *b, uint32_t v);
+
+uint32_t d_get_name__4(const Student *b);
+void d_set_name__4(Student *b, uint32_t v);
+
+uint32_t d_get_name__5(const Student *b);
+void d_set_name__5(Student *b, uint32_t v);
+
+uint32_t d_get_name__6(const Student *b);
+void d_set_name__6(Student *b, uint32_t v);
+
+uint32_t d_get_name__7(const Student *b);
+void d_set_name__7(Student *b, uint32_t v);
+
+uint32_t d_get_name__8(const Student *b);
+void d_set_name__8(Student *b, uint32_t v);
+
+uint32_t d_get_name__9(const Student *b);
+void d_set_name__9(Student *b, uint32_t v);
+
+uint32_t d_get_name__10(const Student *b);
+void d_set_name__10(Student *b, uint32_t v);
+
+uint32_t d_get_name__11(const Student *b);
+void d_set_name__11(Student *b, uint32_t v);
+
+uint32_t d_get_name__12(const Student *b);
+void d_set_name__12(Student *b, uint32_t v);
+
+uint32_t d_get_name__13(const Student *b);
+void d_set_name__13(Student *b, uint32_t v);
+
+uint32_t d_get_name__14(const Student *b);
+void d_set_name__14(Student *b, uint32_t v);
+
+uint32_t d_get_name__15(const Student *b);
+void d_set_name__15(Student *b, uint32_t v);
+
+uint32_t d_get_id(const Student *b);
+void d_set_id(Student *b, uint32_t v);
+
+uint32_t d_get_grades__maths(const Student *b);
+void d_set_grades__maths(Student *b, uint32_t v);
+
+uint32_t d_get_grades__physics(const Student *b);
+void d_set_grades__physics(Student *b, uint32_t v);
 
 #endif
