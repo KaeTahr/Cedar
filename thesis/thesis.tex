@@ -10,6 +10,14 @@
 \usepackage{xcolor}
 \usepackage{pdflscape}
 \usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{mathpartir}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{semantic}
+\usepackage{array}
+\usepackage{mathtools}
+\usepackage{stmaryrd}
 \usepackage{longtable}
 \DeclareUnicodeCharacter{0308}{\"{}}
 
@@ -17,6 +25,9 @@
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\newcommand{\grey}[1]{\textcolor{gray}{#1}}
+\newcommand{\Q}{\mathcal{Q}}
 
 \lstdefinestyle{mystyle}{
     backgroundcolor=\color{backcolour},   
@@ -29,7 +40,7 @@
     breaklines=true,                 
     captionpos=b,                    
     keepspaces=true,                 
-    numbers=left,                    
+    numbers=none,                    
     numbersep=5pt,                  
     showspaces=false,                
     showstringspaces=false,
@@ -47,6 +58,7 @@
 
 \begin{document}
 \maketitle
+\input{sections/1-abstract.tex}
 \input{sections/4-introduction.tex}
 \input{sections/5-background_n_related_work.tex}
 \input{sections/6-methodology_and_system_design.tex}

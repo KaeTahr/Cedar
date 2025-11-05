@@ -84,10 +84,10 @@ To control layout, programmers use mechanisms such as \texttt{struct} for field
 ordering bit-fields and \texttt{union}, often combine with compiler-specific
 directives like \texttt{\#pragma pack} or
 \texttt{\_\_attribute\_\_((packed))}~\autocite{C_structures}. These features
-are essential when implementing devide drivers, network stacks, or
+are essential when implementing device drivers, network stacks, or
 file-system components that must match predefined binary
 formats~\autocite{network_memory_layouts,device_drivers}. Yet their semantics
-are fragile: even small changes in type definions or compiler options
+are fragile: even small changes in type definitions or compiler options
 can alter offsets or alignment unexpectedly. Because the correctness of these
 constructs is not checked statically, developers resort to
 \textbf{trial-and-error inspection}—printing offsets or using debuggers to
@@ -100,7 +100,7 @@ input~\autocite{memory_errors_stridharan,memory_errors_stridharan}; and
 inconsistent packing across architectures breaks cross-platform file or
 network formats. Each example reflects a deeper issue: the lack of a formal
 abstraction boundary between a type's \textit{semantic structure} and its
-\textit{physical representation} in  memory. Whithout such
+\textit{physical representation} in  memory. Without such
 boundary, reasoning about correctness or
 portability becomes extremely difficult, both for programmers
 and for automated analysis tools.
@@ -205,6 +205,18 @@ unrestricted mutation—also limit applicability to general-purpose
 systems programming. Dargent's layout declaration are tied to
 Cogent's type system and proof infrastructure; they cannot be
 directly used withing arbitrary C codebases. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/dargent_pipeline.png}
+    \caption{The Cogent refinement framework (adapted from \cite{dargent_isola}). 
+  Each box represents an embedding of the same Cogent program within Isabelle/HOL, 
+  and arrows denote refinement proofs that establish semantic equivalence between 
+  successive representations. 
+  This verified foundation underpins later extensions such as Dargent, 
+  which introduces declarative data-layout descriptions within the Cogent toolchain.}
+    \label{fig:dargent_pipeline}
+\end{figure}
 
 \subsubsection{Extending the Lineage}
 Earlier foundational work by \textbf{Tuch} (2008) formalized C's
@@ -396,7 +408,7 @@ fine-grained isolation between components.
 
 Despite their effectiveness, these mechanisms do not reason about
 \textbf{representation correctness}: they guarantee that accesses stay within
-allocated bounds, not that the byes being accessed correspond
+allocated bounds, not that the bytes being accessed correspond
 to the intended logical structure. A program can be spatially safe
 but still misinterpret a binary layout
 if field offsets or bit-widths are wrong. Hardware capabilities thus solve
@@ -407,7 +419,7 @@ layout correctness to the programmer.
 Runtime and static tools collectively enhance robustness but they remain
 \textit{after-the-fact} defenses. They identify violations of memory
 safety rather than enforcing \textit{design-time correctness} of layouts.
-Cedar approaches the problem from the opposite direction: by
+Cedar approaches the problem from the opposite direcion: by
 \textbf{declaring layouts explicitly} and checking their compatibility
 with corresponding C types before compilation, it aims
 to prevent entire categories of representation errors that dynamic tools
@@ -430,9 +442,9 @@ sections examined how \textbf{verified compilers} and \textbf{languages},
 exemplified by CompCert, Cogent and Dargent, have provided rigorous guarantees
 about program semantics and layout correctness—but only within constrained or
 abstracted settings. Other efforts, from \textbf{declarative layout DSLs} like
-PADS and DataScript, to \textbf{inudstrial framework} such as FLatBuffers
+PADS and DataScript, to \textbf{industrial frameworks} such as FFlatBuffers
 or Cap'n Proto, have demonstrated that high-level schema descriptions
-can improve maintainablility and portability, albeit without
+can improve maintainability and portability, albeit without
 formal assurance for in-place C data structures. Finally, the chapter
 considered \textbf{runtime tools, hardware capabilities}, and \textbf{safer
 systems languages} such as Rust, which mitigate many classes of memory errors

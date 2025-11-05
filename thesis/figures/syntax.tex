@@ -1,0 +1,15 @@
+\begin{figure}[h]
+\[
+\begin{array}{llclr}
+  \textrm{Layouts (core syntax)} 
+     & \ell & ::=  & () & \textrm{unit / empty layout} \\
+     &       & \mid & \langle o, s \rangle & \textrm{bit-range starting at offset $o$ of size $s$ bits} \\
+     &       & \mid & \texttt{record}\ \{\, f_i : \ell_i \,\} & \textrm{nested record layout} \\
+     &       & \mid & \ell [n] & \textrm{array of $n$ identical elements} \\
+  \textrm{Offsets} & o & \in & \mathbb{N} & \textrm{byte offsets (resolved statically)} \\
+  \textrm{Sizes}   & s & \in & \mathbb{N} & \textrm{bit lengths (multiples of 8)} \\
+\end{array}
+\]
+\caption{Core syntax of Cedar layouts after parsing and offset resolution. Greyed forms are shown for context only.}
+\label{fig:cedar-core}
+\end{figure}

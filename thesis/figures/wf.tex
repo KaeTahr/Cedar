@@ -1,0 +1,50 @@
+\begin{figure}[h]
+\begin{inductive}{\ell\ \mathbf{wf}}
+  \inferrule
+    { }
+    {\langle o, s \rangle\ \mathbf{wf}}
+    {\textsc{BitRangeWF}}
+  \quad
+  \inferrule
+    { }
+    {()\ \mathbf{wf}}
+    {\textsc{UnitWF}}
+  \quad
+  \inferrule
+    { }
+    {x\{o\}\ \mathbf{wf}}
+    {\textsc{VarWF}}
+  \\[1em]
+  \inferrule
+    { \text{for each } i: \ell_i\ \mathbf{wf} \\[0.3em]
+      \text{for each } i \neq j: \mathrm{taken}(\ell_i) \cap \mathrm{taken}(\ell_j) = \emptyset }
+    {\texttt{record}\ \{\, f_i : \ell_i \,\}\ \mathbf{wf}}
+    {\textsc{RecordWF}}
+  \\[1em]
+  \inferrule
+    { \text{for each } i: \ell_i\ \mathbf{wf} \\[0.3em]
+      v_i < 2^s \\[0.3em]
+      \mathrm{taken}(\ell_i) \cap \mathrm{taken}(\langle o,s\rangle) = \emptyset \\[0.3em]
+      \text{for each } i \neq j: v_i \neq v_j }
+    {\texttt{variant}\ \langle o,s\rangle\ \{ A_i(v_i) : \ell_i \}\ \mathbf{wf}}
+    {\textsc{VariantWF}}
+\end{inductive}
+
+where $\mathrm{taken}(\ell) \subseteq \mathbb{N}$ denotes the set of bit positions that $\ell$ occupies.
+\caption{Well-formed layouts in Cedar. A layout is well-formed if its fields occupy disjoint bit ranges, variant tags are unique, and all sublayouts are themselves well-formed.}
+\label{fig:cedar-wf}
+\end{figure}
+
+Throughout this paper we refer to the notion of \textbf{well-formedness} to
+describe when a Cedar layout is internally consistent and represents
+a valid memory configuration.
+Figure~\ref{fig:cedar-wf} formalizes this notion using structural rules adapted
+from Dargent's layout calculus.
+Intuitively, a layout is well-formed if its constituent fields occupy non-overlapping
+regions of memory, variant tags are unique, and bounded by their declared
+bit-range, and all sub-layouts are themselves well-formed.
+The auxiliary function $\mathrm{taken}(\ell)$ computes the set of bit positions
+that a layout $\ell$ occupies, ensuring that no two layouts overlap.
+This property guarantees that the generated C representation corresponds to a
+contiguous deterministic data structure in memory, forming the foundation for
+Cedar's soundness.

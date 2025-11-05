@@ -1,11 +1,6 @@
 \section{Introduction}
 
 \subsection{Motivation}
-In systems programming, correctness often hinges not on the logic of
-computation but on how data is laid out in memory.
-Modern infrastructure—from operating systems to
-cryptographic libraries—rely on \textit{structural assumptions} about
-memory that are rarely explicit in the source language.
 Systems programming in C remains foundational to modern computing
 infrastructure\autocite{dist_systems_languages, C_embedded_programming, valgrind}.
 Operating systems, hardware drivers, and performance-critical software
@@ -15,10 +10,20 @@ Yet the same flexibility that makes C efficient also makes it fragile:
 small inconsistencies in layout can cause catastrophic runtime
 errors \autocite{evaluation_memory_errors, C_errors_study, unsafe_rust}.
 Layout-related faults—incorrect padding, mis-aligned fields, or unintended
-aliasing—manifest as memory corruption and undefined behaviour.
+aliasing—manifest as memory corruption and undefined behavior.
 These faults are notoriously difficult to detect, especially when they arise
 from hand-crafted structures that must precisely conform to hardware
 or protocol formats.
+
+\begin {figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/layout_padding.pdf}
+    \caption{Example of implicit padding in a C structure, illustrating how
+    compiler alignment rules insert invisible bytes between fields.
+    Even simple definitions can produce unexpected layouts, motivating the need
+    for declarative, verifiable layout descriptions.}
+    \label{fig:layoutbug}
+\end{figure}
 
 Despite decades of tooling—static analyzers, dynamic sanitizers, and
 formal verification projects— layout bugs remain common because they occur
@@ -43,7 +48,7 @@ specifications.
 Despite its promise, Dargent exposes an inherent challenge: layouts must be
 low-level enough to control bits and bytes, yet compositional enough
 to reason and verify. Its design is also closely tied to Cogent's compiler,
-which makes reuse outside that context difficult. These limitations motiviate
+which makes reuse outside that context difficult. These limitations motivate
 the development of an independent, declarative language for describing and
 generating correct low-level layouts—a language that can serve both as a
 research vehicle for reasoning about memory representations, and as a
@@ -53,19 +58,19 @@ The gap between \textit{abstract correctness} and \textit{concrete memory
 representation} is addressed by this thesis. Cedar—a declarative language for
 specifying data layout as a first-class concern. Where C's \texttt{struct}
 and \texttt{union} declarations provide limited implementation, Cedar
-exposes bit-accurate specifications that can be reasoned about compositionally.
+exposes bit-accurate specifications that can be reasoned about.
 
 \subsection{Problem Context}
-The flexibility of C's memory model, while powerful, undermines compostional
+The flexibility of C's memory model, while powerful, undermines compositional
 reasoning. C programmers routinely rely on \textit{type-punning},
-\textit{bitfields}, and \textit{packed structs} to control binary
+\textit{bit-fields}, and \textit{packed structs} to control binary
 representations, yet the standard provides only practical guarantees about
-how these constructs behave. COmpiler optimisations may reorder fields,
+how these constructs behave. COmpiler optimizations may reorder fields,
 introduce padding, or interpret aliasing differently across
 architectures \autocite{c_compilers}.
 
 This design leaves a critical trust gap between language semantics and hardware
-behaviour. Layout mismatches can manifest in several ways:
+behavior. Layout mismatches can manifest in several ways:
 \begin{itemize}
     \item \textbf{Padding and alignment errors}, where implicit bytes
     inserted by the compiler violate protocol formats or hardware expectations.
@@ -86,15 +91,15 @@ categories of low-level defects}\autocite{ubsan}.
 
 Cedar targets this class of problems by providing a separate, declarative layer
 that specifies how a value is represented in memory, independent of its logical
-structure. Instead, of emebedding layout logic implicitly withinc C syntax or 
-heuristics, Cedar externalises it as a \textit{layout description language}.
+structure. Instead, of embedding layout logic implicitly withinc C syntax or 
+heuristics, Cedar externalizes it as a \textit{layout description language}.
 The compiler then translates that specification into verifiable C accessors
 and struct declarations.
 
 \subsection{Research Aim and Question}
 This thesis explores how a small, declarativce language can express complex
 memory layouts while preserving reasoning about correctness. The project
-defines a prototype langauge, \textbf{Cedar}, originally proposed by
+defines a prototype language, \textbf{Cedar}, originally proposed by
 Anderson\autocite{cedar_george}, which treats data layouts as a first-class
 concern. Cedar allows programmers to describe how values of structured types
 occupy memory, decoupling layout from logical structure.
@@ -112,8 +117,8 @@ Addressing this question involves both theoretical and practical components:
         \begin{itemize}
             \item Extend Cedar's syntax and internal representations 
             (\texttt{L}, \texttt{LR}, \texttt{CR}) to support nested layouts,
-            arrays, and bitfields.
-            \item Formalise layout semantics in terms of offset-size pairs
+            arrays, and bit-fields.
+            \item Formalize layout semantics in terms of offset-size pairs
             and compositional alignment rules.
             \item Draw parallels with declarative frameworks, to inform
             tradeoffs with techniques such as serialization. 
@@ -148,7 +153,7 @@ The research follows a \textit{design-and-evaluation} methodology typical
 of programming-language research\autocite{incremental_development}.
 The work proceeds in three interlocking stages:
 \begin{enumerate}
-    \item \textbf{Language Design and Formalisation — } analyising the previous
+    \item \textbf{Language Design and Formalization — } analyising the previous
     Cedar proposal and revising its intermediate representations
     (L $\rightarrow$ LR $\rightarrow$ CR) to better capture nexsted records, arrays,
     and bitfields.
@@ -193,10 +198,8 @@ Collectively, these outcomes advance Cedar from a concept to a more
 complete research language, and contribute new insights into the design of
 trustworthy data-layout languages for C.
 
-\subsection{Significanse and Broader Impact}
-
 \subsection{Thesis Structure}
-The remainder of this thesis is organised as follows:
+The remainder of this thesis is organized as follows:
 \begin{itemize}
     \item \textbf{Chapter 2} reviews background material on C memory layouts,
     verified compilation, the Cogent and Dargent frameworks, and the origins

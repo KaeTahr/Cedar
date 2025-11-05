@@ -1,0 +1,20 @@
+\begin{figure}[h]
+\[
+\begin{array}{llclr}
+    \textrm{C types (CompCert subset)} 
+     & \tau & ::=  & \mathrm{int}(n,\mathit{sg})           & \textrm{($n\!\in\!\{8,16,32,64\}$; signed/unsigned)} \\
+     &      & \mid & \_Bool                                & \\
+     &      & \mid & \mathrm{float}(p)                     & \textrm{($p\!\in\!\{32,64\}$)} \\
+     &      & \mid & \tau [n]                              & \textrm{(array of $n$)} \\
+     &      & \mid & \mathrm{struct}\ \{\, f_i : \tau_i \,\} & \textrm{(struct)} \\
+     &      & \mid & \grey{ \mathrm{union}\ \{\, f_i : \tau_i \,\} } & \textrm{\grey{(unions not yet implemented)}} \\
+     &      & \mid & \grey{\tau\,{*}}                             & \textrm{\grey{(pointers not yet implemented)}} \\
+  \textrm{Field names} & & \ni & f & \\
+\end{array}
+\]
+\caption{Cedar’s type universe, aligned with \textsc{CompCert} C.}
+\label{fig:cedar-types}
+\end{figure}
+
+Figure~\ref{fig:cedar-typing} summarizes the core typing rules
+that relate Cedar layouts ($\ell$) to C types ($\tau$).
