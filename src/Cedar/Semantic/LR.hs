@@ -1,3 +1,5 @@
+-- Original Author: Goerge Anderson
+
 module Cedar.Semantic.LR where
 
 import Data.List

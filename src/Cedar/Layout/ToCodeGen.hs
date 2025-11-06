@@ -20,7 +20,7 @@ import Cedar.Compat.Basic (Size(..))
 -- Codegen-facing struct description
 data CGStruct = CGStruct
   { cgTypeName  :: String
-  , cgWordCount :: Int                -- number of 32-bit lanes
+  , cgWordCount :: Int -- number of 32-bit lanes
   , cgFields    :: [CGField]
   }
 

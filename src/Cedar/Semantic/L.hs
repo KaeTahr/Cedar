@@ -1,3 +1,5 @@
+-- Original Author: George Anderson
+
 {-# LANGUAGE InstanceSigs #-}
 module Cedar.Semantic.L where
 

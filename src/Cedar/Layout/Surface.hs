@@ -33,7 +33,7 @@ evalSize (Add a b) = evalSize a + evalSize b
 -- knot-tying surface layout
 data DataLayoutExpr' e
   = Prim    DataLayoutSize
-  | Record  [(String, e)]       -- (field, sublayout)
+  | Record  [(String, e)]
   | Offset  e DataLayoutSize
   | Endian  e Endianness
   | Ptr

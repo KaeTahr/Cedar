@@ -17,7 +17,7 @@ data POffset
 data PType
   = TPrim Prim
   | TArray PType Int
-  | TRecord POffset [PField]   -- record carries its own base offset
+  | TRecord POffset [PField]
   deriving (Eq,Show)
 
 data PField = PField

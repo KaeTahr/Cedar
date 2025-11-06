@@ -1,3 +1,5 @@
+-- original author: George Anderson
+
 module Cedar.Semantic.CR where
 
 import qualified Cedar.Semantic.BasicType as BMT

@@ -6,12 +6,10 @@ import System.Directory (createDirectoryIfMissing)
 
 import Cedar.Pipeline (compileToStrings)
 
--- semantic ASTs
 import qualified Cedar.Semantic.C as C
 import qualified Cedar.Semantic.L as L
 
 
--- C
 studentC :: C.CType
 studentC = C.Struct [
     ("Student Number", C.Int C.I32 C.Signed C.noattr), 
@@ -22,7 +20,7 @@ studentC = C.Struct [
         ])
     ]
 
--- L
+
 studentL :: L.Layout
 studentL = L.Struct (L.AbsOffset (L.Bit 0))
     [

@@ -1,4 +1,4 @@
--- protent from dargent
+-- proted from dargent
 -- cogent/src/Cogent/Dargent/Core.hs
 
 {-# LANGUAGE DeriveFunctor #-}
@@ -28,10 +28,10 @@ data DataLayout bits
 
 -- size of a BitRange-backed layout (hi - lo)
 dataLayoutSizeBits' :: DataLayout' BitRange -> Size
-dataLayoutSizeBits' (PrimLayout (BitRange sz off) _) = sz              -- all prims are absolute here
+dataLayoutSizeBits' (PrimLayout (BitRange sz off) _) = sz
 dataLayoutSizeBits' (RecordLayout mp) =
   let hi = maximum (0 : [ off + sz | PrimLayout (BitRange sz off) _ <- M.elems mp ])
-  in fromIntegral (alignSize 8 hi)  -- round up to byte
+  in fromIntegral (alignSize 8 hi)
 
 -- convert BitRange → [AlignedBitRange] (word lanes)
 alignLayout' :: DataLayout' BitRange -> DataLayout' [AlignedBitRange]

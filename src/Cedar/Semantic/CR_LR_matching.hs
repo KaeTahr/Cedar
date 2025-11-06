@@ -1,3 +1,5 @@
+-- Original author: George Anderson
+
 module Cedar.Semantic.CR_LR_matching where
 
 import qualified Cedar.Semantic.CR as CR

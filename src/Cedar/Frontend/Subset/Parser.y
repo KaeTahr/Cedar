@@ -44,9 +44,9 @@ Decl :: { TopDecl }
 
 -- Types ---------------------------------------------------
 
-Type :: { PType }                   -- used at top-level layouts; may be a record-with-offset
+Type :: { PType }
   : RecordTy                        { $1 }
-  | NonRecType                      { $1 }   -- (top-level prim/array is allowed if you want)
+  | NonRecType                      { $1 } 
 
 -- Non-record types (do not carry their own offset)
 NonRecType :: { PType }

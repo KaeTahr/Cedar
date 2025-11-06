@@ -2,8 +2,8 @@ module Cedar.Pipeline
   ( compileToStrings
   ) where
 
-import qualified Cedar.Semantic.C as C           -- C AST
-import qualified Cedar.Semantic.L as L           -- Layout AST
+import qualified Cedar.Semantic.C as C
+import qualified Cedar.Semantic.L as L
 import qualified Cedar.Semantic.CR as CR
 import qualified Cedar.Semantic.LR as LR
 import qualified Cedar.Semantic.C_to_CR as C_to_CR
