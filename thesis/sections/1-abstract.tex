@@ -1,44 +1,30 @@
 \abstract{
-    Cedar is a protoype programming language and compiler that introduces
-    declarative byte-level data-layout specication to the C programming
-    ecosystem.
-    Low-level software such as device drivers, network stacks, and embedded
-    systems often require precise control over how data structures are
-    represented in memory.
-    In the C programming langauge, these details are typically implicit,
-    expressed through field ordering, alignment directives, or
-    implementation-sepcific pragmas. Such mechanisms are powerful
-    but error-prone, and layout inconsistencies are a major source of system
-    failures and security vulenerabilities.
+    In systems programming, such as in device drivers and network stacks, programmers
+    rely on precise control over how data structures are represented in memory.
+    In the C programming language, these details are typically implicitly
+    expressed through field order, alignment directives, or compiler-specific
+    pragmas. Such mechanisms are powerful but error-prone, and layout
+    inconsistencies remain a major source of system faults and
+    security vulnerabilities.
 
-    Cedar builds on ideas from Dargent, a verified layout description
-    language integrated into the Cogent programming langauge.
-    Cedar also borrows from CompCert, the formally verified C compier.
-    Rather than pursuing full formal verification, Cedar explores how
-    Dargent's declarative approach can be realized directly within
-    conventional C development. The language allows programmers to
-    specify the structure and placement of data fields using high-level
-    constructs such as records, absolute and relative byte offsets,
-    endianness annotations, and fixed-length arrayss. Each layout
-    is compiled into C code that represents the structure as a flat array
-    of 32-bit words, with automatically generated accessor and mutator
-    functions for every field.
+    Cedar is a declarative programming language that addressess this problem
+    by
+    specifying memory layouts explicitly within the C programming ecosystem.
+    Building on ideas from Dargent, a verified layout
+    description language integrated into Cogent, Cedar explores how
+    the same declarative principles can be applied directly to C development.
+    It treats data layouts as first-class constructs, allowing
+    programmers to describe structure and placement at the byte level
+    while preserving compatibility with existing compilers.
 
-    The implementation comprises a four-stage pipeline: parsing, lowering,
-    checking, and code generation.
-    This mirrors the refinement structure of CompCert while remaining small and
-    inspectable.
-    The prototype supports nested records, per-field endianness, and relative
-    or absolute placements, and it generates portable C deo output that has
-    been tested to compile succesfully with both GCC and CompCert.
-    Evaluation on representative layout examples demonstrate that Cedar can
-    express complex C-style structures clearly and that its generated code
-    matches the offsets and sizes produced by standard compilers.
-
-    By making layout intent explicit and checkable, Cedar offers a practical
-    step towrads trustworthy data-layout specification without imposing a 
-    new programming model or sacrificing compatibility with exisiting toolchains.
-    The project highlights a path between unverified low-level programming
-    and fully verified systems: a middle ground where clarity and correctness
-    can coexists with C's performance and flexibility.
+    By making layout intent explicit and statically checkable, Cedar
+    provides a practical foundation for trustworthy data-layout
+    design without requiring new programming models or
+    heavy verification infrastructure. The approach demonstrates
+    many of the benefits of formal reasoning, such as clarity,
+    compositionality, and predictability, can be achieved through
+    careful language design alone. Cedar thus contributes a middle ground
+    between low-level programming and fully verified systems: a lightweight,
+    expressive framework that improves the transparency and reliability of C
+    data representations.
 }

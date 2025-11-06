@@ -1,4 +1,5 @@
 \documentclass[12pt]{article} 
+
 \usepackage{graphicx}
 \usepackage[bottom]{footmisc}
 \usepackage[utf8]{inputenc} 
@@ -47,22 +48,71 @@
     showtabs=false,                  
     tabsize=2
 }
-
 \lstset{style=mystyle}
 \addbibresource{./bibliography/biblio.bib}
 
-\author{Kae Chinchilla 1526925}
-\title{}
+% Compile with: pdflatex -shell-escape main.tex
+\immediate\write18{texcount -1 -sum -merge \jobname.tex > \jobname.wc}
+\newcommand\wordcount{\input{\jobname.wc}}
+
+% -------------------------------
+% Metadata
+% -------------------------------
+\author{K. Chinchilla Flores 1526925 \\ Supervisor: Dr. Christine Rizkallah}
+\title{Cedar: Declarative Data Layouts for C} 
 \date{2025-11-03}
 
-
 \begin{document}
+
+% -------------------------------
+% Title page
+% -------------------------------
 \maketitle
+
+\newpage
+\section*{Declaration of Authorship}
+\addcontentsline{toc}{section}{Declaration of Authorship}
+\input{sections/2-declaration_of_authorship.tex}
+\\[0.75em]
+
+\newpage
+\addcontentsline{toc}{section}{Abstract}
 \input{sections/1-abstract.tex}
+
+\newpage
+\section*{Acknowledgements}
+\addcontentsline{toc}{section}{Acknowledgements}
+\input{sections/3-acknowledgements.tex}
+
+% -------------------------------
+% Contents (before main text)
+% -------------------------------
+\newpage
+\tableofcontents
+\newpage
+\listoftables
+\newpage
+\listoffigures
+\newpage
+
+% -------------------------------
+% Main text
+% -------------------------------
 \input{sections/4-introduction.tex}
 \input{sections/5-background_n_related_work.tex}
 \input{sections/6-methodology_and_system_design.tex}
 \input{sections/7-implementation_and_evaluation.tex}
 \input{sections/8-discussion_and_future_work.tex}
+
+% -------------------------------
+% References
+% -------------------------------
 \printbibliography
+
+% Appendices if you have them (keep your own files/structure)
+% \appendix
+% \section*{Appendix}
+% \addcontentsline{toc}{section}{Appendix}
+% \input{sections/appendix.tex}
+
 \end{document}

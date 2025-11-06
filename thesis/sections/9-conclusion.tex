@@ -1,0 +1,49 @@
+\section{Conclusion}
+This thesis set out to investigate how data-layout correctness could be
+approached through language design rather than through tooling
+or external verification. It proposed extensions to \textit{Cedar},
+a declarative language and compiler that allows programmers to specify
+physical representation of data structures in C without explicit, byte-level
+precision. The project asked whether such a language could
+express realistic layouts while remaining compatible with existing
+C toolchains and conventional programming practices.
+
+The research demonstrated that it can. Cedar's implementation
+shows that layout intent, often buried in compiler pragmas
+or implicit alignment rules, can be expressed directly
+and compiled into deterministic, verified C code.
+Through a compact syntax based on placement directives and compositional
+reasoning about representations as a first-class concern. Its compiler
+pipeline, structured through intermediate representations, provides
+a transparent mapping from high-level specification to concrete bit
+ranges. The evaluation confirmed that this approach
+faithfully reproduces real-world layouts, including
+nested structures and externally defined formats
+such as the ELF header, with results consistent across compilers.
+
+Beyond empirical correctness, Cedar contributes
+conceptually by reframing layout design as a domain of reasoning.
+The language demonstrates that explicitness alone can
+eliminate many of the ambiguities that
+make low-level code fragile. It treats data representation
+not as a by-product of compilation, but as a structured
+subject to analysis and automation. This offers
+an alternative perspective on systems programming: one in which
+correctness emerges from specification rather than from
+defensive debugging.
+
+At the same time, the work highlights clear opportunities for a continuation.
+Completing semantic checking, extending type coverage, and integrating
+with verified backends such as CompCert would advance Cedar as a tool
+in an ecosystem of full assurance. These directions promise not only a
+more powerful tool but also a research vehicle for studying how
+declarative specifications interact with formal proofs and real-world
+compilers.
+
+In summary, Cedar represents a step towards more reliable and trustworthy
+systems programming. It bridges the clarity of declarative design, with the
+pragmatism and industry relevance of C, showing that many of the
+benefits can be achieved through language structure alone. The
+project stands as both a functioning compiler and a methodological argument:
+that improving how we \textit{describe} data is the first step
+towards improving how we \textit{trust} it.
