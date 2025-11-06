@@ -1,0 +1,290 @@
+\section{Discussion and Future Work}
+Declarative specification of data layouts offers a compelling
+alternative to the implicit and error-prone conventions of C.
+The preceding chapters introduced Cedar's language design,
+detailed its implementation and demonstrated that declarative
+layout descriptions can be compiled intro correct byte-accurate
+C code.
+This chapter steps back from the implementation to examine
+what these results imply for programming-language design and
+trustworthy systems development. It reflects on the lessons learned
+from building Cedar, the trade-offs between expressiveness and 
+soundness, and the broader significance of declarative layout control.
+The chapter concludes by outlining concrete directions for extending Cedar
+towards full checking and eventual integration with verified compilation
+frameworks.
+
+\subsection{Overview}
+Cedar's development was motivated by the persistent difficulty of reasoning
+about memory representation in conventional systems code. The project
+sought to determine whether standalone declarative descriptions
+could bridge the gap between low-level control and structural correctness.
+The evaluation presented in this paper confirmed that, within its current scope, 
+Cedar successfully expressed realistic C layouts and produces code
+that matches expected memory representations.
+
+The discussion builds on those findings to identify what Cedar contributes
+to the study of trustworthy data-layout languages and where its current
+design falls short. It first considers the insights
+gained during implementation, that situates Cedar in relation to
+verified predecessors such as Dargent. Subsequent sections examine
+the practical limitations of the present prototype
+and outline pathways toward a verified industrially usable system.
+
+\subsection{Lessons Learned}
+Implementing Cedar provided several insights into how declarative layout
+languages can balance transparency and practicality
+in systems programming.
+
+\textbf{Compositional intermediate representations}
+
+The translation pipeline through L, LR and Cr validated thee decision to
+represent each stage explicitly rather than collapsing transformations. Each
+layer captures a distinct level of semantic detail, making it easier
+to inspect and verify transformations incrementally. This compositional
+structure mirrors the refinement style of verified compilers such as CompCert,
+providing a foundation on which formal proofs could later be attached without
+redesigning implementation.
+
+\textbf{Funcional implementation and transparency}
+
+Writing the compiler in Haskell encouraged a purely functional,
+side-effect free architecture. Each translation phase is a total
+function from one representation to another, yielding
+a clear audit trail from input specification to generated code. 
+This transparency was valuable during debugging and
+evaluation, as intermediate states can be printed and reasoned about
+without concern for hidden mutable state. The experience reinforced
+the suitability of functional languages for constructing research compilers
+whose primary goal is clarity rather than raw performance.
+
+\textbf{Challenges of balance}
+
+Implementing Cedar highlighted the rigidity that a declarative layout
+can have despite its clarity. Features such as overlapping union or
+flexible arrays require substantial machinery when expressed in this way.
+Throughout the implementation, the scope of features
+was balanced in order to maintain simplicity while preserving flexibility
+to model real programs. This trade off is the central challenge for future
+iterations of Cedar.
+
+Together, these lessons confirm that a declarative approach is feasible
+and valuable without formal proof machinery. They show the underlying
+principles of Cedar: explicit structure, and functional transparency.
+These lessons can guide broader efforts to make low-level systems code more
+predictable and analyzable.
+
+\subsection{Position within Related Work}
+Cedar's results invite comparison with the broader family of
+language tools that aim to make low-level data representation explicit
+and reliable. These approaches can be understood as exploring different
+compromises between \textit{assurance}, \textit{expressiveness}, and
+\textit{adoption cost}. Cedar occupies one distinctive point in that design
+space.
+
+\textbf{Complementing verified frameworks}
+
+Formally verified compilers such as CompCert~\cite{compcert} demonstrate
+that machine-checked correctness is achievable for a realistic fragment of C.
+CompCert's focuses on preservation of C's semantics, ensuring that compiled
+programs behave exactly as the source defines. It deliberately abstracts away
+physical layout concerns such as padding, endianness, and aliasing like
+other C compilers. However, these abstractions allow CompCert
+to reason about program behavior rather than representation. By contrast, 
+Dargent incorporates the structure of data itself into the verification model,
+providing that field accessors and mutators preserve meaning down to the bit level.
+
+Cedar approaches the same space from a complementary angle.
+It operates withing unverified toolchains but brings representation semantics
+into the language surface, treating layout as an explicit, checkable design
+artefact.
+In this way, Cedar extends the spirit of formal systems: clarity through
+explicitness. Its contribution is to expose the problem in a form
+that conventional C developers can reason about directly.
+
+\textbf{Relation to schema and layout DSLs}
+
+Beyond the verified-language lineage, Cedar shares motivation
+with declarative frameworks such as \textit{PADS}~\autocite{fisher2005pads},
+\textit{DataScript}~\autocite{back2002datascript}, and industrial
+serialization systems like \textit{FlatBuffers}~\autocite{flat_buffers} and
+\textit{Cap'n Proto}~\autocite{capn_proto_serialization}. These tools
+emphasize cross-platform compatibility and automation, generating
+parsers or serializers from high-level schemas. Cedar differs in
+purpose and granularity; it operates \textit{inside} the C memory model
+rather than above it, producing in-place layouts that respect compiler
+behavior rather than replacing it. Whether existing DSLs focus on
+interoperability across languages, Cedar focuses on \textit{consistency within
+one language}, ensuring that what a C program declares corresponds exactly
+to what resides in memory.
+
+\textbf{Position and Value}
+
+Cedar's significance lies in what it reveals about how programmers reason
+about representation. By making a data layout an explicit, declarative
+construct, the language exposes design intent that is usually implicit and
+uncheckable in C. This shift reframes layout not as a by-product of 
+compiler behavior but as a semantic dimension of program design. Cedar
+therefore contributes to the study of systems language by showing
+that \textit{representation itself} can be a structured, analyzable
+part of the programming mode. It is subject to the same forms
+of composition, abstraction, and analysis as higher-level logic.
+
+In this sense, Cedar is less a reduced form of prior verified systems, and more
+a \textit{conceptual complement} to them. An attempt to understand how the
+benefits of declarative reasoning scale when applied directly to memory
+representation. It demonstrates that careful language design can
+improve transparency and predictability even within
+conventional toolchains, suggesting that many challenges of
+low-level correctness can be addressed through specification
+rather than enforcement.
+
+\subsection{Implementation Gaps and Future Work}
+Developing Cedar required balancing scope between clarity and practical
+constraints.
+Many of the system's design choices were guided less by theoretical purity
+than by the need to keep the implementation comprehensible and experimentally useful.
+The resulting implementation therefore embodies a series of deliberate compromises
+that illuminate the boundaries between a research language and a production tool.
+
+\textbf{Explicitness and Usability}
+
+A declarative layout language introduces a tension between explicit control
+and notation convenience. Cedar's syntax was kept deliberately compact, using
+only placement directives and simple composition, to encourage readability,
+and ease of implementation.
+This simplicity also constrained what could be expressed.
+Nested records, absolute offsets, and arrays fit naturally, but more complex
+layouts did not.
+
+\textbf{Representation Strategy}
+
+Flattening every structure into a single bit array exemplifies the tradeoff
+of flexibility and readability.
+The representation guarantees deterministic addressing and straightforward
+code generation, but it diverges from idiomatic C and could lead to the 
+need of glue code, complicating integration with legacy code.
+The approach simplifies analysis, offsets and bit ranges can be
+calculated uniformly, but at the cost of diverging from C's native
+layout strategies. The choice reflects a preference for transparency
+over convention: Cedar prioritizes predictable consistency
+predictable target rather than emulating compiler heuristics that may
+very across architectures.
+
+\textbf{Scope of the type system}
+The current implementation supports a fixed subset of C's type system: 
+primitive integers, fixed-size arrays, and records. Excluding unions,
+pointers and bit-fields simplified parsing and offset resolution
+allowing the compiler pipeline to remain small and manageable.
+Yet these omissions restrict applicability to only the safest
+corner of systems code. Many real-world interfaces
+rely on tagged unions, sub-byte fields or pointer based indirection.
+Their inclusion in future work would strengthen Cedar's
+model.
+
+\textbf{Semantic Checking}
+
+This implementation also revealed the practical difficulty
+of enforcing semantics invariants early in research compilers.
+Although the internal representations compute explicit bir ranges,
+Cedar currently trusts the user to avoid overlapping fields or gaps.
+The conceptual infrastructure of the language was idealized in the CR
+stage, but implementation stops short of enforcement.
+The choice was pragmatic: allowed rapid exploration of design
+language and focusing on code generation, before committing to a full
+constraint solver. This is the next clear milestone for the system's
+maturation, highlighting how static analysis can grow organically from
+an executable specification.
+
+
+\textbf{Tooling and user experience}
+
+Because this implementation targeted research rather than production use,
+its user experience remains minimal: errors are reported generically,
+diagnostics are limited to parsing failures, and there is no
+visualization of generated layouts.
+Yet even in this minimal form, the compiler's intermediate stages
+proved valuable for understanding and teaching about layout reasoning.
+The sequence of transformations
+from surface syntax to bit ranges provides an explicit audit
+trail that few conventional compilers expose.
+This transparency, though rudimentary, already illustrates how research
+prototypes can serve as explanatory tools, even before reaching
+production quality.
+
+\textbf{Reflections on design process}
+
+Taken together, these gaps define Cedar as an exploratory system. It
+favours conceptual integrity and inspectability over completeness
+or raw performance. Each simplification from idealization to implementation,
+restricting types, flattening structures, deferring full checking, was
+chosen to keep the relationship between syntax and semantics legible, 
+enabling rapid iteration on core ideas.
+The resulting implementation is best understood as an executable 
+demonstration of how far declarative specification can go before 
+formal verification or industrial-scale engineering becomes essential.
+
+
+\subsection{Towards a Verified System}
+The current implementation demonstrates that a declarative layout
+specification is both feasible and valuable within conventional C development.
+The next challenge is to extend this foundation toward stronger guarantees:
+Ensuring layouts are not only explicit but also provably correct
+with respects the language's formal semantics.
+Several complementary directions emerge from this goal, spanning
+from strengthening static analysis, formalization and tooling.
+
+\textbf{Formalizing lowering stages}
+
+Beyond local validation lies the opportunity for formal reasoning
+about the compiler itself. Each translation stage, L, LR and CR, encodes
+a refinement of information: Symbolic structure, resolved offsets and concrete
+bit ranges.
+These transformations are functional and self-contained, making
+them amenable to mechanization in proof assistants such as Roq/Coq.
+Formalizing their behavior would enable proofs that layout meaning
+is preserved across stages: that the semantics of a record array
+in L correspond exactly to its bit-range representation in CR.
+Such results would elevate Cedar into a verifiable component
+with a broader compilation framework.
+
+\textbf{Integrating with Verified Compilation}
+
+Cedar's design is intentionally compatible with CompCert's
+memory model. A long-term objective is to connect these two: to
+demonstrate that Cedar generated C code can be compiled within 
+an environment like CompCert. This integration would enable end-to-end
+reasoning about layout correctness, linking declarative specification in
+source code, to verified compilation at machine level.
+Cedar aims to supply verified inputs to COmpCert's proofs, well-formed
+data structures whose representation invariants are known in advance.
+
+\textbf{Extending Expressiveness}
+
+Parallel to formalization, further work can broaden Cedar's applicability.
+Support for the previously mentioned tagged unions, sub-byte bit-fields,
+and pointers would allow the language to model a wider range of C idioms.
+Achieving this safely might require explicit tagging and refined alignment rules,
+ensuring that extended expressiveness does not undermine checkability.
+These features would also enable richer
+case studies, such as hardware descriptors and protocol parsers that rely on compact
+or overlapping representations.
+
+\textbf{Tooling visualization}
+
+As Cedar's analysis grows more sophisticated, corresponding improvements
+in usability will become essential. Interactive visualization of layouts,
+showing byte ranges, field names and endianness, could transform the compiler
+into a teaching and debugging aid. 
+
+\textbf{Towards a verified industrial tool}
+
+Ultimately, the vision for Cedar is less about deepening assurance.
+The system already demonstrates the usefulness of declarative layouts
+and potential ot eliminate many layout errors.
+The next phase is to connect that explicitness to formal reasoning.
+Completing the checking logic, proving the soundness of translations, and
+linking to a verified back-end would establish a continuous chain of trust, from
+declarative description to compiled binary, within the familiar domain of C.
+Achieving this could position Cedar as both a research tool
+and a tool in the broader effort to build trustworthy systems software.
