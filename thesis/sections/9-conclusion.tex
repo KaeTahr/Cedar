@@ -1,36 +1,25 @@
 \section{Conclusion}
-This thesis set out to investigate how data-layout correctness could be
-approached through language design rather than through tooling
-or external verification. It proposed extensions to \textit{Cedar},
-a declarative language and compiler that allows programmers to specify
-physical representation of data structures in C without explicit, byte-level
-precision. The project asked whether such a language could
-express realistic layouts while remaining compatible with existing
-C toolchains and conventional programming practices.
+This project set out to investigate whether a layout specification
+language could be developed for C. Its purpose was to
+enable data-layout correctness directly in language design, without
+relying on external tooling. In this paper we presented extensions
+to \textit{Cedar}, a declarative language. We built a
+compiler with a fully implemented pipeline that allows
+programmers to describe data layouts down to the byte level.
 
-The research demonstrated that it can. Cedar's implementation
-shows that layout intent, often buried in compiler pragmas
-or implicit alignment rules, can be expressed directly
-and compiled into deterministic, verified C code.
-Through a compact syntax based on placement directives and compositional
-reasoning about representations as a first-class concern. Its compiler
-pipeline, structured through intermediate representations, provides
-a transparent mapping from high-level specification to concrete bit
-ranges. The evaluation confirmed that this approach
-faithfully reproduces real-world layouts, including
-nested structures and externally defined formats
-such as the ELF header, with results consistent across compilers.
+The research demonstrated that it is possible to achieve these goals.
+It shows that a compact syntax can avoid issues of alignment,
+or the need to use compiler-specific instructions and non-portable code.
+Through a minimal syntax and moving layout reasoning to be a first-class concern
+we demonstrated that it is possible to reproduce real-world layouts, including
+complex structures such as the ELF header, with high fidelity, and 
+portable code that works across different compilers
 
-Beyond empirical correctness, Cedar contributes
-conceptually by reframing layout design as a domain of reasoning.
-The language demonstrates that explicitness alone can
-eliminate many of the ambiguities that
-make low-level code fragile. It treats data representation
-not as a by-product of compilation, but as a structured
-subject to analysis and automation. This offers
-an alternative perspective on systems programming: one in which
-correctness emerges from specification rather than from
-defensive debugging.
+Cedar contributes both the conceptual framework for designing
+data layouts declaratively, and a functioning compiler
+that realizes this vision. This offers an alternative perspective
+on programming: correctness can emerge from declaration and
+specification, without relying on defensive testing and debugging. 
 
 At the same time, the work highlights clear opportunities for a continuation.
 Completing semantic checking, extending type coverage, and integrating

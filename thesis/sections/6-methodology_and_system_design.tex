@@ -5,7 +5,7 @@ C layouts declaratively.
 The goal of the project is to give programmers
 \textbf{greater trust} that in-memory representations of data structures
 corresponds to their intent.
-Cedar achieves this bya introducing a small external language
+Cedar achieves this by introducing a small external language
 for layout declarations, paired with a static checker that validates 
 those declarations against C type definitions and generates
 layout consistent C code.
@@ -114,14 +114,14 @@ During checking, Cedar ensures that:
 \end{itemize}
 
 This model allows Cedar to detect and properly handle changes that could
-otherwise be silently mishandled by compiler-specific padding or mis-ordered
+otherwise be silently mishandled by compiler-specific padding or unordered
 field declarations—one of the most common causes of data-layout bugs in C.
 
 
 
 \textbf{Arrays}
 
-Arrays are represented as repeated layouts of a uniform elemenet type.
+Arrays are represented as repeated layouts of a uniform element type.
 Cedar supports both fixed-length and statically known arrays.
 The layout checked verifies that the element layout
 is well-formed and then replicates its size and alignment
@@ -179,7 +179,7 @@ device drivers, network protocols, and binary file formats.
 \subsection{Cedar Language Design and Core Features}
 Cedar extends C with a minimal set of declarative constructs for specifying
 how data structures are laid out in memory.
-Its syntax follows C's lexical convnetions but introduces
+Its syntax follows C's lexical conventions but introduces
 new top-level \texttt{layout} blocks
 that describe the physical
 placement of fields.
@@ -610,7 +610,7 @@ language and compiler for declarative specification of C data
 layouts. Building on CompCert's precise model of C memory and Dargent'
 declarative layout philosophy, Cedar defines a practical subset of
 constructs—\texttt{layout}, \texttt{@}, \texttt{before}, \texttt{after}
-end simple arrays—that enable programmers to express phyisical data
+end simple arrays—that enable programmers to express physical data
 representations explicitly and check them statically.
 
 The chapter introduced the supported C types, the language grammar, and the
