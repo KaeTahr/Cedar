@@ -1,0 +1,41 @@
+\begin{figure}[h]
+\begin{inductive}{\Q \vdash \ell \sim \tau}
+  \inferrule
+    { \mathrm{bits}(T) = s \\ T\ \text{is a primitive integer or boolean type} }
+    { \Q \vdash \langle o, s \rangle \sim T }
+    {\textsc{PrimMatch}}
+
+  \quad
+  \inferrule
+    { \text{for each } i,\ \Q \vdash \ell_i \sim \tau_i }
+    { \Q \vdash \texttt{record}\ \{\, f_i : \ell_i \,\} \sim
+        \texttt{struct}\ \{\, f_i : \tau_i \,\} }
+    {\textsc{RecordMatch}}
+
+  \quad
+  \inferrule
+    { \Q \vdash \ell \sim \tau }
+    { \Q \vdash \ell [n] \sim \tau [n] }
+    {\textsc{ArrayMatch}}
+
+  \quad
+  \inferrule
+    { }
+    { \Q \vdash () \sim () }
+    {\textsc{UnitMatch}}
+
+\end{inductive}
+
+\[
+\begin{array}{ll}
+  \mathrm{bits}(U8) = 8 \quad & \mathrm{bits}(U16) = 16 \\
+  \mathrm{bits}(U32) = 32 \quad & \mathrm{bits}(U64) = 64 \\
+  \mathrm{bits}(\_Bool) = 1
+\end{array}
+\]
+\caption{Layout–type matching rules in Cedar. Each layout $\ell$ corresponds to a well-typed region of memory for type $\tau$. \label{fig:cedar-match}}
+\end{figure}
+
+Figure~\ref{fig:cedar-match} summarizes the core typing rules.
+This project implements a subset of Dargent's layout-type correspondence
+that applies to fixed-type size, byte addressed C records and arrays.

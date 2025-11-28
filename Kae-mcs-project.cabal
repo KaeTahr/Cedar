@@ -1,16 +1,76 @@
-cabal-version:       2.4
-
+cabal-version:       3.0
 name:                Kae-mcs-project
 version:             0.1.0.0
 build-type:          Simple
 
+-- shared flags
+common common-settings
+  default-language:    Haskell2010
+  hs-source-dirs:      src
+  ghc-options:         -Wall -Wcompat -Wincomplete-uni-patterns -Wincomplete-record-updates
+  default-extensions:  RecordWildCards OverloadedStrings
+
+library
+  import:              common-settings
+  exposed-modules:
+      Cedar.CodeGen.Allocation
+      Cedar.CodeGen.Boundary
+      Cedar.CodeGen.CodeGen
+      Cedar.Layout.Surface
+      Cedar.Layout.Core
+      Cedar.Compat.Basic
+      Cedar.Layout.ToCodeGen
+      Cedar.Pipeline
+      Cedar.Bridge.LRToCG
+      Cedar.Semantic.BasicType
+      Cedar.Semantic.C
+      Cedar.Semantic.C_to_CR
+      Cedar.Semantic.CR
+      Cedar.Semantic.L
+      Cedar.Semantic.LR
+      Cedar.Semantic.L_to_LR
+      Cedar.Semantic.CR_LR_matching
+      Cedar.Frontend.Subset.AST
+      Cedar.Frontend.Subset.Lexer
+      Cedar.Frontend.Subset.Parser
+      Cedar.Frontend.Subset.Lower
+
+
+  build-depends:
+      base >=4.14 && <5,
+      containers,
+      text,
+      bytestring,
+      mtl,
+      array,
+      directory,
+      filepath
 
 executable cedar-demo
-  -- We'll use app/Main.hs as the entry point for the demo.
-  main-is:          Main.hs
-  hs-source-dirs:   app, src
-  default-language: GHC2021
+  import:              common-settings
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  build-depends:
+      base,
+      containers,
+      directory,
+      filepath,
+      bytestring,
+      mtl,
+      Kae-mcs-project
+  ghc-options: 
+      -Wall
+      -Wno-unused-imports
+      -Wno-unused-matches
+      -Wno-name-shadowing
+      -Wno-missing-pattern-synonym-signatures
+      -Wno-compat-unqualified-imports
 
-  build-depends:    base >=4.14 && <5
-
-  ghc-options:      -Wall -Wcompat -Wmissing-import-lists -Wredundant-constraints
+    
+executable cedarc
+  hs-source-dirs: app
+  main-is: cedarc.hs
+  build-depends:
+      base, bytestring, containers, mtl, Kae-mcs-project, array,
+      directory, filepath
+  default-language: Haskell2010

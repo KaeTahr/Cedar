@@ -1,0 +1,809 @@
+@MISC{cedar_george,
+title = {Cedar, A Data Layout Description Languange for C},
+author = {George Anderson},
+date = {2024-11-18},
+}
+
+@article{dargent,
+  title={Dargent: A silver bullet for verified data layout refinement},
+  author={Chen, Zilin and Lafont, Ambroise and O'Connor, Liam and Keller, Gabriele and McLaughlin, Craig and Jackson, Vincent and Rizkallah, Christine},
+  journal={Proceedings of the ACM on Programming Languages},
+  volume={7},
+  number={POPL},
+  pages={1369--1395},
+  year={2023},
+  publisher={ACM New York, NY, USA}
+}
+
+@INPROCEEDINGS{adt_layout_faria,
+author={Faria, Nuno and Silva, Rui and Sobral, João L.},
+booktitle={2013 21st Euromicro International Conference on Parallel, Distributed, and Network-Based Processing}, 
+title={Impact of Data Structure Layout on Performance}, 
+year={2013},
+volume={},
+number={},
+pages={116-120},
+keywords={Java;Layout;Arrays;Scalability;Benchmark testing;Multicore processing;locality;collections;multicore;Java},
+doi={10.1109/PDP.2013.24}}
+
+@inproceedings{device_driver_verification,
+author = {Monniaux, David},
+title = {Verification of device drivers and intelligent controllers: a case study},
+year = {2007},
+isbn = {9781595938251},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1289927.1289937},
+doi = {10.1145/1289927.1289937},
+abstract = {The soundness of device drivers generally cannot be verified in isolation, but has to take into account the reactions of the hardware devices. In critical embedded systems, interfaces often were simple "volatile" variables, and the interface specification typically a list of bounds on these variables. Some newer systems use "intelligent" controllers that handle dynamic worklists in shared memory and perform direct memory accesses, all asynchronously from the main processor. Thus, it is impossible to truly verify the device driver without taking the intelligent device into account, because incorrect programming of the device can lead to dire consequences, such as memory zones being erased.We have successfully verified a device driver extracted from a critical industrial system, asynchronously combined with a model for a USB OHCI controller. This paper studies this case, as well as introduces a model and analysis techniques for this asynchronous composition.},
+booktitle = {Proceedings of the 7th ACM \& IEEE International Conference on Embedded Software},
+pages = {30–36},
+numpages = {7},
+keywords = {OHCI, USB, asynchronous, device driver, direct memory access, linked lists, parallelism, verification},
+location = {Salzburg, Austria},
+series = {EMSOFT '07}
+}
+
+      
+
+@inproceedings{Rust_systems,
+author = {Balasubramanian, Abhiram and Baranowski, Marek S. and Burtsev, Anton and Panda, Aurojit and Rakamari\'{c}, Zvonimir and Ryzhyk, Leonid},
+title = {System Programming in Rust: Beyond Safety},
+year = {2017},
+isbn = {9781450350686},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3102980.3103006},
+doi = {10.1145/3102980.3103006},
+abstract = {Rust is a new system programming language that offers a practical and safe alternative to C. Rust is unique in that it enforces safety without runtime overhead, most importantly, without the overhead of garbage collection. While zero-cost safety is remarkable on its own, we argue that the superpowers of Rust go beyond safety. In particular, Rust's linear type system enables capabilities that cannot be implemented efficiently in traditional languages, both safe and unsafe, and that dramatically improve security and reliability of system software. We show three examples of such capabilities: zero-copy software fault isolation, efficient static information flow analysis, and automatic checkpointing. While these capabilities have been in the spotlight of systems research for a long time, their practical use is hindered by high cost and complexity. We argue that with the adoption of Rust these mechanisms will become commoditized.},
+booktitle = {Proceedings of the 16th Workshop on Hot Topics in Operating Systems},
+pages = {156–161},
+numpages = {6},
+location = {Whistler, BC, Canada},
+series = {HotOS '17}
+}
+
+@article{dist_systems_languages,
+author = {Bal, Henri E. and Steiner, Jennifer G. and Tanenbaum, Andrew S.},
+title = {Programming languages for distributed computing systems},
+year = {1989},
+issue_date = {Sep. 1989},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {21},
+number = {3},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/72551.72552},
+doi = {10.1145/72551.72552},
+abstract = {When distributed systems first appeared, they were programmed in traditional sequential languages, usually with the addition of a few library procedures for sending and receiving messages. As distributed applications became more commonplace and more sophisticated, this ad hoc approach became less satisfactory. Researchers all over the world began designing new programming languages specifically for implementing distributed applications. These languages and their history, their underlying principles, their design, and their use are the subject of this paper.We begin by giving our view of what a distributed system is, illustrating with examples to avoid confusion on this important and controversial point. We then describe the three main characteristics that distinguish distributed programming languages from traditional sequential languages, namely, how they deal with parallelism, communication, and partial failures. Finally, we discuss 15 representative distributed languages to give the flavor of each. These examples include languages based on message passing, rendezvous, remote procedure call, objects, and atomic transactions, as well as functional languages, logic languages, and distributed data structure languages. The paper concludes with a comprehensive bibliography listing over 200 papers on nearly 100 distributed programming languages.},
+journal = {ACM Comput. Surv.},
+month = sep,
+pages = {261–322},
+numpages = {62}
+}
+
+@book{Rust_lang,
+  title={The Rust programming language},
+  author={Klabnik, Steve and Nichols, Carol},
+  year={2023},
+  publisher={No Starch Press}
+}
+
+@book{C_embedded_programming,
+  title={Programming embedded systems in C and C++},
+  author={Barr, Michael},
+  year={1999},
+  publisher={"OReilly Media, Inc."}
+}
+
+@inproceedings{C_union_bugs,
+  title={Finding bugs on tagged unions mismatches},
+  author={T{\'o}thvari, Gabor and Umann, Krist{\'o}f and Porkolab, Zoltan},
+  booktitle={2024 IEEE 17th International Scientific Conference on Informatics (Informatics)},
+  pages={415--420},
+  year={2024},
+  organization={IEEE}
+}
+
+@inproceedings{C_to_rust_unions,
+author = {Hong, Jaemin and Ryu, Sukyoung},
+title = {To Tag, or Not to Tag: Translating C's Unions to Rust's Tagged Unions},
+year = {2024},
+isbn = {9798400712487},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3691620.3694985},
+doi = {10.1145/3691620.3694985},
+abstract = {Automatic C-to-Rust translation is a promising way to enhance the reliability of legacy system software. However, C2Rust, an industrially developed translator, generates Rust code with unsafe features, undermining the translation's objective. While researchers have proposed techniques to remove unsafe features in C2Rust-generated code, these efforts have targeted only a limited subset of unsafe features. One important unsafe feature remaining unaddressed is a union, a type consisting of multiple fields sharing the same memory storage. Programmers often place a union with a tag in a struct to record the last-written field, but they can still access wrong fields. In contrast, Rust's tagged unions combine tags and unions at the language level, ensuring correct value access. In this work, we propose techniques to replace unions with tagged unions during C-to-Rust translation. We develop a static analysis that facilitates such replacement by identifying tag fields and the corresponding tag values. The analysis involves a must-points-to analysis computing struct field values and a heuristic interpreting these results. To enhance efficiency, we adopt intraprocedural function-wise analysis, allowing selective analysis of functions. Our evaluation on 36 real-world C programs shows that the proposed approach is (1) precise, identifying 74 tag fields with no false positives and only five false negatives, (2) mostly correct, with 17 out of 23 programs passing tests post-transformation, and (3) efficient, capable of analyzing and transforming 141k LOC in 4,910 seconds.},
+booktitle = {Proceedings of the 39th IEEE/ACM International Conference on Automated Software Engineering},
+pages = {40–52},
+numpages = {13},
+keywords = {rust, C, automatic translation, union, tagged union},
+location = {Sacramento, CA, USA},
+series = {ASE '24}
+}
+
+@article{pragmas_jungck,
+  title={Pragmas and Other Key Compiler Directives},
+  author={Jungck, Peder and Duncan, Ralph and Mulcahy, Dwight and Jungck, Peder and Duncan, Ralph and Mulcahy, Dwight},
+  journal={packetC Programming},
+  pages={233--235},
+  year={2011},
+  publisher={Springer}
+}
+
+@article{memory_errors_stridharan,
+author = {Sridharan, Vilas and DeBardeleben, Nathan and Blanchard, Sean and Ferreira, Kurt B. and Stearley, Jon and Shalf, John and Gurumurthi, Sudhanva},
+title = {Memory Errors in Modern Systems: The Good, The Bad, and The Ugly},
+year = {2015},
+issue_date = {March 2015},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {43},
+number = {1},
+issn = {0163-5964},
+url = {https://doi.org/10.1145/2786763.2694348},
+doi = {10.1145/2786763.2694348},
+abstract = {Several recent publications have shown that hardware faults in the memory subsystem are commonplace. These faults are predicted to become more frequent in future systems that contain orders of magnitude more DRAM and SRAM than found in current memory subsystems. These memory subsystems will need to provide resilience techniques to tolerate these faults when deployed in high-performance computing systems and data centers containing tens of thousands of nodes. Therefore, it is critical to understand the efficacy of current hardware resilience techniques to determine whether they will be suitable for future systems. In this paper, we present a study of DRAM and SRAM faults and errors from the field. We use data from two leadership-class high-performance computer systems to analyze the reliability impact of hardware resilience schemes that are deployed in current systems. Our study has several key findings about the efficacy of many currently deployed reliability techniques such as DRAM ECC, DDR address/command parity, and SRAM ECC and parity. We also perform a methodological study, and find that counting errors instead of faults, a common practice among researchers and data center operators, can lead to incorrect conclusions about system reliability. Finally, we use our data to project the needs of future large-scale systems. We find that SRAM faults are unlikely to pose a significantly larger reliability threat in the future, while DRAM faults will be a major concern and stronger DRAM resilience schemes will be needed to maintain acceptable failure rates similar to those found on today's systems.},
+journal = {SIGARCH Comput. Archit. News},
+month = mar,
+pages = {297–310},
+numpages = {14},
+keywords = {field studies, large-scale systems, reliability}
+}
+
+@inproceedings{evaluation_memory_errors,
+  title={A realistic evaluation of memory hardware errors and software system susceptibility},
+  author={Li, Xin and Huang, Michael C and Shen, Kai and Chu, Lingkun},
+  booktitle={2010 USENIX Annual Technical Conference (USENIX ATC 10)},
+  year={2010}
+}
+
+@article{C_errors_study,
+  title={Memory errors and memory safety: C as a case study},
+  author={van Oorschot, Paul C},
+  journal={IEEE Security \& Privacy},
+  volume={21},
+  number={2},
+  pages={70--76},
+  year={2023},
+  publisher={IEEE}
+}
+
+@article{flat_buffers,
+  title={Efficient Data Representation Using FlatBuffers},
+  author={Koparkar, Chaitanya},
+  journal={XRDS: Crossroads, The ACM Magazine for Students},
+  volume={29},
+  number={2},
+  pages={50--51},
+  year={2023},
+  publisher={ACM New York, NY, USA}
+}
+
+@inproceedings{capn_proto_serialization,
+  title={Breakfast of champions: towards zero-copy serialization with NIC scatter-gather},
+  author={Raghavan, Deepti and Levis, Philip and Zaharia, Matei and Zhang, Irene},
+  booktitle={Proceedings of the Workshop on Hot Topics in Operating Systems},
+  pages={199--205},
+  year={2021}
+}
+
+
+@article{rust_memory_v_c,
+  title={C vs Rust: Manual vs Automatic Spatial and Temporal Memory Safety},
+  author={Syalim, Amril and Sheradhien, Dewangga Putra},
+  journal={The Indonesian Journal of Computer Science},
+  volume={14},
+  number={2},
+  year={2025}
+}
+
+@inproceedings{rust_memory_protection,
+  title={Static and Dynamic Memory Protection using Type-Based Memory Layout in Rust},
+  author={Lindgren, Per and Dzialo, Pawel and Nurmi, Antti and Lunnikivi, Henri},
+  booktitle={2023 IEEE 2nd Industrial Electronics Society Annual On-Line Conference (ONCON)},
+  pages={1--6},
+  year={2023},
+  organization={IEEE}
+}
+
+@article{memory_bottleneck,
+  title={Hitting the memory wall: Implications of the obvious},
+  author={Wulf, Wm A and McKee, Sally A},
+  journal={ACM SIGARCH computer architecture news},
+  volume={23},
+  number={1},
+  pages={20--24},
+  year={1995},
+  publisher={ACM New York, NY, USA}
+}
+
+@article{marshalling_performance,
+title={Performance analysis of data serialization formats in m2m wireless sensor networks},
+author={Pacini, Francesca and Aderohunmu, Femi A and Pagano, Paolo and Azzara, Andrea and Petracca, Matteo and Bocchino, Stefano},
+journal={ewsn 2015},
+pages={7},
+year={2015}
+}
+
+@inproceedings{memory_formal_verification,
+  title={Formal Verification of Memory},
+  author={Bockenek, Joshua A and Verbeek$^1$, Freek and Lammich, Peter},
+  booktitle={Computer Safety, Reliability, and Security: 38th International Conference, SAFECOMP 2019, Turku, Finland, September 11--13, 2019, Proceedings},
+  volume={11698},
+  pages={35},
+  year={2019},
+  organization={Springer Nature}
+}
+
+@inproceedings{network_memory_layouts,
+  title={A constraint network based approach to memory layout optimization},
+  author={Chen, Guilin and Kandemir, Mahmut and Karakoy, Mustafa},
+  booktitle={Design, Automation and Test in Europe},
+  pages={1156--1161},
+  year={2005},
+  organization={IEEE}
+}
+
+
+@article{data_layout,
+  title={Tiling, block data layout, and memory hierarchy performance},
+  author={Park, Neungsoo and Hong, Bo and Prasanna, Viktor K},
+  journal={IEEE Transactions on Parallel and Distributed Systems},
+  volume={14},
+  number={7},
+  pages={640--654},
+  year={2003},
+  publisher={IEEE}
+}
+
+@inproceedings{device_drivers,
+  title={Nooks: An architecture for reliable device drivers},
+  author={Swift, Michael M and Martin, Steven and Levy, Henry M and Eggers, Susan J},
+  booktitle={Proceedings of the 10th workshop on ACM SIGOPS European workshop},
+  pages={102--107},
+  year={2002}
+}
+
+@inproceedings{file_systems,
+  title={File system aging—increasing the relevance of file system benchmarks},
+  author={Smith, Keith A and Seltzer, Margo I},
+  booktitle={Proceedings of the 1997 ACM SIGMETRICS international conference on Measurement and modeling of computer systems},
+  pages={203--213},
+  year={1997}
+}
+
+@article{c_compilers,
+  title={Evaluation of compiler-induced vulnerabilities},
+  author={Hohnka, Michael J and Miller, Jodi A and Dacumos, Kenrick M and Fritton, Timothy J and Erdley, Julia D and Long, Lyle N},
+  journal={Journal of Aerospace Information Systems},
+  volume={16},
+  number={10},
+  pages={409--426},
+  year={2019},
+  publisher={American Institute of Aeronautics and Astronautics}
+}
+
+@article{C_structures,
+  title={Bitfields and Tagged Unions in C: Verification through Automatic Generation.},
+  author={Cock, David A},
+  journal={VERIFY},
+  volume={8},
+  pages={44--55},
+  year={2008}
+}
+
+@inproceedings{valgrind,
+  title={Using Valgrind to Detect Undefined Value Errors with Bit-Precision.},
+  author={Seward, Julian and Nethercote, Nicholas},
+  booktitle={USENIX Annual Technical Conference, General Track},
+  pages={17--30},
+  year={2005}
+}
+
+@inproceedings{asan,
+  title={AddressSanitizers: A fast address sanity checker},
+  author={Serebryany, Konstantin and Bruening, Derek and Potapenko, Alexander and Vyukov, Dmitriy},
+  booktitle={2012 USENIX annual technical conference (USENIX ATC 12)},
+  pages={309--318},
+  year={2012}
+}
+
+@inproceedings{ubsan,
+  title={CapSan-UB: Bug Capabilities Detector Based on Undefined Behavior},
+  author={Zhao, Wei and Li, Zhiwei and Li, Ruilin and Tang, Chaojing},
+  booktitle={Proceedings of the 2023 13th International Conference on Communication and Network Security},
+  pages={6--11},
+  year={2023}
+}
+
+@phdthesis{rust_repr,
+  title={Integrating the future into the past: Approach to seamlessly integrate newly-developed Rust-components into an existing C++-system},
+  author={von Perponcher-Sedlnitzki, Graf and Christian, Philipp},
+  year={2024},
+  school={Technische Hochschule Ingolstadt}
+}
+
+@inproceedings{unsafe_rust,
+  title={Is unsafe an Achilles' Heel? A Comprehensive Study of Safety Requirements in Unsafe Rust Programming},
+  author={Cui, Mohan and Sun, Shuran and Xu, Hui and Zhou, Yangfan},
+  booktitle={Proceedings of the IEEE/ACM 46th International Conference on Software Engineering},
+  pages={1--13},
+  year={2024}
+}
+
+@article{protobuf,
+  title={Beyond JSON: Evaluating Serialization Formats for Space-Efficient Communication},
+  author={Maltsev, Eduard and Muliarevych, Oleksandr},
+  journal={Advances in Cyber-Physical Systems},
+  volume={9},
+  number={1},
+  pages={9--15},
+  year={2024}
+}
+
+@online{carbon_cpp_safety,
+  title={Safety, Revisited},
+  author={Teodorescu, Lucian Radu},
+  url={https://www.accu.org/journals/overload/32/179/teodorescu/}
+
+}
+
+@inproceedings{compcert,
+  title={CompCert-a formally verified optimizing compiler},
+  author={Leroy, Xavier and Blazy, Sandrine and K{\"a}stner, Daniel and Schommer, Bernhard and Pister, Markus and Ferdinand, Christian},
+  booktitle={ERTS 2016: Embedded Real Time Software and Systems, 8th European Congress},
+  year={2016}
+}
+
+
+@article{incremental_development,
+  title={Incremental programming language development},
+  author={Mernik, Marjan and {\v{Z}}umer, Viljem},
+  journal={Computer Languages, Systems \& Structures},
+  volume={31},
+  number={1},
+  pages={1--16},
+  year={2005},
+  publisher={Elsevier}
+}
+
+@article{acm_programming_language_dev,
+  title={Position statements on strategic directions for research on programming languages},
+  author={Hankin, Chris and Nielson, Hanne Riis and Palsberg, Jens},
+  journal={ACM Sigplan Notices},
+  volume={32},
+  number={1},
+  pages={59--65},
+  year={1997},
+  publisher={ACM New York, NY, USA}
+}
+
+
+@article{cohen2009precise,
+  title={A precise yet efficient memory model for C},
+  author={Cohen, Ernie and Moskal, Micha{\l} and Tobies, Stephan and Schulte, Wolfram},
+  journal={Electronic Notes in Theoretical Computer Science},
+  volume={254},
+  pages={85--103},
+  year={2009},
+  publisher={Elsevier}
+}
+
+@inproceedings{chakrabarti2008structure,
+  title={Structure layout optimizations in the open64 compiler: Design, implementation and measurements},
+  author={Chakrabarti, Gautam and Chow, Fred and PathScale, L},
+  booktitle={Open64 Workshop at the International Symposium on Code Generation and Optimization},
+  year={2008}
+}
+
+
+@incollection{packetc_bitfields,
+  title={Portable Bit Fields in packetC},
+  author={Duncan, Ralph and Jungck, Peder and Mulcahy, Dwight},
+  booktitle={packetC Programming},
+  pages={363--369},
+  year={2011},
+  publisher={Springer}
+}
+
+
+
+@inproceedings{nita2008automatic,
+  title={Automatic transformation of bit-level C code to support multiple equivalent data layouts},
+  author={Nita, Marius and Grossman, Dan},
+  booktitle={International Conference on Compiler Construction},
+  pages={85--99},
+  year={2008},
+  organization={Springer}
+}
+
+@inproceedings{balatsouras2016structure,
+  title={Structure-sensitive points-to analysis for C and C++},
+  author={Balatsouras, George and Smaragdakis, Yannis},
+  booktitle={International Static Analysis Symposium},
+  pages={84--104},
+  year={2016},
+  organization={Springer}
+}
+
+@inproceedings{strict_aliasing,
+  title={Detecting strict aliasing violations in the wild},
+  author={Cuoq, Pascal and Runarvot, Lo{\"\i}c and Cherepanov, Alexander},
+  booktitle={International conference on verification, model checking, and abstract interpretation},
+  pages={14--33},
+  year={2017},
+  organization={Springer}
+}
+
+@inproceedings{whatyouc,
+  title={What you get is what you C: Controlling side effects in mainstream C compilers},
+  author={Simon, Laurent and Chisnall, David and Anderson, Ross},
+  booktitle={2018 IEEE European Symposium on Security and Privacy (EuroS\&P)},
+  pages={1--15},
+  year={2018},
+  organization={IEEE}
+}
+
+@phdthesis{tuch2008formal,
+  title={Formal memory models for verifying C systems code},
+  author={Tuch, Harvey},
+  year={2008},
+  school={UNSW Sydney}
+}
+
+@mastersthesis{hahn2016rust2viper,
+  title={Rust2Viper: Building a static verifier for Rust},
+  author={Hahn, Florian},
+  year={2016},
+  school={ETH Z{\"u}rich}
+}
+
+
+@inproceedings{monniaux2024memory,
+  title={Memory Simulations, Security and Optimization in a Verified Compiler},
+  author={Monniaux, David},
+  booktitle={Proceedings of the 13th ACM SIGPLAN International Conference on Certified Programs and Proofs},
+  pages={103--117},
+  year={2024}
+}
+
+
+@article{wang2022verified,
+  title={Verified compilation of C programs with a nominal memory model},
+  author={Wang, Yuting and Zhang, Ling and Shao, Zhong and Koenig, J{\'e}r{\'e}mie},
+  journal={Proceedings of the ACM on Programming Languages},
+  volume={6},
+  number={POPL},
+  pages={1--31},
+  year={2022},
+  publisher={ACM New York, NY, USA}
+}
+
+@inproceedings{tolmach2024defining,
+  title={Defining and preserving more C behaviors: Verified compilation using a concrete memory model},
+  author={Tolmach, Andrew and Chhak, Chris and Anderson, Sean},
+  booktitle={15th International Conference on Interactive Theorem Proving (ITP 2024)},
+  pages={36--1},
+  year={2024},
+  organization={Schloss Dagstuhl--Leibniz-Zentrum f{\"u}r Informatik}
+}
+
+@phdthesis{leroy2012compcert,
+  title={The CompCert memory model, version 2},
+  author={Leroy, Xavier and Appel, Andrew W and Blazy, Sandrine and Stewart, Gordon},
+  year={2012},
+  school={Inria}
+}
+
+@article{hamid2003syntactic,
+  title={A syntactic approach to foundational proof-carrying code},
+  author={Hamid, Nadeem A and Shao, Zhong and Trifonov, Valery and Monnier, Stefan and Ni, Zhaozhong},
+  journal={Journal of Automated Reasoning},
+  volume={31},
+  number={3},
+  pages={191--229},
+  year={2003},
+  publisher={Springer}
+}
+
+@article{fisher2005pads,
+  title={PADS: a domain-specific language for processing ad hoc data},
+  author={Fisher, Kathleen and Gruber, Robert},
+  journal={ACM Sigplan Notices},
+  volume={40},
+  number={6},
+  pages={295--304},
+  year={2005},
+  publisher={ACM New York, NY, USA}
+}
+
+@inproceedings{back2002datascript,
+  title={DataScript-A specification and scripting language for binary data},
+  author={Back, Godmar},
+  booktitle={International Conference on Generative Programming and Component Engineering},
+  pages={66--77},
+  year={2002},
+  organization={Springer}
+}
+
+@article{westhead2003representing,
+  title={Representing Scientific Data on the Grid with BinX--Binary XML Description Language},
+  author={Westhead, Martin and Bull, Mark},
+  journal={EPCC, University of Edinburgh},
+  year={2003}
+}
+
+@article{sellsecurity,
+  title={Security Evaluation and Vulnerability Assessment of FlatBuffers},
+  author={Sell, Lilly}
+}
+
+@article{basanioptimizing,
+  title={Optimizing Cloud Data Storage: Evaluating File Formats for Efficient Data Warehousing},
+  author={Basani, Maria Anurag Reddy and Kandi, Anudeep}
+}
+
+@article{viotti2022survey,
+  title={A survey of json-compatible binary serialization specifications},
+  author={Viotti, Juan Cruz and Kinderkhedia, Mital},
+  journal={arXiv preprint arXiv:2201.02089},
+  year={2022}
+}
+
+@article{sweeney2003quantifying,
+  title={Quantifying and evaluating the space overhead for alternative C++ memory layouts},
+  author={Sweeney, Peter F and Burke, Michael},
+  journal={Software: Practice and Experience},
+  volume={33},
+  number={7},
+  pages={595--636},
+  year={2003},
+  publisher={Wiley Online Library}
+}
+
+@inproceedings{wolnikowski2021zerializer,
+  title={Zerializer: Towards zero-copy serialization},
+  author={Wolnikowski, Adam and Ibanez, Stephen and Stone, Jonathan and Kim, Changhoon and Manohar, Rajit and Soul{\'e}, Robert},
+  booktitle={Proceedings of the Workshop on Hot Topics in Operating Systems},
+  pages={206--212},
+  year={2021}
+}
+
+@article{uzunoglu2024reducing,
+  title={Reducing the Security Risks of C and C++ Programming Languages with Code Sanitizers},
+  author={Uzunoglu, Fatih and Virtanen, Seppo and Mohammad, Tahir and J{\"a}rvi, Jaakko},
+  year={2024}
+}
+
+@inproceedings{seward2005using,
+  title={Using Valgrind to Detect Undefined Value Errors with Bit-Precision.},
+  author={Seward, Julian and Nethercote, Nicholas},
+  booktitle={USENIX Annual Technical Conference, General Track},
+  pages={17--30},
+  year={2005}
+}
+
+@article{lopes2009static,
+  title={Static analysis tools, a practical approach for safety-critical software verification},
+  author={Lopes, Rui and Vicente, Diogo and Silva, Nuno},
+  journal={ESA Special Publication},
+  volume={669},
+  year={2009}
+}
+
+@techreport{gutstein2022memory,
+  title={Memory safety with CHERI capabilities: security analysis, language interpreters, and heap temporal safety},
+  author={Gutstein, Brett},
+  year={2022},
+  institution={University of Cambridge, Computer Laboratory}
+}
+
+@article{zhou2023fat,
+  title={Fat pointers for temporal memory safety of c},
+  author={Zhou, Jie and Criswell, John and Hicks, Michael},
+  journal={Proceedings of the ACM on Programming Languages},
+  volume={7},
+  number={OOPSLA1},
+  pages={316--347},
+  year={2023},
+  publisher={ACM New York, NY, USA}
+}
+
+@article{park2025efficient,
+  title={Efficient Hardware-Assisted Heap Memory Safety for Embedded RISC-V Systems},
+  author={Park, Hyunjae and Kim, Yonghae and Kang, Dongwook and Ju, Hongil and An, Gaeil and Kim, Yongwoo},
+  journal={IEEE Access},
+  year={2025},
+  publisher={IEEE}
+}
+
+@article{nagarakatte2024full,
+  title={Full spatial and temporal memory safety for c},
+  author={Nagarakatte, Santosh},
+  journal={IEEE Security \& Privacy},
+  volume={22},
+  number={4},
+  pages={30--39},
+  year={2024},
+  publisher={IEEE}
+}
+
+@inproceedings{hardin2020verified,
+  title={Verified hardware/software co-assurance: Enhancing safety and security for critical systems},
+  author={Hardin, David S},
+  booktitle={2020 IEEE International Systems Conference (SysCon)},
+  pages={1--6},
+  year={2020},
+  organization={IEEE}
+}
+
+@inproceedings{kandemir1998enhancing,
+  title={Enhancing spatial locality via data layout optimizations},
+  author={Kandemir, Mahmut and Choudhary, Alok and Ramanujam, Jagannathan and Shenoy, Nagaraj and Banerjee, Prithviraj},
+  booktitle={European Conference on Parallel Processing},
+  pages={422--434},
+  year={1998},
+  organization={Springer}
+}
+
+@inproceedings{perry2010automatic,
+  title={Automatic realignment of data structures to improve mpi performance},
+  author={Perry, Benjamin and Swany, Martin},
+  booktitle={2010 Ninth International Conference on Networks},
+  pages={42--47},
+  year={2010},
+  organization={IEEE}
+}
+
+@inproceedings{majeti2013compiler,
+  title={Compiler-driven data layout transformation for heterogeneous platforms},
+  author={Majeti, Deepak and Barik, Rajkishore and Zhao, Jisheng and Grossman, Max and Sarkar, Vivek},
+  booktitle={European Conference on Parallel Processing},
+  pages={188--197},
+  year={2013},
+  organization={Springer}
+}
+
+@article{roy2012memory,
+  title={Memory hierarchy sensitive graph layout},
+  author={Roy, Amitabha},
+  journal={arXiv preprint arXiv:1203.5675},
+  year={2012}
+}
+
+@incollection{strzodka2012abstraction,
+  title={Abstraction for AoS and SoA layout in C++},
+  author={Strzodka, Robert},
+  booktitle={GPU computing gems Jade edition},
+  pages={429--441},
+  year={2012},
+  publisher={Elsevier}
+}
+
+@inproceedings{beard2015raftlib,
+  title={RaftLib: A C++ template library for high performance stream parallel processing},
+  author={Beard, Jonathan C and Li, Peng and Chamberlain, Roger D},
+  booktitle={Proceedings of the Sixth International Workshop on Programming Models and Applications for Multicores and Manycores},
+  pages={96--105},
+  year={2015}
+}
+
+@article{compiler_vulns,
+  title={An Investigation of Compiler-Induced Vulnerabilities and Insecure Optimizations},
+  author={Crotts, L Joshua}
+}
+
+@article{daga2006separation,
+  title={Separation of concerns: techniques, issues and implications},
+  author={Daga, Aseem and de Cesare, Sergio and Lycett, Mark},
+  journal={Journal of Intelligent Systems},
+  volume={15},
+  number={1-4},
+  pages={153--176},
+  year={2006},
+  publisher={De Gruyter}
+}
+
+@inproceedings{milne2005design,
+  title={Design for verifiability},
+  author={Milne, George J},
+  booktitle={Hardware Specification, Verification and Synthesis: Mathematical Aspects: Mathematical Sciences Institute Workshop Cornell University, Ithaca, New York, USA July 5--7, 1989 Proceedings},
+  pages={1--13},
+  year={2005},
+  organization={Springer}
+}
+
+@article{gunter1994semantics,
+  title={The semantics of types in programming languages},
+  author={Gunter, Carl A},
+  journal={Handbook of logic in computer science},
+  volume={3},
+  pages={395--475},
+  year={1994},
+  publisher={Clarendon Press}
+}
+
+@inproceedings{condit2007dependent,
+  title={Dependent types for low-level programming},
+  author={Condit, Jeremy and Harren, Matthew and Anderson, Zachary and Gay, David and Necula, George C},
+  booktitle={European Symposium on Programming},
+  pages={520--535},
+  year={2007},
+  organization={Springer}
+}
+
+@article{kim2018verifying,
+  title={Verifying Code toward Trustworthy Software.},
+  author={Kim, Hyong-Soon and Lee, Eunyoung},
+  journal={Journal of Information Processing Systems},
+  volume={14},
+  number={2},
+  year={2018}
+}
+
+@article{cogent1,
+  title={Cogent: Verifying high-assurance file system implementations},
+  author={Amani, Sidney and Hixon, Alex and Chen, Zilin and Rizkallah, Christine and Chubb, Peter and O'Connor, Liam and Beeren, Joel and Nagashima, Yutaka and Lim, Japheth and Sewell, Thomas and others},
+  journal={ACM SIGARCH Computer Architecture News},
+  volume={44},
+  number={2},
+  pages={175--188},
+  year={2016},
+  publisher={ACM New York, NY, USA}
+}
+
+@article{dargent1,
+  title={Extending a Purely Functional Language to Enable Low-Level Systems Programming},
+  author={Kerr, Luka},
+  journal={BE Thesis, The University of New South Wales, December},
+  volume={11},
+  year={2020}
+}
+
+@inproceedings{dargent_isola,
+  title={Bringing effortless refinement of data layouts to Cogent},
+  author={O’Connor, Liam and Chen, Zilin and Susarla, Partha and Rizkallah, Christine and Klein, Gerwin and Keller, Gabriele},
+  booktitle={International Symposium on Leveraging Applications of Formal Methods},
+  pages={134--149},
+  year={2018},
+  organization={Springer}
+}
+
+@article{ritchie1993development,
+  title={The development of the C language},
+  author={Ritchie, Dennis M},
+  journal={ACM Sigplan Notices},
+  volume={28},
+  number={3},
+  pages={201--208},
+  year={1993}
+}
+
+@inproceedings{filardo2020cornucopia,
+  title={Cornucopia: Temporal safety for CHERI heaps},
+  author={Filardo, Nathaniel Wesley and Gutstein, Brett F and Woodruff, Jonathan and Ainsworth, Sam and Paul-Trifu, Lucian and Davis, Brooks and Xia, Hongyan and Napierala, Edward Tomasz and Richardson, Alexander and Baldwin, John and others},
+  booktitle={2020 IEEE Symposium on Security and Privacy (SP)},
+  pages={608--625},
+  year={2020},
+  organization={IEEE}
+}
+
+@article{hevner2004design,
+  title={Design science in information systems research},
+  author={Hevner, Alan R and March, Salvatore T and Park, Jinsoo and Ram, Sudha},
+  journal={MIS quarterly},
+  pages={75--105},
+  year={2004},
+  publisher={JSTOR}
+}
+
+@online{elf_spec,
+  title        = {ELF Header — Executable and Linkable Format (ELF) Specification, Version 4.0},
+  author       = {{Linux Foundation}},
+  year         = {2020},
+  url          = {https://refspecs.linuxfoundation.org/elf/gabi4+/ch4.eheader.html},
+  note         = {System V Application Binary Interface, Edition~4.0},
+  urldate      = {2025-10-06}
+}

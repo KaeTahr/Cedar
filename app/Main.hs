@@ -1,24 +1,56 @@
 module Main where
 
-import Cedar.CodeGen.Boundary
-  ( Prim(..), CType(..), Endian(..)
-  , Range(..), CField(..), CBoundStruct(..)
-  , totalSizeBitsFromFields
-  )
-import Cedar.CodeGen.EmitC (emitHeader, emitImpl)
+import qualified Data.ByteString.Char8 as B
+import System.FilePath ((</>))
+import System.Directory (createDirectoryIfMissing)
 
-student :: CBoundStruct
-student =
-  let fields =
-        [ CField "id"   (CPrim I32) (Range 0   32) (Just LE)
-        , CField "age"  (CPrim I16) (Range 32  16) (Just BE)
-        , CField "gpa"  (CPrim F32) (Range 48  32) Nothing
-        ]
-      sizeBits = totalSizeBitsFromFields fields  -- safer than hardcoding
-  in CBoundStruct { sName = "Student", sSizeBits = sizeBits, sFields = fields }
+import Cedar.Pipeline (compileToStrings)
+
+import qualified Cedar.Semantic.C as C
+import qualified Cedar.Semantic.L as L
+
+
+studentC :: C.CType
+studentC = C.Struct [
+    ("Student Number", C.Int C.I32 C.Signed C.noattr), 
+    ("DOB", C.Int C.I32 C.Signed C.noattr), 
+    ("Grades", C.Struct [
+        ("Maths", C.Int C.I32 C.Signed C.noattr),
+        ("Physics", C.Int C.I32 C.Signed C.noattr)
+        ])
+    ]
+
+
+studentL :: L.Layout
+studentL = L.Struct (L.AbsOffset (L.Bit 0))
+    [
+    ("Student Number", L.Primitive (L.Byte 4) (L.AbsOffset (L.Byte 0)) L.LE),
+    ("DOB", L.Primitive (L.Byte 4) (L.RelOffset "Grades" (L.After (L.Byte 0))) L.LE),
+    ("Grades", L.Struct (L.RelOffset "Student Number" (L.After (L.Byte 2))) [
+        ("Maths", L.Primitive (L.Byte 4) (L.AbsOffset (L.Byte 0)) L.BE),
+        ("Physics", L.Primitive (L.Byte 4) (L.RelOffset "Maths" (L.After (L.Byte 0))) L.BE)
+        ] L.ME)
+    ] L.LE
+
 
 main :: IO ()
 main = do
-  writeFile "student_cedar.h" (emitHeader student)
-  writeFile "student_cedar.c" (emitImpl student)
-  putStrLn "Wrote student_cedar.h and student_cedar.c"
+  let outDir   = "out"
+      typeName = "Student"
+
+      (hdr, impl) = compileToStrings typeName studentC studentL
+
+  createDirectoryIfMissing True outDir
+  let base = fmap toLower' typeName
+      hPath = outDir </> base ++ ".h"
+      cPath = outDir </> base ++ ".c"
+
+  B.writeFile hPath (B.pack hdr)
+  B.writeFile cPath (B.pack impl)
+  putStrLn "Generated C in ./out/:"
+  putStrLn ("  " ++ hPath)
+  putStrLn ("  " ++ cPath)
+
+  where
+    toLower' c | 'A' <= c && c <= 'Z' = toEnum (fromEnum c + 32)
+               | otherwise            = c

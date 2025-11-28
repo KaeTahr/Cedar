@@ -1,0 +1,70 @@
+\section{Future Work}
+Although the examples shown show how valuable a tool like
+Cedar can be, it also highlights several avenues for future development.
+
+\subsection{Language and Compiler Features}
+There are a few features that were considered
+out of scope for this initial implementation, however
+they heavily limited the real world examples that could be tested
+with Cedar. Implementing these features would greatly increase
+the usefulness of the language and set it up as a tool useful
+for real world systems programming and research.
+
+\begin{enumerate}
+    \item Complete well-formedness checking: The current implementation
+    does not perform a full static analysis of the layout.
+    Implementing this should be a priority, and the current design
+    leaves space for this to be added in future work. The CR stage
+    calculates offsets and sizes required for this check to to take
+    place, but it is not yet implemented.
+    \item Missing Structures: Bit fields, unions and pointers
+    are commonly found structures in C programs, and their support
+    would immediately increase the amount of layouts that could be expressed
+    with the language.
+    \item Unified Array accessors: A trivial but useful addition
+    would be to ensure the codegen stage generates a unified
+    accessor for a whole array, as well as per-element accessors. 
+    This would reduce the amount of glue code required to
+    integrate Cedar intro existing C codebases.
+\end{enumerate}
+
+\subsection{Towards a Verified System}
+As with its predecessors, Cedar was conceived as an idea
+for a verified system for data-layouts.
+The design of the language reflects this, and undertaking
+the task of ensuring each of the internal translations
+stages are formally verified, would be the first step into
+turning Cedar into a verified tool that can integrate easily
+with verified compilers such as CompCert in order to provide
+end-to-end guarantees about code behavior.
+
+\textbf{Formalizing Internal Representations}:
+
+Each translation stage (L, LR and CR) encodes
+a refinement of information. From a 
+symbolic structure, to resolved offsets and finally concrete
+bit ranges.
+These transformations are functional and self-contained, enabling
+automated reasoning about their correctness with a proof assistant such
+as Roq/Coq.
+Formalizing their behavior would enable proofs that layout meaning
+is preserved across stages: that the semantics of a record array
+in L correspond exactly to its bit-range representation in CR.
+Such results would elevate Cedar into a verifiable component
+with a broader compilation framework.
+
+\textbf{Integrating with Verified Compilation}:
+
+An interesting direction would be to develop a custom C compiler,
+most likely adapting CompCert as it already provides a verified
+pipeline, and integrate the Cedar compiler into that pipeline.
+This would allow for Cedar code to be written in-line along with 
+C code, creating a seamless experience for programmers who
+need a fully verified toolchain for systems programming.
+
+\textbf{Tooling visualization}:
+
+As Cedar's analysis grows more sophisticated, corresponding improvements
+in usability will become essential. Interactive visualization of layouts,
+showing byte ranges, field names and endianness, could transform the compiler
+into a teaching and debugging aid. 

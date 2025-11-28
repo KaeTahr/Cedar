@@ -1,0 +1,17 @@
+\begin{figure}[h]
+\[
+\begin{array}{llclr}
+  \textrm{Layouts (surface syntax)} 
+     & \ell & ::=  & \texttt{record}\ \{\, f_i : \ell_i \,\}        & \textrm{record layout} \\
+     &      & \mid & @\ n\texttt{B}                                 & \textrm{absolute offset (bytes)} \\
+     &      & \mid & \texttt{after}\ f\ n\texttt{B} \mid \texttt{before}\ f\ n\texttt{B} 
+                                                          & \textrm{relative offset} \\
+     &      & \mid & \ell [n]                                       & \textrm{fixed-length array} \\
+     &      & \mid & \texttt{endian}\ \omega\ \ell                  & \textrm{endianness annotation} \\
+     &      & \mid & ()                                             & \textrm{empty / unit layout} \\
+  \textrm{Endianness} & \omega & ::= & \texttt{LE} \mid \texttt{BE} \mid \texttt{ME} & \textrm{little / big / machine} \\
+\end{array}
+\]
+\caption{Surface syntax of Cedar layouts. Users describe field order, byte offsets, and endianness declaratively.}
+\label{fig:cedar-surface}
+\end{figure}

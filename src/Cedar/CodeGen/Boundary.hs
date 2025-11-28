@@ -32,14 +32,14 @@ data Range = Range { offsetBits :: Int, sizeBits :: Int }
 data CField = CField
   { fName   :: String
   , fType   :: CType
-  , fRange  :: Range           -- absolute bit range in the backing blob
-  , fEndian :: Maybe Endian    -- for word/float fields; Nothing for raw bit blobs
+  , fRange  :: Range -- absolute bit range in the backing blob
+  , fEndian :: Maybe Endian -- for word/float fields; Nothing for raw bit blobs
   }
   deriving (Eq, Show, Generic)
 
 data CBoundStruct = CBoundStruct
   { sName     :: String
-  , sSizeBits :: Int           -- total bits needed (we’ll round to bytes for the array)
+  , sSizeBits :: Int -- total bits needed (we’ll round to bytes for the array)
   , sFields   :: [CField]
   }
   deriving (Eq, Show, Generic)

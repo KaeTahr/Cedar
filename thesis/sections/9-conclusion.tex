@@ -1,0 +1,38 @@
+\section{Conclusion}
+This project set out to investigate whether a layout specification
+language could be developed for C. Its purpose was to
+enable data-layout correctness directly in language design, without
+relying on external tooling. In this paper we presented extensions
+to \textit{Cedar}, a declarative language. We built a
+compiler with a fully implemented pipeline that allows
+programmers to describe data layouts down to the byte level.
+
+The research demonstrated that it is possible to achieve these goals.
+It shows that a compact syntax can avoid issues of alignment,
+or the need to use compiler-specific instructions and non-portable code.
+Through a minimal syntax and moving layout reasoning to be a first-class concern
+we demonstrated that it is possible to reproduce real-world layouts, including
+complex structures such as the ELF header, with high fidelity, and 
+portable code that works across different compilers
+
+Cedar contributes both the conceptual framework for designing
+data layouts declaratively, and a functioning compiler
+that realizes this vision. This offers an alternative perspective
+on programming: correctness can emerge from declaration and
+specification, without relying on defensive testing and debugging. 
+
+At the same time, the work highlights clear opportunities for a continuation.
+Completing semantic checking, extending type coverage, and integrating
+with verified backends such as CompCert would advance Cedar as a tool
+in an ecosystem of full assurance. These directions promise not only a
+more powerful tool but also a research vehicle for studying how
+declarative specifications interact with formal proofs and real-world
+compilers.
+
+In summary, Cedar represents a step towards more reliable and trustworthy
+systems programming. It bridges the clarity of declarative design, with the
+pragmatism and industry relevance of C, showing that many of the
+benefits can be achieved through language structure alone. The
+project stands as both a functioning compiler and a methodological argument:
+that improving how we \textit{describe} data is the first step
+towards improving how we \textit{trust} it.

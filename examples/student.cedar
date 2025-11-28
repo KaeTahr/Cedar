@@ -1,0 +1,8 @@
+layout Student = record {
+  name  : U8[16] @ 0B,
+  id    : U32    @ 16B endian LE,
+  grades : record {
+    maths   : U16 @ 0B  endian BE,
+    physics : U16 @ 2B  endian BE
+  } @ 20B
+} @ 0B;

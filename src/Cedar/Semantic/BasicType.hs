@@ -1,3 +1,5 @@
+-- Original author: George Anderson
+
 module Cedar.Semantic.BasicType where
 
 -- bit sizes completely removes ambiguity

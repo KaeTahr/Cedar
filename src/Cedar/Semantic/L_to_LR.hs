@@ -1,3 +1,5 @@
+-- Original Author: Goerge Anderson
+
 module Cedar.Semantic.L_to_LR where
 
 import qualified Cedar.Semantic.L as L

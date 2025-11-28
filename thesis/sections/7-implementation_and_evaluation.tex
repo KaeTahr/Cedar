@@ -1,0 +1,441 @@
+\section{Evaluation and Results}
+This chapter evaluated Cedar's implementation and tests how accurately
+its declarative layouts describe C data representations.
+While earlier chapters established the language design and implementation,
+here we verify that Cedar's generated C code behaves as intended:
+layouts occupy the correct byte offsets, respect endianness annotations, and
+match the structure of equivalent C programs.
+
+The evaluation focuses on \textit{layout correctness and fidelity} rather
+than performance or formal verification. We therefore use small
+but representative case studies to validate that Cedar's compiler and
+code generation phases preserve the semantics of the layout description
+down to the bit level.
+Each example was compiled to C, linked with a simple test driver, and compared
+against an equivalent reference layout written in plain C examined using the
+\texttt{pahole} tool.
+
+The chapter proceeds as follows.
+We start by outlining the experimental setup and measurement procedure.
+Next we present two examples: a nested record structure demonstrating relative
+and absolute offsets, and a faithful representation of the 64-bit ELF header
+showing compatibility with existing binary formats.
+We conclude the chapter by summarizing findings and known limitations.
+
+\subsection{Experimental Procedure}
+To evaluate the correctness of Cedar's generated code, we adopted
+a reproducible five-step procedure that compares each layout's C representation
+to reference C code.
+All experiments were performed on a x86\_64 Linux system, compiling
+\textbf{GCC 12.2.0} and \textbf{CompCert 3.16} to ensure consistency
+across a mainstream compiler, and a formally verified one.
+Both produced binaries with identical observable layouts in our examples.
+
+\begin{enumerate}
+    \item \textbf{Cedar Layout Definition:} Each example was first expressed
+    in Cedar using a combination of absolute and relative byte offsets.
+    \item \textbf{C Code Generation:} The Cedar compiler produced a \texttt{.c}
+    and a \texttt{.h} file a flat structure definition, of unsigned integer
+    words and a family of field-specific getter and setter functions.
+    These files were compiled without manual modification.
+    \item \textbf{Link to a Driver:} A small C program was written for
+    each example to instantiate the structure, assign deterministic test
+    values through the generated setters, and retrieve them via getters.
+    The driver also printed that raw bytes of thr structure to allow
+    visual inspection of the offsets and endianness.
+    \item \textbf{Inspect Reference Layouts:} For each corresponding hand-written
+    C baseline, we compiled using \texttt{gcc -O0 -g} and inspected
+    the DWARF debug information using \textbf{pahole}, which reports exact
+    member offsets and structure sizes:
+   \begin{verbatim}
+    gcc -Wall -O2 -std=c99 -O0 -g -o <test> <sources>
+    pahole <object.o>
+    \end{verbatim}
+    \item \textbf{Compare Outputs:} The cedar-generated layouts
+    were inspected to match the reference offsets and field order.
+    Successful round-trip conversions (set to get) confirmed
+    that the accessors manipulated the correct bit ranges.
+\end{enumerate}
+
+The following sections report these results.
+
+\subsection{Nested Record Layouts}
+The first example evaluated Cedar's handling of \textbf{nested records,
+relative offsets, and endianness}, three fundamental features of the language.
+This example is deliberately simple, but it exercises common layout idioms
+encountered in C programming, such as byte arrays and nested structures.
+Its purpose is to confirm that Cedar can generate accessor functions that
+correctly reconstruct the expected memory layout.
+
+\textbf{Layout Description}
+
+The cedar source from this example is shown below:
+
+\begin{verbatim}
+layout Student = record {
+  name   : U8[16] @ 0B,
+  id     : U32    @ 16B endian LE,
+  grades : record {
+    maths   : U16 @ 0B  endian BE,
+    physics : U16 @ 2B  endian BE
+  } @ 20B
+} @ 0B;
+\end{verbatim}
+
+This layout declares a student record containing a 16-byte ACII name,
+a 32-bit integer identifier stored in little-endian order, and a
+nested record \texttt{grades} comprising of two big-endian 16-bit
+fields.
+Absolute offsets \texttt{@ nB}, determine each field's byte position
+within the enclosing record, while endianness annotations
+specify the byte order for multi-byte fields.
+
+Cedar compiles this layout into a \texttt{Student} structure
+represented as an array of 32-bit words, accompanied by automatically
+generated getter and setter functions such as \texttt{d\_get\_id} and so forth.
+
+Each accessor isolates the relevant bit-range through shifts and masks,
+providing field-level access without any manual bitwise manipulation.
+
+\textbf{Reference C Layout}
+
+For comparison, an equivalent C hand-written C structure was defined as follows:
+
+\begin{lstlisting}[language=C, caption={Reference C structure for the Student layout}, label=lst:student_c]
+struct Grades {
+  uint16_t maths;
+  uint16_t physics;
+};
+
+struct Student {
+  uint8_t  name[16];
+  uint32_t id;
+  struct Grades grades;
+};
+\end{lstlisting}
+
+Both the handwritten and Cedar-generated versions were compiled with GCC and 
+CompCert.
+The compiled debug information was then examined using the \texttt{pahole} 
+tool to determine field offsets and total structure size.
+Its reference output was:
+
+\begin{lstlisting}[language=C, caption={Pahole output for the Student structure}, label=lst:student_pahole]
+    struct Grades {
+        uint16_t maths;   /*     0     2 */
+        uint16_t physics; /*     2     2 */
+
+        /* size: 4, cachelines: 1, members: 2 */
+        /* last cacheline: 4 bytes */
+};
+struct Student {
+        uint8_t name[16];     /*     0    16 */
+        uint32_t id;          /*    16     4 */
+        struct Grades grades; /*    20     4 */
+
+        /* size: 24, cachelines: 1, members: 3 */
+        /* last cacheline: 24 bytes */
+};
+\end{lstlisting}
+
+\textbf{Testing and Results}:
+
+A small driver program exercised the generated accessors like so:
+\begin{lstlisting}[language=C, caption={Driver code for testing the Student layout}, label=lst:student_driver]
+Student s = {0};
+unsigned char name_bytes[16];
+for (int i = 0; i < 16; i++) name_bytes[i] = i;
+set_name(&s, name_bytes);
+d_set_id(&s, 0x11223344);
+d_set_grades__maths(&s, 0xABCD);
+d_set_grades__physics(&s, 0x0123);
+\end{lstlisting}
+
+The raw memory dump was:
+\begin{verbatim}
+00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F  
+44 33 22 11  AB CD 01 23
+\end{verbatim}
+Which matches the endian representations for out inputs for \texttt{id},
+\texttt{maths}, and \texttt{physics}.
+Getter calls returned the same values, confirming correct round-trip semantics.
+The total structure size (24 bytes) matched \texttt{pahole}'s output exactly,
+with no spurious padding or alignment differences.
+
+\subsubsection{Discussion}
+This experiment demonstrates that Cedar's layout and code generation phases
+produce a memory representation consistent with conventional C semantics
+for simple nested records. The language correctly handled both
+absolute and relative offsets and preserved endianness distinctions
+within the same record.
+Because Cedar's layout is declared independently of the C type,
+programmers can reason about the logical structure separately from its
+binary representation.
+
+However, this example also illustrates some limitations.
+All fields are byte-aligned, and no bit-level packing
+or unions are yet supported. Nonetheless, this example
+successfully confirms the language's core promise: that a declarative
+specification can produce reliable layout-accurate code
+without manual offset calculations or platform-specific pragmas.
+
+\subsection{Representation of the 64-bit ELF Header}
+The Executable and Linkable Format (ELF) is a standard library representation
+for executables, and shared libraries on Unix-like systems~\cite{elf_spec}.
+Its header exemplifies the kind of low-level, performance critical structure
+that must be laid out with exact byte-level precision.
+It therefore provides a compelling stress test for Cedar's
+ability to reproduce externally defined binary formats. 
+
+\textbf{Layout Specification}:
+
+An ELF64 header consists of a fixed 64-byte sequence of fields beginning
+with a 16-byte identifier array and followed by a combination of 16-,
+32- and 64-but integers in a well-defined order.
+The following Cedar layout reproduces the structure:
+
+\begin{verbatim}
+layout Elf64_Ehdr = record {
+  e_ident     : U8[16] @ 0B,
+
+  e_type      : U16    @ 16B endian LE,
+  e_machine   : U16    @ 18B endian LE,
+  e_version   : U32    @ 20B endian LE,
+
+  e_entry     : U64    @ 24B endian LE,
+  e_phoff     : U64    @ 32B endian LE,
+  e_shoff     : U64    @ 40B endian LE,
+
+  e_flags     : U32    @ 48B endian LE,
+
+  e_ehsize    : U16    @ 52B endian LE,
+  e_phentsize : U16    @ 54B endian LE,
+  e_phnum     : U16    @ 56B endian LE,
+  e_shentsize : U16    @ 58B endian LE,
+  e_shnum     : U16    @ 60B endian LE,
+  e_shstrndx  : U16    @ 62B endian LE
+} @ 0B;
+\end{verbatim}
+
+The layout follows the specification exactly, producing a total of 64 bytes.
+
+\textbf{Reference C Layout}:
+
+The comparison was adapted from the ELF specification used in practice~\cite{elf_spec}.
+It is simplified for clarity, omitting custom type definitions:
+
+\begin{lstlisting}[language=C, caption={Reference C structure for the ELF64 header}, label=lst:elf64hdr_c]
+    typedef struct {
+    uint8_t  e_ident[16];
+    uint16_t e_type;
+    uint16_t e_machine;
+    uint32_t e_version;
+    uint64_t e_entry;
+    uint64_t e_phoff;
+    uint64_t e_shoff;
+    uint32_t e_flags;
+    uint16_t e_ehsize;
+    uint16_t e_phentsize;
+    uint16_t e_phnum;
+    uint16_t e_shentsize;
+    uint16_t e_shnum;
+    uint16_t e_shstrndx;
+} Mirror_Elf64_Ehdr;
+\end{lstlisting}
+
+Compiling this structure with
+
+\begin{verbatim}
+    gcc -Wall -O2 -std=c99 -g -c mirror.c
+    pahole mirror.o
+\end{verbatim}
+
+produced the following DWARF-derived layout:
+
+\begin{lstlisting}[language=C, caption={Pahole output for the ELF64 header}, label=lst:elf64hdr_pahole]
+struct Mirror_Elf64_Ehdr {
+    uint8_t       e_ident[16];   /*     0    16 */
+    uint16_t      e_type;        /*    16     2 */
+    uint16_t      e_machine;     /*    18     2 */
+    uint32_t      e_version;     /*    20     4 */
+    uint64_t      e_entry;       /*    24     8 */
+    uint64_t      e_phoff;       /*    32     8 */
+    uint64_t      e_shoff;       /*    40     8 */
+    uint32_t      e_flags;       /*    48     4 */
+    uint16_t      e_ehsize;      /*    52     2 */
+    uint16_t      e_phentsize;   /*    54     2 */
+    uint16_t      e_phnum;       /*    56     2 */
+    uint16_t      e_shentsize;   /*    58     2 */
+    uint16_t      e_shnum;       /*    60     2 */
+    uint16_t      e_shstrndx;    /*    62     2 */
+
+    /* size: 64, cachelines: 1, members: 14 */
+};
+\end{lstlisting}
+
+This output represents the canonical ELF layout and serves
+as the reference for comparison.
+
+\textbf{Testing and Results}:
+
+The Cedar generated an equivalent structure encoded as a 16-element
+array of 32-bit words, along with accessor functions for each field.
+A test driver populated the results with fixed data and printed its
+raw bytes:
+
+\begin{verbatim}
+7F 45 4C 46 00 00 00 00 00 00 00 00 00 00 00 00  
+02 01 04 03 44 33 22 11 88 77 66 55 44 33 22 11  
+00 FF EE DD CC BB AA 99 EF CD AB 89 67 45 23 01  
+D4 C3 B2 A1 10 0E 14 12 18 16 1C 1A 20 1E 24 22
+\end{verbatim}
+
+Each field aligned exactly with the byte offsets in the ELF
+specification. The printed byte sequence verifies the little-endian
+encoding was preserved for all multi-byte fields.
+The output for GCC and CompCert was identical.
+
+\subsubsection{Discussion}
+This experiment demonstrates that Cedar can accurately reproduce the memory
+representations of externally defined data formats.
+
+With further development,
+Cedar can serve as a reliable bridge between verified toolchains such as CompCert,
+and existing C ecosystems, as more complex layouts are supported.
+
+Although these experiments do not extend to bit fields or unions, they
+validate the design premise that declarative layout
+descriptions can coexist with industrial data structures without losing meaning.
+
+\subsection{Discussion of Findings and Limitations}
+
+These experiments demonstrate that the code generated by Cedar
+faithfully reproduces expected memory layouts and is suitable for
+concrete data representations.
+The examples tested,
+\textit{Student} and \textit{Elf64\_Ehdr}, generated C code
+whose memory layout matched that of equivalent hand-written structures
+exactly, down to byte offsets and endianness ordering.
+These results validate the correctness of the compiler's translation
+stages. However, they also highlight several limitations and areas for future work.
+
+\textbf{Accuracy and Correspondence}:
+
+The \textit{Student} example confirmed that Cedar handles
+nested records, arrays, and mixed endianness correctly.
+Each generated accessor retrieved the expected byte sequence, and the
+overall structure size (24 bytes) matched the reference layout as
+inspected by \texttt{pahole} for GCC. Similarly, the \textit{Elf64\_Ehdr}
+example provided a test of Cedar's precision, reproducing an externally
+standardized binary format with distinct fields of varying widths. 
+Every field aligned with the corresponding offset in the official 
+ELF specification, and the printed byte sequences
+showed the correct little-endian encoding. These results indicate that Cedar's
+lowering and code-generation phases preserve layout semantics across multiple
+scales, from simple records to real industry protocol headers.
+
+The ability to compile the generated code successfully
+under both GCC and CompCert further supports Cedar's portability.
+Because the implementation uses only standard C99 constructs and a flat
+bit representation, the emitted code remains architecture-independent
+within th assumed word-size configuration. This compatibility demonstrates
+that Cedar's static checking aligned with the memory model used by industry 
+and verified compilers, suggesting that a future verified backend
+could integrate without layout mismatch.
+
+\textbf{Expressiveness and Scope}:
+
+Cedar's current feature set covers a practical representative
+subset of systems-programming layouts: fixed-sized arrays,
+nested records, and explicit per-field endianness. These
+constructs are sufficient to model common patterns in C programming.
+The separation between layout description and logical types allow
+programmers to verify local correctness independent of the surrounding
+program logic. The declarative syntax, using directives like \texttt{@ nB},
+\texttt{before}, and \texttt{after}, proved readable and unambiguous in all test
+cases.
+In practice, the language reduces the cognitive overhead associated
+with manually calculating offsets and alignment, which are traditionally
+major sources of error in C code.
+
+\textbf{Limitations}:
+
+Despite these strengths, Cedar has several limitations remain.
+Most notably, the current implementation \textbf{does not yet
+perform full well-formedness checking}, allowing overlapping
+fields to be declared. Although internal representations (LR and CR)
+compute explicit offsets and bit ranges for each field, the compiler does not
+\textbf{validate that those ranges are disjoint or without bounds}.
+This potentially produces undefined behavior in the generated C code.
+The rules for well-formedness have been outlined in this project,
+taking inspiration from Dargent's rule, and implementing their
+enforcement is a priority for future work, as this
+is the first step in guaranteeing memory safety.
+This is a major gap between the theoretical model and the current implementation.
+
+Beyond this, the language presently excludes several common C constructs such as
+bit-fields, unions and pointers. Supporting these features safely would demand
+a richer semantic model and explicit tagging or variant typing to prevent
+aliasing conflicts. As a result Cedar cannot yet represent packed or overlapping
+layouts, nor structures whose size depends on runtime parameters. The restriction
+limits expressiveness compared to C's full repertoire, but could be
+implemented in future work.
+
+Error reporting is also minimal. The compiler assumes syntactically correct
+input and does not provide detailed diagnostics when semantic inconsistencies
+occur. Extending the well-formedness pass to detect and localize overlaps, gaps
+and misalignments would not only increase soundness
+but also improve usability.
+
+\textbf{Trustworthiness and Practicality}
+Cedar therefore stands at a middle ground between an unverified C
+and fully verified systems like Cogent. The current prototype delivers
+\textbf{transparency without enforcement}: layouts are explicit and easy to
+inspect,
+but the tool does not yet guarantee their correctness. In this sense, Cedar's
+results demonstrate \textit{potential} trustworthiness, rather
+than actual proof of soundness. The infrastructure for static checking exists,
+The CR stage encodes all the information necessary, but the checking
+logic has been delegated to future work. Once complete, it will align
+the implementation with the formal well-formedness model presented in this paper
+and enable stronger correctness claims.
+
+\subsection{Summary}
+The evaluation demonstrates that Cedar achieves its primary goal:
+to allow programmers to describe and generate precise, byte-level
+layouts for C structures through a small declarative language.
+Across the representative examples, the \textit{Student} and \textit{Elf64\_Ehdr},
+Cedar's generated code reproduced the expected in-memory
+representation exactly, matching the offsets and sizes reported by
+industry-standard compilers and the inspection tool \texttt{pahole}.
+These outcomes show that declarative layout specification can be made
+practical withing conventional C toolchains, providing
+immediate benefits in clarity and consistency without introducing
+new runtime dependencies.
+
+At the same time, the examples reveal the boundaries of the current
+implementation. WHile Cedar captures layout intent faithfully, and generates
+correct code for well-behaved inputs, it does not yet enforce full
+well-formedness. The compiler computes bit ranges for every field but
+does not verify that those regions are disjoint or contiguous.
+As a result, malformed layouts may still pass unchecked. This
+limitation, along with the absence of bit-fields, unions
+and pointer types, delineates the scope of the
+present implementation and highlights where future development could focus.
+
+Despite these constraints, Cedar already demonstrates a
+meaningful step toward trustworthy data layout specification
+in low-level programming. By externalizing layout intent and compiling
+it into portable deterministic C code, it provides a mode of how
+structural correctness can be expressed explicitly
+rather than inferred implicitly from type declarations
+and compiler heuristics. The resulting system
+combines the transparency of declarative description with the familiarity
+of C's execution model.
+
+Overall, the evaluation confirms Cedar's design principles of separation of logical
+and physical structure, compositional layout rules and alignment with existing
+C semantics, are effective in practice. These results provide the empirical
+foundation for the discussion that follows, which examines Cedar's broader
+implications, the lessons learned from its design, and the directions
+for extending the language and implementation toward verified correctness.

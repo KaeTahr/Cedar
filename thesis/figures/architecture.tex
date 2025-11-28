@@ -1,0 +1,16 @@
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{./figures/transpil.png}
+    \caption{The Cedar compiler processing pipeline, adapted from Anderson's
+    original proposal~\autocite{cedar_george}. Phase 1 performs lexing,
+    parsing, and semantic analysis of the input source code, while Phase 2
+    performs code generation to produce C output.}
+    \label{fig:cedar-architecture}
+\end{figure}
+
+FIgure \ref{fig:cedar-architecture} illustrates Cedar's compiler, as designed
+by Anderson~\autocite{cedar_george}. This project leaves the design unchanged,
+and builds upon the two-phase structure, extending the second phase with 
+code generation capabilities as well as completing the first phase's
+parsing, and lexing components.
+    

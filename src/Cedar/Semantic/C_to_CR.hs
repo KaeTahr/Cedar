@@ -1,3 +1,5 @@
+-- Original Author: George Anderson
+
 module Cedar.Semantic.C_to_CR where
 
 import qualified Cedar.Semantic.C as C

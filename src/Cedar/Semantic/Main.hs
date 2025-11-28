@@ -1,3 +1,7 @@
+-- Original Author: George Anderson
+
+-- Old driver for first prototype before parsing, lexing and codegen was implemented
+
 module Cedar.Semantic.Main where
 
 import qualified Cedar.Semantic.BasicType as BMT
@@ -15,7 +19,7 @@ studentC = C.Struct [
     ("Student Number", C.Int C.I32 C.Signed C.noattr), 
     ("DOB", C.Int C.I32 C.Signed C.noattr), 
     ("Grades", C.Struct [
-        ("Maths", C.Int C.I32 C.Signed C.noattr),
+        ("Maths", C.Int C.I32 C.Signed C.noattr)
         ("Physics", C.Int C.I32 C.Signed C.noattr)
         ])
     ]

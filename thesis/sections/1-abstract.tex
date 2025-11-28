@@ -1,0 +1,32 @@
+\abstract{
+    When programmers write low-level systems code, such as device drivers
+    or network protocol implementations, they need to be able to
+    control exactly how data structures are stored in memory.
+    In the C programming language, these details are usually implied by
+    the order of fields, alignment directives, or pragmas that are specific
+    to the compiler.
+    These kind of tools are powerful, but can also be error-prone and
+    layout problems are still a big cause of systems crashes and
+    security issues.
+
+    Cedar is a declarative programming language that addresses this problem
+    by making memory layouts clear and easy to reason about in the C programming
+    environment. Cedar builds on previous work, most notably Dargent, a verified
+    data description language built into Cogent. It aims to follow the
+    same declarative principles while being usable directly in C development.
+    It treats data layouts as first-class constructs, meaning programmers
+    can describe structure and placement at the byte level while still
+    being able to use existing compilers. 
+
+    Cedar provides a practical basis for reliable data-layout
+    specification by making intent clear and easy to be checked
+    statistically. This does not require a whole new programming
+    environment, and shows that language design alone may
+    provide many benefits learned from formal methods, such as
+    clarity and predictability. Cedar is a lightweight expressive
+    framework that increases the transparency and reliability of
+    C data representations. It fills the gap to increase
+    trustworthiness in low-level systems programming without
+    leaving a familiar ecosystem.
+
+}

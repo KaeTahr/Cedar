@@ -1,3 +1,5 @@
+-- Original author: George Anderson
+
 module Cedar.Semantic.C where
 
 import Numeric.Natural

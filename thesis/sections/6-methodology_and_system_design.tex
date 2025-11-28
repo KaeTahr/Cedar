@@ -1,0 +1,631 @@
+\section{Methodology and Implementation}
+This chapter presents the design principles and implementation of
+\textbf{Cedar}, a language and compiler for describing
+C layouts declaratively.
+The goal of the project is to give programmers
+\textbf{greater trust} that in-memory representations of data structures
+corresponds to their intent.
+Cedar achieves this by introducing a small external language
+for layout declarations, paired with a static checker that validates 
+those declarations against C type definitions and generates
+layout consistent C code.
+
+While we previously reviewed related work, this chapter focuses on what
+was built: the theoretical foundations on which Cedar stands, the kind
+of layouts it supports, and the design of its grammar and compilation
+pipeline.
+The work draws on two main sources of inspiration—\textbf{CompCert} and
+\textbf{Dargent}—whose ideas on form the conceptual basis for
+Cedar's semantics and tooling.
+
+\subsection{Foundations: CompCert and Dargent}
+Cedar's design is built upon the semantic foundations provided by
+\textbf{CompCert}~\cite{leroy2009formal}, and the declarative layout
+principles introduced by \textbf{Dargent}~\cite{dargent}.
+Understanding these two systems explains both the motivation
+and structure of Cedar.
+
+\subsubsection{CompCert verified C semantics as a foundation}
+CompCert~\autocite{compcert} is a formally verified compiler of the C language
+Its significance lies 
+in \textbf{formal definition of the C memory model}~\autocite{leroy2012compcert},
+which specified how C objects are represented as contiguous blocks of bytes,
+how pointer arithmetic and aliasing work, and under what condition two
+memory states can be considered equivalent.
+Although Cedar is not yet built \textit{within} CompCert, it adopts
+the same conceptual views on C memory: objects are typed, laid out in
+addressable bytes, and subjected to well-defined alignment and
+padding rules.
+
+By grounding Cedar's reasoning in this model, layout checking can be 
+interpreted consistently within verified C semantics.
+For example, when Cedar computes bit-ranges, and checks for non-overlapping
+fields, it effectively enforces that the resulting layout 
+would be \textbf{well-formed under CompCerts memory abstraction}. The
+connection ensures that, if Cedar layouts were eventually compiled through
+CompCert, their structural assumptions would remain sound.
+
+\subsubsection{Dargent: declarative layouts and type-layout separation}
+While CompCert provides the semantic bedrock, Cedar's language design
+follows the philosophy of \textbf{Dargent}~\autocite{dargent}.
+Dargent introduced a declarative approach to specifying how algebraic data types
+are represented in memory, separating the physical layout from the logical
+structure.
+
+Cedar adopts key ideas—\textbf{type-layout separation} and \textbf{explicit
+field placement}—but targets them for plain C rather than Cogent. Unlike Dargent,
+Cedar does not require a restricted functional language, or a theorem prover;
+it provides lightweight static checking that enforces the same
+well-formedness properties. These adaptations transform Dargent's research
+concept into a more practical, C-oriented tool.
+
+\subsubsection{Bridging the Two influences}
+Cedar can thus be viewed as a \textbf{bridge between CompCert and Dargent}:
+From CompCert, it inherits a precise understanding of how C objects
+occupy memory; from Dargent, it inherits a declarative notation for describing
+that occupation explicitly.
+Cedar's goal is to close the gap between declarative layout specifications
+in self-contained languages, and the C ecosystem, producing verifiable code
+that remain compatible with existing C compilers.
+
+The remainder of this chapter builds on these foundations.
+We continue by describing the subset of C types supported by Cedar and how
+layouts are represented. Later we detail the language patterns and features.
+Finally, we summarize the compiler architecture that realizes it.
+
+%Figure of Cedar's lineage
+\subsection{Language Overview}
+Cedar operates over a well-defined subset of the C type system that
+reflect the representations defined by CompCert. The
+current compiler focuses on data structures whose layout is
+statically determinable: \textbf{structures, arrays, and
+tagged unions}. These cases cover the majority of layout-sensitive
+code in low-level programming while remaining tractable for static
+checking.
+
+\subsubsection{C types}
+\input{figures/types.tex}
+Cedar's typing system aligns closely with CompCert's
+    representation of C types~\autocite{leroy2012compcert}.
+Figure~\ref{fig:cedar-types} summarizes the supported
+C types ($\tau$) and their syntax.
+
+
+\subsubsection{Supported Constructs}
+
+
+\textbf{Structures}
+
+Cedar treats C \texttt{struct} as ordered collections of named
+fields occupying contiguous regions of memory.
+Each field has a known size and alignment derived from its
+base type.
+A layout declaration for a structure describes the physical
+order and spacing of its fields using placement
+directives
+such as \texttt{at}, \texttt{before}, and \texttt{after}.
+During checking, Cedar ensures that:
+\begin{itemize}
+    \item All fields of the corresponding C \texttt{struct}  are
+    represented exactly once,
+    \item No two fields overlap in their bit ranges, and
+    \item The overall size and alignment conform to the
+    base types requirements.
+\end{itemize}
+
+This model allows Cedar to detect and properly handle changes that could
+otherwise be silently mishandled by compiler-specific padding or unordered
+field declarations—one of the most common causes of data-layout bugs in C.
+
+
+
+\textbf{Arrays}
+
+Arrays are represented as repeated layouts of a uniform element type.
+Cedar supports both fixed-length and statically known arrays.
+The layout checked verifies that the element layout
+is well-formed and then replicates its size and alignment
+across the declared array length.
+Array support enables Cedar to express memory regions such as
+device register tables, or network buffers that consist of repeated
+records.
+
+\textbf{Primitive and Derived Types}
+
+\subsubsection{Primitive and Derived Types}
+Base types such as \texttt{char}, \texttt{short}, \texttt{int}, \texttt{long},
+and their fixed-width equivalents (\texttt{int8\_t}, \texttt{uint32\_t}, etc.)
+are treated as atomic elements with known bit sizes and alignment constraints.
+Cedar assumes the same type sizes as the host compiler, which can be
+configured when the tool is built.
+
+\noindent
+Pointers are not yet handled.
+
+Each primitive type has its endianness specified in the layout declaration.
+
+\input{figures/constructs.tex}
+
+\subsubsection{Layout Representation}
+\input{figures/student_example.tex}
+
+Internally, every Cedar layout is reduced to a \textbf{set of
+non-overlapping bit-ranges} withing a contiguous address space.
+Each range corresponds to a field array element and is annotated with its
+logical name, type, and alignment.
+The student example at Figure~\ref{fig:student-layout} illustrates this mapping for a simple \texttt{struct} example.
+
+The compiler computer explicit offsets—\texttt{name} [0-255],
+\texttt{id} [256-287], \texttt{grade}[288-295]—and verifies
+that these regions are contiguous and non-overlapping.
+
+This representation follows the same notion of "memory chunk" used in CompCert,
+where each object occupies a sequence of bytes and field addresses are
+computed as offsets within that chunk.
+By maintaining this correspondence, Cedar's checked
+layouts can be compiled through any C toolchain, including CompCert,
+without violating its memory-safe assumptions.
+
+\subsubsection{Scope and Limitations}
+The current compiler omits constructs whose semantics 
+complicate static layout reasoning, such as: bitfields,
+flexible array members, recursive layouts, and untagged unions.
+These features will be considered in future work
+once the core checking mechanisms are stable.
+Despite these restrictions, the implemented subset is expressive
+enough to capture common data representations used in
+device drivers, network protocols, and binary file formats.
+
+\subsection{Cedar Language Design and Core Features}
+Cedar extends C with a minimal set of declarative constructs for specifying
+how data structures are laid out in memory.
+Its syntax follows C's lexical conventions but introduces
+new top-level \texttt{layout} blocks
+that describe the physical
+placement of fields.
+These layouts declarations are currently written in separate
+\texttt{.cedar} source file and linked to existing C type
+definition.
+The language is intentionally small: its expressiveness
+comes from composable placement directives rather than
+complex new forms.
+
+\subsubsection{Core Syntax}
+After parsing, Cedar lowers the surface syntax (Figure~\ref{fig:cedar-surface})
+into a simpler internal representation.
+Relative offsets are resolved into absolute byte positions.
+Endianness annotations are preserved for code generation.
+
+\input{figures/syntax.tex}
+
+Each \texttt{layout} declaration associates a name (matching a C type) with
+a collection of fields. Each field declaration specifies the type and
+placement of a field relative to the layout's origin
+or to other fields.
+
+The \texttt{placement} clause may be absolute (\texttt{\@}) or relative
+(\texttt{before}/\texttt{after}).
+Recursive or parametric layouts are excluded.
+
+In this example, the \texttt{Student} layout begins at offset 0.
+The field \texttt{name} is an array of 32 characters
+occupying the first 256 bits; \texttt{id} is placed immediately
+after it, and \texttt{grade} follows \texttt{id}.
+Offsets are computed automatically during the layout-checking phase.
+If two fields were to overlap, or if a field were missing compared
+to the associated C type, the checked
+would reject the layout.
+
+%Figure annotated same example as above.
+
+\subsubsection{Layout-Type Matching}
+
+\input{figures/matching.tex}
+
+\subsubsection{Well-formedness}
+
+\input{figures/wf.tex}
+
+
+
+\subsubsection{Design Considerations}
+Cedar's syntax supports declarative rather than arithmetic.
+Instead of writing numeric offsets directly, programmers may
+express structural relationships—"\texttt{id} after \texttt{name}"—that
+the compiler resolves into precise addresses.
+This improves readability and reduces the risk of human error, while
+still allowing absolute placement (\texttt{@}) when required
+for interoperability with binary formats and hardware registers.
+
+To keep the semantics tractable, Cedar omits features like computed
+field expressions or conditional layouts.
+The resulting language is small enough to reason about statically and
+expressive enough to describe practical C structures.
+
+\subsubsection{Supported Directives Summary}
+\begin{center}
+    \begin{tabular}{|| c c c||}
+        \hline
+        Directive & Purpose & Example \\ [0.5ex]
+        \hline\hline
+        \texttt{@} & Absolute placement.  & \texttt{id : u32 @ 64B;} \\
+        \hline
+        \texttt{after} & Place field immediately after another. & \texttt{grade : u8 after id;} \\
+        \hline
+        \texttt{before} & Place field immediately before another. & \texttt{prefix : u8 before name;} \\
+        \hline
+        \texttt{layout} & Define a new layout block. & \texttt{layout Student { ... }} \\
+        \hline
+    \end{tabular}
+\end{center}
+
+Together , the grammar and these directives define Cedar's core language.
+They form the user-facing layer of the system which is then translated by
+the compiler into a sequence of well-defined intermediate representations.
+These representations capture progressively more information
+about the layout, allowing the checked to validate and later generate code
+for the specified structures.
+
+\subsection{Compiler Architecture}
+\input{figures/architecture.tex}
+
+Cedar's compiler is organized as a sequence of \textbf{pure translation stages}
+that progressively enrich the information available about each layout.
+This implementation is lightweight and research-oriented.
+
+%Figure about compiler flow
+
+Each stage transforms the program into a slightly more concrete form,
+preserving the structure while adding derived information such as absolute
+offsets and alignment constraints.
+
+\subsubsection{Parsing and Resolution}
+The grammar is parsed into a structure abstract syntax tree (\texttt{L}).
+A resolution pass then substitutes symbolic references (e.g., \texttt{after name})
+with explicit dependencies between fields.
+Each field returns its declared attributes—type, byte offset, relative placement,
+and optional endianness.
+At this point the layout is still declarative: field positions are
+described relative to one another rather than as numeric offsets.
+
+The parser currently supports: Nested constructs, quoted field names, and forward
+references between fields. Comments and diagnostics, and multiple layouts per
+field are not yet implemented. Parse errors are reported generically.
+
+\subsubsection{Static Checking}
+In the next stage (LR), the compiler resolves \textbf{relative placements} and
+\textbf{nesting}. Every symbolic reference (\texttt{after x}, \texttt{before y})
+is replaced with a concrete byte offset computed from previously defined fields.
+Nested \texttt{record} blocks are \textbf{flattenned} into a single
+linear sequence of fields using compound names (e.g., \texttt{grade\_maths}).
+Endianness and element size information are propagated through this transformation.
+
+The resulting \textit{lowered representation (LR)} is a canonical, order-independent
+list of fields, each with a fixed, offset, size and endianness tag.
+
+The \textbf{checked representation (CR)}  introduces explicit byte ranges.
+Offsets are multiplied by eight to produce bit ranges for each field, which
+allow the code generator to reason about sub-word accessess and multi-word
+values.
+Cedar performs basic consistency checks during this phase:
+
+\begin{itemize}
+    \item fields do not overlap,
+    \item offsets must be non-negative and monotonically increasing, and
+    \item all fields must have defined sizes.
+\end{itemize}
+
+Full alignment checking, total-size verification, and overlap proofs are
+not yet implemented, but the structure is designed to accommodate them later
+
+\subsection{Code Generation}
+The final stage translated the checked representation into compile-able C code.
+The output consists of:
+\begin{enumerate}
+    \item A header file defining the a flat array of \texttt{uint32\_t} words;
+    and
+    \item A C source file containing \textit{accessor} and \textit{mutator}
+    functions for each field.
+\end{enumerate}
+
+Nested records are emitted as flattened field names; arrays are unrolled into
+repeat accessors. Per-field endianness annotations are honoured by inserting
+byte-swap operations in generated setters and getters.
+
+No runtime support or special compiler modifications are required. The generated
+code can be compiled by any C compiler, including \textbf{GCC} and \textbf{CompCert}.
+
+\subsubsection{Code Generation Example}
+Cedar's back end translates a checked layout into portable C that
+treats the underlying object as a flat array of 32-bit "word lanes"
+and emits \textbf{byte-accurate} accessors/mutators for each field (and,
+when needed, for each byte "part" of a multi-byte field). The generated
+code is \textbf{standalone C}: no runtime library, no compiler extensions.
+
+\subsubsection{In-memory representation}
+In this section we will follow the example of the \texttt{Student} layout:
+\begin{lstlisting}[caption={Cedar layout example}, label={lst:student_layout}]
+layout Student = record {
+  name  : U8[16] @ 0B,
+  id    : U32    @ 16B endian LE,
+  grades : record {
+    maths   : U16 @ 0B  endian BE,
+    physics : U16 @ 2B  endian BE
+  } @ 20B
+} @ 0B;
+\end{lstlisting}
+
+For each layout \texttt{T}, Cedar emits a header that defines a packed container:
+
+\begin{lstlisting}[language=C, caption={Generated C struct for layout Student}, label={lst:student_struct}]
+struct T {
+    unsigned int data[N];
+};
+typedef struct T T;
+\end{lstlisting}
+
+\texttt{N} is chosen so that all declared byte ranges fit exactly into 32-bit words.
+In the example below, \texttt{Student} needs 6 words (24B) to hold
+\texttt{name: U8[16]} (16B), \texttt{id: U32} (4B), and \texttt{record} (4B).
+
+\begin{lstlisting}[language=C, caption={Generated C struct for layout Student}, label={lst:student_struct_full}]
+    struct Student { unsigned int data[6U]; };
+\end{lstlisting}
+
+\textbf{Addressing model.} Fields are addressed as \textbf{byte lanes} within
+\texttt{data[w]}, using shifts and masks. A U8 at byte \texttt{k} of word \texttt{w}
+is accessed by \texttt{(unint32\_tdata[w] >> (k * 8)) \& 0xFF}. Multi-byte
+scalars are reconstructed from their constituent bytes according to the
+field's \textbf{declared endianness}.
+
+\subsection{Flattening of nested records and naming}
+Nested \texttt{record { ... } @ off} are \textbf{flattened} with
+separators. For example: 
+
+\begin{lstlisting}[caption={Cedar layout example}, label={lst:student_layout}]
+    grades: record {math: U16 @0B; physics: U16 @ 2B; } @ 20B
+\end{lstlisting}
+
+becomes \texttt{grades\_math} at \texttt{20B + 0B = 20B} and \texttt{grades\_physics} at \texttt{20B + 2B = 22B}.
+The header declares one getter/setter per flattened field:
+
+\begin{lstlisting}[language=C, caption={Generated accessors for flattened fields}, label={lst:student_accessors}]
+    uint32_t d_get_grades_maths(const Student *b);
+    void d_set_grades_maths(Student *b, uint32_t v);
+\end{lstlisting}
+
+\subsubsection{Scalars and Arrays}
+
+\begin{itemize}
+    \item \textbf{U8 arrays} generate one accessor per element(index in the symbol):
+    \texttt{d\_get\_name\_\_0}...\texttt{d\_get\_name\_\_15}. Each reads/writes
+    the corresponding byte lane.
+    \begin{lstlisting}[language=C], caption={Generated accessor for U8 array element}, label={lst:u8_array_accessor}
+        static uint32_t d_get_name__4__part0(const Student *b) {
+            return ((uint32_t)(b->data[1U] >> 0U) & 255U) //byte 4 overall -> word1, lane 0
+        }
+    \end{lstlisting}
+    \item U16/U32/U64 scalars are emitted as single getters/setters that \textbf{assemble}
+    and \textbf{disassemble} the value by combining 8-bit parts with shifts in the
+    declared endianness.
+\end{itemize}
+
+\subsubsection{Emdianness Policy}
+Per-field endianness is honoured by the order of byte assembly/disassembly in
+the top-level getter/setter:
+
+\begin{enumerate}
+    \item \textbf{Little-endian(}\texttt{endian LE}\textbf{)}: read/write bytes from lowest lane;
+    bytes are combined as \texttt{<< 0}, \texttt{<< 8}, \texttt{<< 16}, ...:
+    \begin{lstlisting}[language=C, caption={Generated accessor for U32 little-endian field}, label={lst:u32_le_accessor}]
+        // id : U32 @ 16B endian LE  -> all in data[4]
+        static uint32_t d_get_id_part0(const Student *b) { return ((uint32_t)b->data[4U] >> 0U)  & 255U; }
+        static uint32_t d_get_id_part1(const Student *b) { return ((uint32_t)b->data[4U] >> 8U)  & 255U; }
+        static uint32_t d_get_id_part2(const Student *b) { return ((uint32_t)b->data[4U] >> 16U) & 255U; }
+        static uint32_t d_get_id_part3(const Student *b) { return ((uint32_t)b->data[4U] >> 24U) & 255U; }
+
+        uint32_t d_get_id(const Student *b) {
+        uint32_t acc_u =
+            ((uint64_t)d_get_id_part0(b) << 0U)
+            | ((uint64_t)d_get_id_part1(b) << 8U)
+            | ((uint64_t)d_get_id_part2(b) << 16U)
+            | ((uint64_t)d_get_id_part3(b) << 24U);
+        return (uint32_t)acc_u;
+        }
+    \end{lstlisting}
+
+    \item \textbf{Big-endian(}\texttt{endian BE}\textbf{)}: most-significant byte
+    resides at the lowest address; assembly order is reversed: For
+    \texttt{grades\_maths: U16 @ 20B endian BE}: (bytes 0-1 of data[5]):
+    \begin{lstlisting}[language=C, caption={Generated accessor for U16 big-endian field}, label={lst:u16_be_accessor}]
+        static uint32_t d_get_grades__maths_part0(const Student *b){ return ((uint32_t)b->data[5U] >> 0U) & 255U; }   // MSB
+        static uint32_t d_get_grades__maths_part1(const Student *b){ return ((uint32_t)b->data[5U] >> 8U) & 255U; }   // LSB
+
+        uint32_t d_get_grades__maths(const Student *b) {
+        uint32_t acc_u =
+            ((uint64_t)d_get_grades__maths_part0(b) << 8U)   // MSB << 8
+            | ((uint64_t)d_get_grades__maths_part1(b) << 0U);  // LSB << 0
+        return (uint32_t)acc_u;
+    }
+    \end{lstlisting}
+
+    \texttt{grades\_physics} is similar, using lanes 16 and 24 of \texttt{data[5]}
+    with the reversed-byte assembly.
+\end{enumerate}
+
+\textit{Machine endian} \texttt{ME} \textit{currently defaults as little-endian.}
+
+\subsubsection{Byte-part helpers and masking discipline}
+Each getter/setter is layered over private \texttt{\_part<i>} helpers that 
+isolate a single 8-bit chunk. Setters update the target word with a
+\textbf{read-modify-write} using a clear-then-insert mask:
+
+\begin{lstlisting}[language=C], caption={Generated mutator for U8 field}, label={lst:u8_setter}
+    b->data[w] = (b->data[w] & ~(0xFFu << lane)) | (((0xFFu & v) << lane));
+\end{lstlisting}
+
+This guarantees that writing one byte lane does not disturb adjacent lanes.
+
+\subsubsection{Example: offsets and word mapping}
+\begin{lstlisting}[caption={Cedar layout example}, label={lst:student_layout}]
+    \item \texttt{name: U8[16] @ 0B} $\rightarrow$ \texttt{data[0]..data[3]}, lanes 0, 8, 16, 24 per
+    element functions \texttt{d\_get\_name\_\_0 .. d\_get\_name\_\_15}
+    \item \texttt{id: U32 @ 16B endian LE} $\rightarrow$ \texttt{data[4]}, lanes 0, 8, 16, 24; LE assembly (\texttt{<< 0, 8, 16, 24})
+    \item \texttt{grades\_maths: U16 @ 20B endian BE} $\rightarrow$ \texttt{data[5]}, lanes 0, 8; BE assembly (\texttt{<< 8, 0})
+    \item \texttt{grades\_physics: U16 @ 22B endian BE} $\rightarrow$ \texttt{data[5]}, lanes 16, 24; BE assembly (\texttt{<< 8, 0})
+\end{lstlisting}
+
+%FIGURE OF THIS
+
+\subsubsection{Compilation Targets}
+The emitted code has been testted with \textbf{GCC} (for inspection via \textit{pahole})
+and \textbf{CompCert} (to verify compatibility with its memory model).
+
+\subsubsection{Current codegen limitations}
+\begin{enumerate}
+    \item The container is always a \textbf{flat} \texttt{unsigned int data[N]}; no C \textbf{struct} field nesting is emitted.
+    \item No diagnostics for overlapping byte field ranges at this stage, the code is assumed to be well-formed.
+    \item Pointers/boxed fields, tagged unions, and sub-type bit-fields are out of scope in this compiler.
+\end{enumerate}
+
+\subsection{Design Rationale}
+The architecture emphasizes two main principles:
+\begin{enumerate}
+    \item \textbf{Transparency}. Each representation (L, LR, CR) can
+    be inspected, making the compiler's reasoning traceable
+    \item \textbf{Modularity}. Additional analyses or transformations
+    can be inserted between stages without disrupting others.
+    \item \textbf{Extensibility}. The separation of passes makes it straightforward
+    to extend the language (for example, by adding union layouts or precise bit-field control)
+    without disrupting the core pipeline.
+\end{enumerate}
+
+This design allow Cedar to be extended in the future with
+additional features, and potentially support for automated
+verification, similar to Dargent.
+
+It provides a practical foundation for Cedar's compiler: small enough
+to experiment with, both structured in a way that preserves the formal
+clarity of its inspirations.
+
+
+\subsection{Achievements and Scope}
+The Cedar compiler demonstrated that declarative data-layout specification
+can be integrated directly into the C programming environment in a practical
+way.
+Its development produced a complete end-to-end toolchain—from parsing and static
+checking of layout descriptions to the generation of layout-consistent C
+code—that validates the design concepts outlined in this chapter.
+
+\subsubsection{Implemented Features}
+The current implementation supports:
+
+\begin{itemize}
+    \item \textbf{Declarative layout definitions} for \texttt{structs},
+    fixed-size arrays, and tagged unions.
+    \item \textbf{Placement directives} (\texttt{at}, \texttt{before}, \texttt{after})
+    that determine field ordering and spacing.
+    \item \textbf{Automatic offset computation} and total-size calculation.
+    \item \textbf{C code generation} producing equivalent declarations
+    and accessor functions.
+\end{itemize}
+
+Each of these features we tested on representative examples derived from
+Dargent's examples and from common systems-programming idioms such as
+device registers. The compiler successfully detected layout mismatches
+and generated compilable C code for all supported constructs.
+
+\subsubsection{Implementation Coverage}
+In this table we summarize the functionality currently implemented in the
+Cedar compiler, based on the grammar and pipeline described in
+the previous sections. The implementation realizes the
+\textit{record-offset-endianness} fragment of the Dargent layout language
+and provides a complete -end-to-end compiler from parsing to C code
+generation.
+
+\begin{table}[h]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lcl}
+        \toprule
+        \textbf{Feature} & \textbf{Status} & \textbf{Notes} \\
+        \midrule
+        Layout declarations(\texttt{layout Name = record {...}}) & Implemented & Only one layout per file.  \\
+        \hline
+        Nested records & Implemented & Arbitrary depth; flattened in code generation \\
+        \hline
+        Absolute offsets (\texttt{@ n B}) & Implemented & Byte-based; no bit-granularity arithmetic \\
+        \hline
+        Relative offsets (\texttt{after}/\texttt{before}) & Implemented & Top-level only. \\
+        \hline
+        Per-field endianness (LE, BE, ME) & Implemented & ME defaults to LE \\
+        \hline
+        Uniform arrays (\texttt{type[n]}) & Implemented & Fixed-size only. No bounds checking \\
+        \hline
+        Quoted field names & Implemented & Support fields with names such as \texttt{"Field Name"} \\
+        \hline
+        Forward references between fields & Implemented & Declarative, order-independent layouts. \\
+        \hline
+        Signed integers & Partial & Handles by the parser, but not generated in codegen \\
+        \hline
+        Unions/variants & Not implemented & Planned for future work. \\
+        \hline
+        Sub-type bit-fields (1<B) & Not implemented & Not supported. \\
+        \hline
+        Complex offset expressions (arithmetic) & Not implemented & No evaluation of \texttt{a +1B} \\
+        \hline
+        Mixed-endian composited & Not implemented & No canonicalized \\
+        \hline
+        Comments and diagnostics & Not implemented & Comments are not lexed; generic parse errors only. \\
+        \hline
+        Pointer/boxed fields & Not implemented & Treated as opaque machine words. \\
+        \hline
+        \bottomrule
+    \end{tabular}%
+}
+    \caption{Implementation coverage summary}
+    \label{tab:implcov}
+\end{table}
+
+\subsubsection{Practical Outcome}
+The resulting system is a functioning compiler that demonstrates:
+\begin{enumerate}
+    \item Declarative layout syntax can describe C data structures succinctly;
+    \item Static checking can verify structural inconsistencies that ordinary
+    C compilers accept silently;
+    \item Generated code remains portable and compatible with existing toolchains.
+\end{enumerate}
+
+Together, these results validate Cedar's underlying hypothesis: that
+separating layout intent from C type declarations can improve
+programmers' confidence in the correctness of low-level data representations.
+
+The next chapter presents concrete example and results, illustrating how
+Cedar's layout translate into verified C code and how its checker behaves
+on representative cases.
+
+\subsection{Summary}
+This chapter has described the design and implementation of Cedar, a 
+language and compiler for declarative specification of C data
+layouts. Building on CompCert's precise model of C memory and Dargent'
+declarative layout philosophy, Cedar defines a practical subset of
+constructs—\texttt{layout}, \texttt{@}, \texttt{before}, \texttt{after}
+end simple arrays—that enable programmers to express physical data
+representations explicitly and check them statically.
+
+The chapter introduced the supported C types, the language grammar, and the
+compiler architecture that transforms layouts through successive translation
+stages into layout-consistent C code. While the current compiler implements
+only a subset of the planned language, it demonstrated the feasibility
+of integrating declarative layout checking directly into C development
+workflows.
+The system provides static guarantees about field order, alignment,
+and completeness without altering C's execution model or
+requiring external verification frameworks.
+
+The following chapter presents the evaluation of Cedar through concrete
+examples and generated code.
+It examples how well the language captures real C idioms, how the
+checker behaves on representative layouts, and what these results suggest
+for future extensions of the system.
+
