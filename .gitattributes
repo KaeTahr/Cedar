@@ -2,3 +2,5 @@
 *.bib linguist-documentation
 *.cls linguist-documentation
 *.sty linguist-documentation
+thesis/* linguist-documentation
+proposal/* linguist-documentation
